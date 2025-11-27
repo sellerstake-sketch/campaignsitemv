@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Campaign logos - users can upload and read their own logos
+    match /campaign-logos/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.email == userId;
+    }
+    
+    // Messenger attachments - authenticated users can read/write
+    match /messenger/{conversationId}/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Voter images - users can upload and read their own voter images
+    match /voters/{userEmail}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.email == userEmail;
+    }
+    
+    // Default deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

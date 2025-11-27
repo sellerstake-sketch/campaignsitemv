@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Campaign Management System</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAABM0lEQVR4nO2WQU7DMBBFX8qBC1SxQ1Uu0Bu0d+CGC8AF4AhwgXYHqAcgwAHgAhUckEpCJrITj+2JEDOyPNY489mZ8cSJiIiIiIiI/A0KQAUYAB1gCuTAFGgBXaAPlHGzAHaAg0t4B3wBD8BJfvw2UApMjysw2h08AXz7+ISGdxF+BEw6Yk7vO6BR4i9gWeLvfuFPYGxiLq0r8HlVH4E5MAZ64oNO3/gxk0WKrxV4CjSCP2V+s15g1QpUwDz4U+U3KwW6QR+Cp8D7z5gJ1vwNN6P4Qwp9BY7/nDnMPSbwq3XGC3rAtP8X4OvOPGMCL7AFxoK7k/5VaBd4CJz4PzADPgNvQX8CBsAX8AG8Aq/AE/AIPAC3wBWwB5wCO8AJsAVsAhvAGrAKLAMrwBKwyC/wCxx7XuDYC6S+HL7vAf+K98/1wKWa+QAAAABJRU5ErkJggg==">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="pages-styles.css">
+    <link rel="stylesheet" href="admin-styles.css">
+    <link rel="stylesheet" href="messenger-styles.css">
+    <script type="module" src="dialog.js"></script>
+    <script>
+        // Detect if opened via file:// protocol and show error
+        if (window.location.protocol === 'file:') {
+            document.write(`
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        text-align: center; 
+                        padding: 50px; 
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                    }
+                    .error-box {
+                        background: rgba(255,255,255,0.95);
+                        color: #333;
+                        padding: 40px;
+                        border-radius: 15px;
+                        max-width: 600px;
+                        margin: 50px auto;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                    }
+                    h1 { color: #dc3545; margin-bottom: 20px; }
+                    .button {
+                        display: inline-block;
+                        background: #667eea;
+                        color: white;
+                        padding: 15px 30px;
+                        text-decoration: none;
+                        border-radius: 8px;
+                        margin: 10px;
+                        font-weight: bold;
+                    }
+                    code {
+                        background: #f4f4f4;
+                        padding: 2px 8px;
+                        border-radius: 4px;
+                        font-family: monospace;
+                    }
+                </style>
+                <div class="error-box">
+                    <h1>⚠️ WRONG WAY TO OPEN THIS FILE!</h1>
+                    <p style="font-size: 18px; margin: 20px 0;">
+                        You opened this file directly from your computer.<br>
+                        This causes CORS errors and won't work!
+                    </p>
+                    <p style="margin: 30px 0;">
+                        <strong>You MUST use the HTTP server instead:</strong>
+                    </p>
+                    <div style="margin: 30px 0;">
+                        <a href="http://localhost:8080/admin.html" class="button">Open via Server (Port 8080)</a><br><br>
+                        <a href="http://localhost:8000/admin.html" class="button">Open via Server (Port 8000)</a>
+                    </div>
+                    <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-top: 30px; text-align: left;">
+                        <strong>How to fix:</strong><br>
+                        1. Make sure server is running (check terminal)<br>
+                        2. Click one of the buttons above<br>
+                        3. Or type in browser: <code>http://localhost:8000/admin.html</code><br>
+                        4. <strong>NEVER</strong> double-click HTML files!
+                    </div>
+                </div>
+            `);
+            throw new Error('File opened via file:// protocol');
+        }
+    </script>
+</head>
+
+<body>
+    <!-- Admin Login Screen -->
+    <div id="admin-login-screen" class="screen active">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="logo-header">
+                    <h1>Admin Panel</h1>
+                    <p class="subtitle">Campaign Management System</p>
+                </div>
+                <form id="admin-login-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="admin-email">Admin Email</label>
+                        <input type="email" id="admin-email" placeholder="Enter admin email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-password">Password</label>
+                        <input type="password" id="admin-password" placeholder="Enter password" required>
+                    </div>
+                    <div id="admin-login-error" class="error-message"></div>
+                    <div style="background: var(--primary-50); padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; color: var(--text-700);">
+                        <strong>Admin Login:</strong><br>
+                        <strong>Email:</strong> <code>rixaski@gmail.com</code><br>
+                        <small>⚠️ Make sure you have created this account in Firebase Authentication console first.</small><br>
+                        <small>📋 <a href="ADMIN-SETUP.md" target="_blank" style="color: var(--primary-color);">View Setup Instructions</a></small>
+                    </div>
+                    <button type="submit" class="btn-primary">Login as Admin</button>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <a href="index.html" style="color: var(--primary-color); text-decoration: none;">← Back to Client Login</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="admin-dashboard" class="screen">
+        <div class="admin-header">
+            <div class="admin-header-left">
+                <h2>Admin Dashboard</h2>
+                <p>Client & License Management System</p>
+            </div>
+            <div class="admin-header-right">
+                <!-- Desktop View: Show email and logout button -->
+                <span id="admin-name-display" class="admin-email-display"></span>
+                <button id="admin-logout-btn" class="btn-secondary admin-logout-desktop">Logout</button>
+
+                <!-- Mobile View: Profile icon with dropdown -->
+                <div class="admin-profile-dropdown">
+                    <button id="admin-profile-toggle" class="admin-profile-btn" aria-label="Profile menu">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </button>
+                    <div id="admin-profile-dropdown-menu" class="admin-profile-dropdown-menu">
+                        <div class="admin-profile-dropdown-header">
+                            <div class="admin-profile-avatar">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </div>
+                            <div class="admin-profile-info">
+                                <div class="admin-profile-label">Admin</div>
+                                <div id="admin-profile-email" class="admin-profile-email"></div>
+                            </div>
+                        </div>
+                        <div class="admin-profile-dropdown-divider"></div>
+                        <button id="admin-logout-mobile" class="admin-profile-dropdown-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-container">
+            <!-- Sidebar Navigation -->
+            <div class="admin-sidebar">
+                <nav class="admin-nav">
+                    <a href="#" class="admin-nav-item active" data-section="clients">
+                        <span data-icon="users"></span>
+                        <span>Client Management</span>
+                    </a>
+                    <a href="#" class="admin-nav-item" data-section="sessions">
+                        <span data-icon="monitor"></span>
+                        <span>Active Sessions</span>
+                    </a>
+                    <a href="#" class="admin-nav-item" data-section="notifications">
+                        <span data-icon="bell"></span>
+                        <span>Notifications</span>
+                    </a>
+                    <a href="#" class="admin-nav-item" data-section="records">
+                        <span data-icon="file-text"></span>
+                        <span>Records</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="admin-content">
+                <!-- Client Management Section -->
+                <div id="clients-section" class="admin-section active">
+                    <div class="section-header">
+                        <h3>Client Management</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="add-license-btn" class="btn-secondary btn-compact">
+                                <span data-icon="key"></span>
+                                New License
+                            </button>
+                            <button id="add-client-btn" class="btn-primary btn-compact">
+                                <span data-icon="plus"></span>
+                                New Client
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid-admin">
+                        <div class="stat-card-admin">
+                            <div class="stat-icon-admin stat-primary">
+                                <span data-icon="users"></span>
+                            </div>
+                            <div class="stat-content-admin">
+                                <h3>Total Clients</h3>
+                                <p class="stat-number-admin" id="total-clients">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card-admin">
+                            <div class="stat-icon-admin stat-success">
+                                <span data-icon="check-circle"></span>
+                            </div>
+                            <div class="stat-content-admin">
+                                <h3>Active Licenses</h3>
+                                <p class="stat-number-admin" id="active-licenses">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card-admin">
+                            <div class="stat-icon-admin stat-warning">
+                                <span data-icon="pause-circle"></span>
+                            </div>
+                            <div class="stat-content-admin">
+                                <h3>Suspended</h3>
+                                <p class="stat-number-admin" id="suspended-clients">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card-admin">
+                            <div class="stat-icon-admin stat-info">
+                                <span data-icon="monitor"></span>
+                            </div>
+                            <div class="stat-content-admin">
+                                <h3>Active Sessions</h3>
+                                <p class="stat-number-admin" id="current-sessions">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="search-filter-bar">
+                        <input type="text" id="client-search" class="search-input" placeholder="Search clients by name, email, or code...">
+                        <select id="status-filter" class="search-input">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="suspended">Suspended</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Client Code</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>License Status</th>
+                                    <th>Registered Date</th>
+                                    <th>Last Active</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clients-table-body">
+                                <!-- Client rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="clients-pagination" class="admin-pagination"></div>
+                </div>
+
+
+                <!-- Active Sessions Section -->
+                <div id="sessions-section" class="admin-section">
+                    <div class="section-header">
+                        <h3>Active Sessions</h3>
+                        <button id="refresh-sessions-btn" class="btn-secondary btn-compact">
+                            <span data-icon="refresh-cw"></span>
+                            Refresh
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Client Code</th>
+                                    <th>Email</th>
+                                    <th>IP Address</th>
+                                    <th>Location</th>
+                                    <th>Device Info</th>
+                                    <th>Login Time</th>
+                                    <th>Last Activity</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sessions-table-body">
+                                <!-- Session rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="sessions-pagination" class="admin-pagination"></div>
+                </div>
+
+                <!-- Notifications Section -->
+                <div id="notifications-section" class="admin-section">
+                    <div class="section-header">
+                        <h3>Send Notifications</h3>
+                    </div>
+                    <div class="notification-form-wrapper">
+                        <div class="notification-form-card">
+                            <div class="notification-card-header">
+                                <div class="notification-icon-wrapper">
+                                    <span data-icon="bell" class="notification-form-icon"></span>
+                                </div>
+                                <div>
+                                    <h4>Compose Notification</h4>
+                                    <p class="notification-subtitle">Send important updates and messages to your clients</p>
+                                </div>
+                            </div>
+                            <form id="send-notification-form" class="notification-form">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="notification-recipient">
+                                            <span data-icon="users" style="display: inline-flex; align-items: center; margin-right: 6px;"></span>
+                                            Recipient
+                                        </label>
+                                        <select id="notification-recipient" required>
+                                            <option value="">Select recipient...</option>
+                                            <option value="all">All Active Clients</option>
+                                            <option value="specific">Specific Client</option>
+                                        </select>
+                                        <small class="form-helper">Choose who will receive this notification</small>
+                                    </div>
+                                    <div class="form-group" id="specific-client-group" style="display: none;">
+                                        <label for="notification-client-code">
+                                            <span data-icon="key" style="display: inline-flex; align-items: center; margin-right: 6px;"></span>
+                                            Client Code
+                                        </label>
+                                        <input type="text" id="notification-client-code" placeholder="Enter 4-digit code" maxlength="4" pattern="[0-9]{4}">
+                                        <small class="form-helper">4-digit code of the specific client</small>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="notification-title">
+                                        <span data-icon="file-text" style="display: inline-flex; align-items: center; margin-right: 6px;"></span>
+                                        Notification Title
+                                    </label>
+                                    <input type="text" id="notification-title" placeholder="Enter a clear and concise title" required>
+                                    <small class="form-helper">Brief title that summarizes the notification</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="notification-message">
+                                        <span data-icon="file-text" style="display: inline-flex; align-items: center; margin-right: 6px;"></span>
+                                        Message
+                                    </label>
+                                    <textarea id="notification-message" rows="6" placeholder="Write your notification message here. Be clear and informative..." required></textarea>
+                                    <small class="form-helper">Detailed message content for the notification</small>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn-primary">
+                                        <span data-icon="bell"></span>
+                                        Send Notification
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Records Section -->
+                <div id="records-section" class="admin-section">
+                    <div class="section-header">
+                        <h3>Client Records</h3>
+                        <button id="export-records-btn" class="btn-secondary btn-compact">
+                            <span data-icon="download"></span>
+                            Export Records
+                        </button>
+                    </div>
+                    <div class="records-filters">
+                        <input type="date" id="records-start-date" class="search-input">
+                        <span>to</span>
+                        <input type="date" id="records-end-date" class="search-input">
+                        <button id="filter-records-btn" class="btn-secondary btn-compact">Filter</button>
+                    </div>
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Client Code</th>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                    <th>Admin</th>
+                                </tr>
+                            </thead>
+                            <tbody id="records-table-body">
+                                <!-- Records will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="records-pagination" class="admin-pagination"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add License Modal -->
+    <div id="add-license-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Generate New License</h3>
+                <button class="modal-close" id="close-license-modal">
+                    <span data-icon="x"></span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="generate-license-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="license-client-code">
+                                <span data-icon="users" style="display: inline-flex; align-items: center; margin-right: 6px;"></span>
+                                Client Code
+                            </label>
+                            <input type="text" id="license-client-code" placeholder="Enter 4-digit code" maxlength="4" pattern="[0-9]{4}" required>
+                            <small>Unique 4-digit code for this client</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="license-email">
+                                <span data-icon="profile" style="display: inline-flex; align-items: center; margin-right: 6px;"></span>
+                                Client Email
+                            </label>
+                            <input type="email" id="license-email" placeholder="client@example.com" required>
+                            <small>Email address for the client account</small>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="license-serial">
+                            <span data-icon="key" style="display: inline-flex; align-items: center; margin-right: 6px;"></span>
+                            Serial Number
+                        </label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="license-serial" placeholder="Auto-generated serial number" readonly class="readonly-input" style="flex: 1;">
+                            <button type="button" id="generate-serial-btn" class="btn-secondary btn-compact">
+                                <span data-icon="refresh-cw"></span>
+                                Generate
+                            </button>
+                        </div>
+                        <small>Click "Generate" to create a unique serial number automatically</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="license-expiry">
+                            <span data-icon="events" style="display: inline-flex; align-items: center; margin-right: 6px;"></span>
+                            License Expiry Date <span style="color: var(--text-light); font-size: 12px;">(Optional)</span>
+                        </label>
+                        <input type="date" id="license-expiry">
+                        <small>Leave empty for unlimited license validity</small>
+                    </div>
+                    <div id="license-error" class="error-message"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary btn-compact" id="cancel-license">Cancel</button>
+                        <button type="submit" class="btn-primary btn-compact">
+                            <span data-icon="check-circle"></span>
+                            Generate License
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Client Modal -->
+    <div id="add-client-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>New Client</h3>
+                <button class="modal-close" id="close-client-modal">
+                    <span data-icon="x"></span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="register-client-form">
+                    <div class="form-group">
+                        <label for="client-name">Client Name</label>
+                        <input type="text" id="client-name" placeholder="Enter client name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="client-email-register">Email Address</label>
+                        <input type="email" id="client-email-register" placeholder="client@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="client-code-register">Client Code (4 digits)</label>
+                        <input type="text" id="client-code-register" placeholder="0000" maxlength="4" pattern="[0-9]{4}" required>
+                        <small>Unique 4-digit code for this client</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="client-temp-password">Temporary Password</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="client-temp-password" placeholder="Auto-generated" readonly class="readonly-input" style="flex: 1;">
+                            <button type="button" id="generate-password-btn" class="btn-secondary btn-compact">
+                                <span data-icon="refresh-cw"></span>
+                                Generate Password
+                            </button>
+                        </div>
+                        <small>Click "Generate Password" to create a secure temporary password automatically</small>
+                    </div>
+                    <div id="client-register-error" class="error-message"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary btn-compact" id="cancel-client-register">Cancel</button>
+                        <button type="submit" class="btn-primary btn-compact">Register Client</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Check for common errors before loading modules
+        window.addEventListener('error', (e) => {
+            console.error('JavaScript error:', e.error);
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; background: #dc2626; color: white; padding: 15px; z-index: 100000; text-align: center; font-family: monospace; font-size: 12px;';
+            errorDiv.textContent = `Error: ${e.message} - Check browser console (F12) for details`;
+            document.body.appendChild(errorDiv);
+        });
+
+        // Log when page loads
+        console.log('Admin page loaded, initializing scripts...');
+    </script>
+
+    <!-- Messenger Chatbox -->
+    <div id="messenger-container" class="messenger-container">
+        <div class="messenger-header">
+            <div class="messenger-header-left">
+                <div class="messenger-title">Messages</div>
+                <div class="messenger-subtitle" id="messenger-online-count">0 online</div>
+            </div>
+            <button class="messenger-close-btn" id="messenger-container-close-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="messenger-search">
+            <input type="text" placeholder="Search conversations..." id="messenger-search-input">
+        </div>
+
+        <div class="messenger-users-list" id="messenger-users-list">
+            <!-- Online users will be populated here -->
+            <div class="messenger-empty">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3; margin-bottom: 12px;">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <p>No online users</p>
+                <small>Users will appear here when online</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messenger Chat Window -->
+    <div id="messenger-chat-window" class="messenger-chat-window">
+        <div class="chat-window-header">
+            <button class="chat-back-btn" id="chat-back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+            <div class="chat-user-info">
+                <div class="chat-user-avatar" id="chat-user-avatar"></div>
+                <div class="chat-user-details">
+                    <div class="chat-user-name" id="chat-user-name">Messages</div>
+                    <div class="chat-user-status" id="chat-user-status">0 online</div>
+                </div>
+            </div>
+            <button class="messenger-close-btn" id="messenger-chat-close-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            <!-- Messages will be populated here -->
+        </div>
+
+        <div class="chat-preview-area" id="chat-preview-area"></div>
+        <div class="chat-input-area">
+            <button class="chat-attach-btn" title="Attach file">
+                <input type="file" id="chat-file-input" accept="image/*,.pdf,.doc,.docx,.txt" multiple>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                </svg>
+            </button>
+            <input type="text" placeholder="Type a message..." id="chat-message-input" maxlength="1000">
+            <button class="chat-send-btn" id="chat-send-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Messenger Toggle Button -->
+    <button id="messenger-toggle-btn" class="messenger-toggle-btn" title="Open Messages">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span class="messenger-badge" id="messenger-badge">0</span>
+    </button>
+
+    <script src="icons.js"></script>
+    <script type="module" src="admin.js"></script>
+    <script type="module" src="messenger.js"></script>
+    <script>
+        // Fallback error handling
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('Unhandled promise rejection:', e.reason);
+            const errorEl = document.getElementById('admin-login-error');
+            if (errorEl) {
+                const errorMsg = (e.reason && e.reason.message) ? e.reason.message : (e.reason ? String(e.reason) : 'Unknown error');
+                errorEl.textContent = 'Error loading admin panel. Check console (F12) for details: ' + errorMsg;
+                errorEl.classList.add('show');
+            }
+        });
+    </script>
+</body>
+
+</html>
