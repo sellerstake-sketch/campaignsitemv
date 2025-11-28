@@ -299,10 +299,18 @@ function updateMessengerVisibility() {
     const settingsToggle = document.getElementById('messenger-enabled-toggle');
 
     if (messengerEnabled) {
-        if (toggleBtn) toggleBtn.classList.remove('hidden');
+        // Show toggle button only when messenger is enabled
+        if (toggleBtn) {
+            toggleBtn.classList.remove('hidden');
+            toggleBtn.style.display = 'flex'; // Ensure it's visible
+        }
         if (chatWindow) chatWindow.style.display = 'flex';
     } else {
-        if (toggleBtn) toggleBtn.classList.add('hidden');
+        // Hide toggle button when messenger is disabled
+        if (toggleBtn) {
+            toggleBtn.classList.add('hidden');
+            toggleBtn.style.display = 'none'; // Force hide
+        }
         if (chatWindow) {
             chatWindow.classList.remove('open');
             chatWindow.style.display = 'none';
@@ -312,6 +320,12 @@ function updateMessengerVisibility() {
     if (settingsToggle) {
         settingsToggle.checked = messengerEnabled;
     }
+
+    console.log('[Messenger] Visibility updated:', {
+        messengerEnabled,
+        toggleBtnVisible: toggleBtn && !toggleBtn.classList.contains('hidden'),
+        toggleBtnDisplay: toggleBtn ? toggleBtn.style.display : 'N/A'
+    });
 }
 
 // Setup presence tracking
@@ -403,34 +417,42 @@ async function loadOnlineUsersForAgent() {
     try {
         // Set up real-time listener for Campaign Manager
         const campaignManagerRef = doc(db, 'users', window.campaignEmail);
-        onSnapshot(campaignManagerRef, (managerDoc) => {
-            if (managerDoc.exists()) {
-                const managerData = managerDoc.data();
-                // Update or add Campaign Manager to online users
-                const existingIndex = onlineUsers.findIndex(u => u.id === window.campaignEmail);
-                const managerUser = {
-                    id: window.campaignEmail,
-                    email: window.campaignEmail,
-                    name: managerData.name || window.campaignEmail.split('@')[0] || 'Campaign Manager',
-                    isOnline: managerData.isOnline || false,
-                    agentCode: null,
-                    isCampaignManager: true,
-                    lastSeen: managerData.lastSeen
-                };
+        onSnapshot(
+            campaignManagerRef,
+            (managerDoc) => {
+                if (managerDoc.exists()) {
+                    const managerData = managerDoc.data();
+                    // Update or add Campaign Manager to online users
+                    const existingIndex = onlineUsers.findIndex(u => u.id === window.campaignEmail);
+                    const managerUser = {
+                        id: window.campaignEmail,
+                        email: window.campaignEmail,
+                        name: managerData.name || window.campaignEmail.split('@')[0] || 'Campaign Manager',
+                        isOnline: managerData.isOnline || false,
+                        agentCode: null,
+                        isCampaignManager: true,
+                        lastSeen: managerData.lastSeen
+                    };
 
-                if (existingIndex >= 0) {
-                    onlineUsers[existingIndex] = managerUser;
-                } else {
-                    onlineUsers.push(managerUser);
-                }
+                    if (existingIndex >= 0) {
+                        onlineUsers[existingIndex] = managerUser;
+                    } else {
+                        onlineUsers.push(managerUser);
+                    }
 
-                updateOnlineCount();
-                const chatWindow = document.getElementById('messenger-chat-window');
-                if (chatWindow && chatWindow.classList.contains('open') && !selectedUserId) {
-                    showUsersInChatWindow();
+                    updateOnlineCount();
+                    const chatWindow = document.getElementById('messenger-chat-window');
+                    if (chatWindow && chatWindow.classList.contains('open') && !selectedUserId) {
+                        showUsersInChatWindow();
+                    }
                 }
+            },
+            (error) => {
+                console.error('[Messenger] Error listening to Campaign Manager:', error);
+                // Don't show error to user - just log it
+                // The agent can still use chat even if Campaign Manager status isn't available
             }
-        });
+        );
 
         // Set up real-time listener for agents
         const agentsQuery = query(
@@ -438,36 +460,43 @@ async function loadOnlineUsersForAgent() {
             where('email', '==', window.campaignEmail)
         );
 
-        onSnapshot(agentsQuery, (agentsSnapshot) => {
-            // Remove all agents from onlineUsers (we'll re-add them)
-            onlineUsers = onlineUsers.filter(u => !u.isAgent);
+        onSnapshot(
+            agentsQuery,
+            (agentsSnapshot) => {
+                // Remove all agents from onlineUsers (we'll re-add them)
+                onlineUsers = onlineUsers.filter(u => !u.isAgent);
 
-            agentsSnapshot.forEach((agentDoc) => {
-                const agentData = agentDoc.data();
-                // Don't include current agent
-                if (window.agentData && agentData.agentAccessCode === window.agentData.agentAccessCode) {
-                    return;
-                }
+                agentsSnapshot.forEach((agentDoc) => {
+                    const agentData = agentDoc.data();
+                    // Don't include current agent
+                    if (window.agentData && agentData.agentAccessCode === window.agentData.agentAccessCode) {
+                        return;
+                    }
 
-                // Get agent presence from agents collection
-                onlineUsers.push({
-                    id: `agent_${agentDoc.id}`,
-                    email: agentData.email || window.campaignEmail,
-                    name: agentData.name || 'Agent',
-                    isOnline: agentData.isOnline || false, // Get online status from agent document
-                    agentCode: agentData.agentId || agentData.agentAccessCode || null,
-                    isCampaignManager: false,
-                    isAgent: true,
-                    lastSeen: agentData.lastSeen || null
+                    // Get agent presence from agents collection
+                    onlineUsers.push({
+                        id: `agent_${agentDoc.id}`,
+                        email: agentData.email || window.campaignEmail,
+                        name: agentData.name || 'Agent',
+                        isOnline: agentData.isOnline || false, // Get online status from agent document
+                        agentCode: agentData.agentId || agentData.agentAccessCode || null,
+                        isCampaignManager: false,
+                        isAgent: true,
+                        lastSeen: agentData.lastSeen || null
+                    });
                 });
-            });
 
-            updateOnlineCount();
-            const chatWindow = document.getElementById('messenger-chat-window');
-            if (chatWindow && chatWindow.classList.contains('open') && !selectedUserId) {
-                showUsersInChatWindow();
+                updateOnlineCount();
+                const chatWindow = document.getElementById('messenger-chat-window');
+                if (chatWindow && chatWindow.classList.contains('open') && !selectedUserId) {
+                    showUsersInChatWindow();
+                }
+            },
+            (error) => {
+                console.error('[Messenger] Error listening to agents:', error);
+                // Don't show error to user - just log it
             }
-        });
+        );
 
     } catch (error) {
         console.error('Error loading online users for agent:', error);
@@ -800,16 +829,33 @@ async function loadMessages(otherUserId) {
         const messagesRef = collection(db, 'conversations', conversationId, 'messages');
         const messagesQuery = query(messagesRef, orderBy('timestamp', 'asc'));
 
-        onSnapshot(messagesQuery, (snapshot) => {
-            messagesContainer.innerHTML = '';
-            snapshot.forEach((doc) => {
-                const message = doc.data();
-                renderMessage(message, message.senderId === userEmail);
-            });
+        onSnapshot(
+            messagesQuery,
+            (snapshot) => {
+                messagesContainer.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const message = doc.data();
+                    renderMessage(message, message.senderId === userEmail);
+                });
 
-            // Scroll to bottom
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        });
+                // Scroll to bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            },
+            (error) => {
+                console.error('[Messenger] Error loading messages:', error);
+                if (error.code === 'permission-denied') {
+                    console.error('[Messenger] Permission denied - check Firestore rules for conversations/messages');
+                }
+                // Show error to user
+                if (messagesContainer) {
+                    messagesContainer.innerHTML = `
+                        <div style="padding: 20px; text-align: center; color: var(--text-muted);">
+                            <p>Error loading messages. Please refresh the page.</p>
+                        </div>
+                    `;
+                }
+            }
+        );
     } catch (error) {
         console.error('Error loading messages:', error);
     }
@@ -1054,8 +1100,8 @@ async function sendMessage() {
             conversationId,
             senderId: userEmail,
             receiverId: selectedUserId,
-            isAnonymous: auth.currentUser ? .isAnonymous,
-            authEmail: auth.currentUser ? .email
+            isAnonymous: auth.currentUser.isAnonymous,
+            authEmail: auth.currentUser.email
         });
 
         // Ensure conversation document exists (Firestore allows subcollections without parent doc, but it's good practice)
@@ -1138,8 +1184,8 @@ async function sendMessage() {
             selectedUserId,
             conversationId: userEmail && selectedUserId ? [userEmail, selectedUserId].sort().join('_') : 'N/A',
             isAuthenticated: auth.currentUser != null,
-            isAnonymous: auth.currentUser ? .isAnonymous,
-            authEmail: auth.currentUser ? .email
+            isAnonymous: auth.currentUser.isAnonymous,
+            authEmail: auth.currentUser.email
         });
 
         let errorMessage = 'Failed to send message. Please try again.';
@@ -1213,3 +1259,4 @@ if (document.readyState === 'loading') {
 
 // Make functions available globally
 window.initMessenger = initMessenger;
+window.updateMessengerVisibility = updateMessengerVisibility;

@@ -43,12 +43,16 @@ service cloud.firestore {
       // Users can read their own document if authenticated
       allow read: if request.auth != null && request.auth.token.email == userId;
       
-      // Allow authenticated users to read other users' documents (for online users list in chat)
-      // This allows campaign managers to see other online users for messaging
+      // Allow authenticated users (including anonymous agents) to read other users' documents
+      // This allows campaign managers and agents to see other online users for messaging
       allow read: if request.auth != null;
       
       // Users can create/update their own document if authenticated
       allow write: if request.auth != null && request.auth.token.email == userId;
+      
+      // Allow list operations for queries and snapshot listeners
+      // This is needed for real-time listeners on user documents
+      allow list: if request.auth != null;
     }
     
     // Clients collection - admin can read/write all, clients can read/write their own

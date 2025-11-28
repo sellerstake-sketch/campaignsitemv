@@ -11,7 +11,7 @@
     background: var(--gradient-primary);
     color: white;
     border: none;
-    box-shadow: 0 4px 16px rgba(91, 33, 182, 0.4);
+    box-shadow: 0 4px 16px rgba(111, 193, 218, 0.4);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -22,7 +22,7 @@
 
 .messenger-toggle-btn:hover {
     transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(91, 33, 182, 0.5);
+    box-shadow: 0 6px 20px rgba(111, 193, 218, 0.5);
 }
 
 .messenger-toggle-btn.hidden {
@@ -124,7 +124,7 @@
 .messenger-search input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(91, 33, 182, 0.1);
+    box-shadow: 0 0 0 3px rgba(111, 193, 218, 0.1);
 }
 
 /* Messenger Users List */
@@ -507,7 +507,7 @@
 .chat-input-area input[type="text"]:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(91, 33, 182, 0.1);
+    box-shadow: 0 0 0 3px rgba(111, 193, 218, 0.1);
 }
 
 .chat-attach-btn {
@@ -631,7 +631,7 @@
 
 .chat-send-btn:hover {
     transform: scale(1.1);
-    box-shadow: 0 2px 8px rgba(91, 33, 182, 0.3);
+    box-shadow: 0 2px 8px rgba(111, 193, 218, 0.3);
 }
 
 .chat-send-btn:disabled {

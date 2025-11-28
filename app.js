@@ -603,7 +603,7 @@ function generateCampaignLogo(campaignName) {
 
     // Generate a color based on campaign name (consistent color for same name)
     const colors = [
-        ['#5b21b6', '#7c3aed'], // Purple gradient
+        ['#6fc1da', '#8dd4e8'], // Primary gradient
         ['#0891b2', '#06b6d4'], // Cyan gradient
         ['#059669', '#10b981'], // Green gradient
         ['#dc2626', '#ef4444'], // Red gradient
@@ -2006,6 +2006,14 @@ async function loadWorkspace(data) {
             }
         }, 100);
 
+        // Setup notification handlers when workspace is shown (elements should exist now)
+        setTimeout(() => {
+            if (typeof window.setupNotificationHandlers === 'function') {
+                window.setupNotificationHandlers();
+                console.log('[loadWorkspace] Notification handlers re-initialized');
+            }
+        }, 200);
+
         // Update sidebar IMMEDIATELY (progressive rendering)
         try {
             const campaignNameEl = document.getElementById('sidebar-campaign-name');
@@ -2326,26 +2334,101 @@ function initializeWorkspace() {
     // Make navigateToSection globally available
     window.navigateToSection = navigateToSection;
 
-    // Notification Toggle
-    const notificationBtn = document.getElementById('notification-btn');
-    if (notificationBtn) {
-        notificationBtn.addEventListener('click', () => {
-            const notificationCenter = document.getElementById('notification-center');
-            if (notificationCenter) {
-                notificationCenter.classList.toggle('show');
+    // Setup notification handlers (with duplicate prevention)
+    function setupNotificationHandlers() {
+        // Remove old listeners if they exist
+        if (window._notificationBtnHandler) {
+            const oldBtn = document.getElementById('notification-btn');
+            if (oldBtn) {
+                oldBtn.removeEventListener('click', window._notificationBtnHandler);
             }
-        });
+        }
+        if (window._notificationCloseHandler) {
+            const oldCloseBtn = document.getElementById('close-notifications');
+            if (oldCloseBtn) {
+                oldCloseBtn.removeEventListener('click', window._notificationCloseHandler);
+            }
+        }
+        if (window._notificationOutsideClickHandler) {
+            document.removeEventListener('click', window._notificationOutsideClickHandler);
+        }
+
+        // Notification Toggle Button
+        const notificationBtn = document.getElementById('notification-btn');
+        if (notificationBtn) {
+            window._notificationBtnHandler = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                console.log('[Notifications] Button clicked');
+                const notificationCenter = document.getElementById('notification-center');
+                if (notificationCenter) {
+                    const isShowing = notificationCenter.classList.contains('show');
+                    console.log('[Notifications] Current state:', isShowing);
+                    notificationCenter.classList.toggle('show');
+                    console.log('[Notifications] New state:', notificationCenter.classList.contains('show'));
+
+                    // Load notifications when opening the center
+                    if (!isShowing) {
+                        // Always reload notifications when opening to get latest
+                        if (typeof loadNotifications === 'function') {
+                            console.log('[Notifications] Loading notifications...');
+                            loadNotifications().catch(error => {
+                                console.error('[Notifications] Error loading notifications:', error);
+                            });
+                        } else {
+                            console.warn('[Notifications] loadNotifications function not found');
+                        }
+                    }
+                } else {
+                    console.error('[Notifications] Notification center element not found');
+                }
+            };
+            notificationBtn.addEventListener('click', window._notificationBtnHandler);
+            console.log('[Notifications] Notification button handler attached');
+        } else {
+            console.warn('[Notifications] Notification button not found in DOM');
+        }
+
+        // Close Button
+        const closeNotificationsBtn = document.getElementById('close-notifications');
+        if (closeNotificationsBtn) {
+            window._notificationCloseHandler = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const notificationCenter = document.getElementById('notification-center');
+                if (notificationCenter) {
+                    notificationCenter.classList.remove('show');
+                    console.log('[Notifications] Closed via close button');
+                }
+            };
+            closeNotificationsBtn.addEventListener('click', window._notificationCloseHandler);
+            console.log('[Notifications] Close button handler attached');
+        }
+
+        // Click Outside Handler
+        window._notificationOutsideClickHandler = (e) => {
+            const notificationCenter = document.getElementById('notification-center');
+            const notificationBtn = document.getElementById('notification-btn');
+
+            if (notificationCenter && notificationCenter.classList.contains('show')) {
+                // Check if click is outside both the notification center and the button
+                if (!notificationCenter.contains(e.target) &&
+                    notificationBtn &&
+                    !notificationBtn.contains(e.target)) {
+                    notificationCenter.classList.remove('show');
+                    console.log('[Notifications] Closed via outside click');
+                }
+            }
+        };
+        document.addEventListener('click', window._notificationOutsideClickHandler);
+        console.log('[Notifications] Outside click handler attached');
     }
 
-    const closeNotificationsBtn = document.getElementById('close-notifications');
-    if (closeNotificationsBtn) {
-        closeNotificationsBtn.addEventListener('click', () => {
-            const notificationCenter = document.getElementById('notification-center');
-            if (notificationCenter) {
-                notificationCenter.classList.remove('show');
-            }
-        });
-    }
+    // Setup notification handlers
+    setupNotificationHandlers();
+
+    // Make it globally available for re-initialization
+    window.setupNotificationHandlers = setupNotificationHandlers;
 
     // Clear all notifications button
     const clearAllBtn = document.getElementById('clear-all-notifications');
@@ -3070,7 +3153,7 @@ function updateProfileDisplay(userData) {
             hash = str.charCodeAt(i) + ((hash << 5) - hash);
         }
         const colors = [
-            ['rgba(91, 33, 182, 0.9)', 'rgba(124, 58, 237, 0.85)'],
+            ['rgba(111, 193, 218, 0.9)', 'rgba(141, 212, 232, 0.85)'],
             ['rgba(8, 145, 178, 0.9)', 'rgba(6, 182, 212, 0.85)'],
             ['rgba(5, 150, 105, 0.9)', 'rgba(16, 185, 129, 0.85)'],
             ['rgba(220, 38, 38, 0.9)', 'rgba(239, 68, 68, 0.85)'],

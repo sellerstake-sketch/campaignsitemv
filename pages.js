@@ -442,7 +442,7 @@ const pageTemplates = {
         <div class="zero-day-sections">
             <!-- Ballot Management Section -->
             <div class="section-card">
-                <div class="section-header">
+                <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2>Ballot Management</h2>
                     <button class="btn-primary btn-compact" id="add-ballot-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; display: inline-block;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -450,25 +450,60 @@ const pageTemplates = {
                     </button>
                 </div>
                 
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Ballot Number</th>
-                                <th>Location</th>
-                                <th>Expected Voters</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ballots-table-body">
-                            <tr>
-                                <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-light);">No ballots added yet</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- Ballot Tabs -->
+                <div class="ballot-tabs" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color);">
+                    <button class="ballot-tab-btn active" data-ballot-tab="list" onclick="switchBallotTab('list')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                        Ballot List
+                    </button>
+                    <button class="ballot-tab-btn" data-ballot-tab="statistics" onclick="switchBallotTab('statistics')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                        Statistics
+                    </button>
                 </div>
-                <div id="ballots-pagination" class="table-pagination" style="display: none;"></div>
+                
+                <!-- Ballot List Tab -->
+                <div id="ballot-list-tab" class="ballot-tab-content active">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Ballot Number</th>
+                                    <th>Location</th>
+                                    <th>Expected Voters</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ballots-table-body">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-light);">No ballots added yet</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="ballots-pagination" class="table-pagination" style="display: none;"></div>
+                </div>
+                
+                <!-- Statistics Tab -->
+                <div id="ballot-statistics-tab" class="ballot-tab-content" style="display: none;">
+                    <div id="ballot-statistics-content">
+                        <div style="text-align: center; padding: 40px; color: var(--text-light);">
+                            <p>Select a ballot to view statistics</p>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <!-- Transportation Requirements Section -->
@@ -5084,6 +5119,22 @@ window.generateReport = generateReport;
 
 // Populate settings page with campaign data
 function populateSettingsData() {
+    // Initialize messenger toggle state from localStorage
+    setTimeout(() => {
+        const messengerToggle = document.getElementById('messenger-enabled-toggle');
+        if (messengerToggle) {
+            const savedSetting = localStorage.getItem('messengerEnabled');
+            const isEnabled = savedSetting === 'true';
+            messengerToggle.checked = isEnabled;
+
+            // Update messenger visibility when settings page loads
+            if (typeof window.updateMessengerVisibility === 'function') {
+                window.updateMessengerVisibility();
+            } else if (typeof updateMessengerVisibility === 'function') {
+                updateMessengerVisibility();
+            }
+        }
+    }, 100);
     // Get campaign data from global window object (set by app.js)
     if (window.campaignData) {
         updateSettingsFields(window.campaignData);
@@ -5340,6 +5391,9 @@ function renderBallotsTable(ballots) {
             <td>
                 <div class="table-actions">
                     ${!ballot._isLocal ? `
+                    <button class="icon-btn" title="View Statistics" onclick="viewBallotStatistics('${ballot.id}', '${ballot.ballotNumber || ''}')" style="color: var(--primary-color);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    </button>
                     <button class="icon-btn" title="View Assigned Voters" onclick="viewBallotVoters('${ballot.id}', '${ballot.ballotNumber || ''}')" style="color: var(--info-color);">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </button>
@@ -6333,7 +6387,8 @@ window.viewBallotVoters = async (ballotId, ballotNumber) => {
                 permanentAddress: voterData.permanentAddress || voterData.address || 'N/A',
                 agentName: voterData.agentName || 'N/A',
                 voted: voterData.voted || false,
-                votedAt: voterData.votedAt || null
+                votedAt: voterData.votedAt || null,
+                pledge: voterData.pledge || null
             });
         });
 
@@ -6346,6 +6401,509 @@ window.viewBallotVoters = async (ballotId, ballotNumber) => {
         }
     }
 };
+
+// Switch ballot tab
+window.switchBallotTab = function(tab) {
+    // Update tab buttons
+    document.querySelectorAll('.ballot-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.ballotTab === tab) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Update tab content
+    const listTab = document.getElementById('ballot-list-tab');
+    const statsTab = document.getElementById('ballot-statistics-tab');
+
+    if (tab === 'list') {
+        if (listTab) listTab.classList.add('active');
+        if (statsTab) statsTab.classList.remove('active');
+    } else if (tab === 'statistics') {
+        if (listTab) listTab.classList.remove('active');
+        if (statsTab) statsTab.classList.add('active');
+        // Load statistics for all ballots
+        loadAllBallotsStatistics();
+    }
+};
+
+// View ballot statistics
+window.viewBallotStatistics = async function(ballotId, ballotNumber) {
+    if (!window.db || !window.userEmail) {
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Database not initialized. Please refresh the page.');
+        }
+        return;
+    }
+
+    try {
+        // Switch to statistics tab
+        switchBallotTab('statistics');
+
+        // Load statistics for this specific ballot
+        await loadBallotStatistics(ballotId, ballotNumber);
+    } catch (error) {
+        console.error('Error loading ballot statistics:', error);
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Failed to load ballot statistics. Please try again.', 'Error');
+        }
+    }
+};
+
+// Load statistics for a specific ballot
+async function loadBallotStatistics(ballotId, ballotNumber) {
+    if (!window.db || !window.userEmail) return;
+
+    const statsContent = document.getElementById('ballot-statistics-content');
+    if (!statsContent) return;
+
+    statsContent.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-light);"><p>Loading statistics...</p></div>';
+
+    try {
+        const {
+            doc,
+            getDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Get ballot data
+        const ballotRef = doc(window.db, 'ballots', ballotId);
+        const ballotSnap = await getDoc(ballotRef);
+
+        if (!ballotSnap.exists()) {
+            statsContent.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--danger-color);"><p>Ballot not found</p></div>';
+            return;
+        }
+
+        const ballotData = ballotSnap.data();
+        const ballotNum = ballotNumber || ballotData.ballotNumber || 'N/A';
+
+        // Calculate statistics using helper function
+        const stats = await calculateBallotStatistics(ballotId, ballotNum);
+
+        if (!stats) {
+            statsContent.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--danger-color);"><p>Error calculating statistics</p></div>';
+            return;
+        }
+
+        // Render statistics
+        renderBallotStatistics(ballotNum, ballotData.location || 'N/A', stats);
+    } catch (error) {
+        console.error('Error loading ballot statistics:', error);
+        statsContent.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--danger-color);"><p>Error loading statistics. Please try again.</p></div>';
+    }
+}
+
+// Load statistics for all ballots
+async function loadAllBallotsStatistics() {
+    const statsContent = document.getElementById('ballot-statistics-content');
+    if (!statsContent) return;
+
+    statsContent.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-light);"><p>Loading statistics...</p></div>';
+
+    if (!window.db || !window.userEmail) {
+        statsContent.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--danger-color);"><p>Database not initialized</p></div>';
+        return;
+    }
+
+    try {
+        const {
+            collection,
+            query,
+            where,
+            orderBy,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Get all ballots
+        const ballotsQuery = query(
+            collection(window.db, 'ballots'),
+            where('email', '==', window.userEmail),
+            orderBy('ballotNumber', 'asc')
+        );
+
+        const ballotsSnapshot = await getDocs(ballotsQuery);
+        const ballots = [];
+
+        ballotsSnapshot.docs.forEach(doc => {
+            ballots.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+
+        if (ballots.length === 0) {
+            statsContent.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: var(--text-light);">
+                    <p>No ballots found. Add ballots to view statistics.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Load statistics for each ballot
+        const allStats = [];
+        for (const ballot of ballots) {
+            const stats = await calculateBallotStatistics(ballot.id, ballot.ballotNumber || 'N/A');
+            if (stats) {
+                allStats.push({
+                    ballotId: ballot.id,
+                    ballotNumber: ballot.ballotNumber || 'N/A',
+                    location: ballot.location || 'N/A',
+                    ...stats
+                });
+            }
+        }
+
+        // Render all statistics
+        renderAllBallotsStatistics(allStats);
+    } catch (error) {
+        console.error('Error loading all ballots statistics:', error);
+        statsContent.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--danger-color);"><p>Error loading statistics. Please try again.</p></div>';
+    }
+}
+
+// Calculate statistics for a ballot (helper function)
+async function calculateBallotStatistics(ballotId, ballotNumber) {
+    if (!window.db || !window.userEmail) return null;
+
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Fetch voters assigned to this ballot
+        const votersQuery = query(
+            collection(window.db, 'voters'),
+            where('email', '==', window.userEmail),
+            where('ballot', '==', ballotNumber)
+        );
+
+        const votersSnapshot = await getDocs(votersQuery);
+        const voters = [];
+
+        votersSnapshot.docs.forEach(doc => {
+            const voterData = doc.data();
+            voters.push({
+                id: doc.id,
+                name: voterData.name || 'N/A',
+                idNumber: voterData.idNumber || voterData.voterId || 'N/A',
+                permanentAddress: voterData.permanentAddress || voterData.address || 'N/A',
+                agentName: voterData.agentName || 'N/A',
+                voted: voterData.voted || false,
+                votedAt: voterData.votedAt || null,
+                pledge: voterData.pledge || null
+            });
+        });
+
+        // Calculate statistics
+        const totalVoters = voters.length;
+        const votedVoters = voters.filter(v => v.voted === true).length;
+        const voterTurnout = totalVoters > 0 ? ((votedVoters / totalVoters) * 100).toFixed(1) : 0;
+
+        // Pledge voters statistics
+        const pledgeVoters = voters.filter(v => v.pledge === 'yes' || v.pledge === 'Yes');
+        const pledgeVotersCount = pledgeVoters.length;
+        const pledgeVotersVoted = pledgeVoters.filter(v => v.voted === true).length;
+        const pledgeTurnout = pledgeVotersCount > 0 ? ((pledgeVotersVoted / pledgeVotersCount) * 100).toFixed(1) : 0;
+
+        // Non-voted voters
+        const nonVotedVoters = voters.filter(v => !v.voted || v.voted === false);
+
+        return {
+            totalVoters,
+            votedVoters,
+            voterTurnout,
+            pledgeVotersCount,
+            pledgeVotersVoted,
+            pledgeTurnout,
+            nonVotedVoters
+        };
+    } catch (error) {
+        console.error('Error calculating ballot statistics:', error);
+        return null;
+    }
+}
+
+// Render statistics for all ballots
+function renderAllBallotsStatistics(allStats) {
+    const statsContent = document.getElementById('ballot-statistics-content');
+    if (!statsContent) return;
+
+    if (allStats.length === 0) {
+        statsContent.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: var(--text-light);">
+                <p>No statistics available</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Calculate overall totals
+    const overallTotal = allStats.reduce((sum, s) => sum + s.totalVoters, 0);
+    const overallVoted = allStats.reduce((sum, s) => sum + s.votedVoters, 0);
+    const overallTurnout = overallTotal > 0 ? ((overallVoted / overallTotal) * 100).toFixed(1) : 0;
+    const overallPledgeCount = allStats.reduce((sum, s) => sum + s.pledgeVotersCount, 0);
+    const overallPledgeVoted = allStats.reduce((sum, s) => sum + s.pledgeVotersVoted, 0);
+    const overallPledgeTurnout = overallPledgeCount > 0 ? ((overallPledgeVoted / overallPledgeCount) * 100).toFixed(1) : 0;
+
+    statsContent.innerHTML = `
+        <div style="margin-bottom: 24px;">
+            <h3 style="margin: 0 0 8px 0; color: var(--text-color); font-size: 20px; font-weight: 700;">Overall Statistics</h3>
+            <p style="color: var(--text-light); margin: 0; font-size: 14px;">Summary across all ballots</p>
+        </div>
+
+        <!-- Overall Statistics Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--primary-50); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p style="font-size: 12px; color: var(--text-light); font-weight: 500; margin: 0;">Total Voters</p>
+                        <h3 style="margin: 4px 0 0 0; font-size: 24px; font-weight: 700; color: var(--text-color);">${overallTotal}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(5, 150, 105, 0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <p style="font-size: 12px; color: var(--text-light); font-weight: 500; margin: 0;">Voted Voters</p>
+                        <h3 style="margin: 4px 0 0 0; font-size: 24px; font-weight: 700; color: var(--success-color);">${overallVoted}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(111, 193, 218, 0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <p style="font-size: 12px; color: var(--text-light); font-weight: 500; margin: 0;">Overall Turnout</p>
+                        <h3 style="margin: 4px 0 0 0; font-size: 24px; font-weight: 700; color: var(--primary-color);">${overallTurnout}%</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(245, 158, 11, 0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--warning-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <p style="font-size: 12px; color: var(--text-light); font-weight: 500; margin: 0;">Pledge Turnout</p>
+                        <h3 style="margin: 4px 0 0 0; font-size: 24px; font-weight: 700; color: var(--warning-color);">${overallPledgeTurnout}%</h3>
+                        <p style="font-size: 11px; color: var(--text-light); margin: 4px 0 0 0;">${overallPledgeVoted}/${overallPledgeCount} voted</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual Ballot Statistics -->
+        <div style="margin-bottom: 24px;">
+            <h3 style="margin: 0 0 16px 0; color: var(--text-color); font-size: 18px; font-weight: 600;">Ballot Statistics</h3>
+        </div>
+
+        <div style="display: grid; gap: 16px;">
+            ${allStats.map(stat => `
+                <div style="background: white; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); overflow: hidden;">
+                    <div style="padding: 20px; border-bottom: 1px solid var(--border-color); background: var(--light-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h4 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: var(--text-color);">Ballot ${stat.ballotNumber} - ${stat.location}</h4>
+                                <p style="margin: 0; font-size: 12px; color: var(--text-light);">${stat.totalVoters} total voters</p>
+                            </div>
+                            <button class="btn-primary btn-compact" onclick="viewBallotStatistics('${stat.ballotId}', '${stat.ballotNumber}')" style="font-size: 12px; padding: 8px 16px;">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
+                            <div>
+                                <p style="font-size: 11px; color: var(--text-light); margin: 0 0 4px 0;">Voter Turnout</p>
+                                <h4 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--primary-color);">${stat.voterTurnout}%</h4>
+                                <p style="font-size: 11px; color: var(--text-light); margin: 4px 0 0 0;">${stat.votedVoters}/${stat.totalVoters} voted</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 11px; color: var(--text-light); margin: 0 0 4px 0;">Pledge Turnout</p>
+                                <h4 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--warning-color);">${stat.pledgeTurnout}%</h4>
+                                <p style="font-size: 11px; color: var(--text-light); margin: 4px 0 0 0;">${stat.pledgeVotersVoted}/${stat.pledgeVotersCount} voted</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 11px; color: var(--text-light); margin: 0 0 4px 0;">Not Voted</p>
+                                <h4 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--danger-color);">${stat.nonVotedVoters.length}</h4>
+                                <p style="font-size: 11px; color: var(--text-light); margin: 4px 0 0 0;">Remaining voters</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// Render ballot statistics
+function renderBallotStatistics(ballotNumber, location, stats) {
+    const statsContent = document.getElementById('ballot-statistics-content');
+    if (!statsContent) return;
+
+    const {
+        totalVoters,
+        votedVoters,
+        voterTurnout,
+        pledgeVotersCount,
+        pledgeVotersVoted,
+        pledgeTurnout,
+        nonVotedVoters
+    } = stats;
+
+    statsContent.innerHTML = `
+        <div style="margin-bottom: 24px;">
+            <h3 style="margin: 0 0 8px 0; color: var(--text-color); font-size: 20px; font-weight: 700;">Ballot ${ballotNumber} - ${location}</h3>
+            <p style="color: var(--text-light); margin: 0; font-size: 14px;">Voter turnout and pledge statistics</p>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--primary-50); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p style="font-size: 12px; color: var(--text-light); font-weight: 500; margin: 0;">Total Voters</p>
+                        <h3 style="margin: 4px 0 0 0; font-size: 24px; font-weight: 700; color: var(--text-color);">${totalVoters}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(5, 150, 105, 0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <p style="font-size: 12px; color: var(--text-light); font-weight: 500; margin: 0;">Voted Voters</p>
+                        <h3 style="margin: 4px 0 0 0; font-size: 24px; font-weight: 700; color: var(--success-color);">${votedVoters}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(111, 193, 218, 0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <p style="font-size: 12px; color: var(--text-light); font-weight: 500; margin: 0;">Voter Turnout</p>
+                        <h3 style="margin: 4px 0 0 0; font-size: 24px; font-weight: 700; color: var(--primary-color);">${voterTurnout}%</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(245, 158, 11, 0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--warning-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <p style="font-size: 12px; color: var(--text-light); font-weight: 500; margin: 0;">Pledge Voters Turnout</p>
+                        <h3 style="margin: 4px 0 0 0; font-size: 24px; font-weight: 700; color: var(--warning-color);">${pledgeTurnout}%</h3>
+                        <p style="font-size: 11px; color: var(--text-light); margin: 4px 0 0 0;">${pledgeVotersVoted}/${pledgeVotersCount} voted</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Non-Voted Voters Table -->
+        <div style="background: white; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); overflow: hidden;">
+            <div style="padding: 20px; border-bottom: 1px solid var(--border-color);">
+                <h4 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-color); display: flex; align-items: center; gap: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    Non-Voted Voters (${nonVotedVoters.length})
+                </h4>
+            </div>
+            <div class="table-container" style="max-height: 500px; overflow-y: auto;">
+                ${nonVotedVoters.length === 0 ? 
+                    '<div style="text-align: center; padding: 40px; color: var(--text-light);"><p>All voters have voted!</p></div>' :
+                    `<table class="data-table" style="margin: 0;">
+                        <thead style="position: sticky; top: 0; background: white; z-index: 10;">
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>ID Number</th>
+                                <th>Address</th>
+                                <th>Agent</th>
+                                <th>Pledge</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${nonVotedVoters.map((voter, index) => `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td><strong>${voter.name}</strong></td>
+                                    <td>${voter.idNumber}</td>
+                                    <td>${voter.permanentAddress}</td>
+                                    <td>${voter.agentName}</td>
+                                    <td>
+                                        ${voter.pledge === 'yes' || voter.pledge === 'Yes' ? 
+                                            '<span class="status-badge status-active">Yes</span>' : 
+                                            voter.pledge === 'no' || voter.pledge === 'No' ? 
+                                            '<span class="status-badge" style="background: rgba(220, 38, 38, 0.1); color: var(--danger-color);">No</span>' : 
+                                            '<span class="status-badge" style="background: rgba(245, 158, 11, 0.1); color: var(--warning-color);">Undecided</span>'}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>`
+                }
+            </div>
+        </div>
+    `;
+}
 
 // Show modal with ballot voters list
 function showBallotVotersModal(ballotNumber, location, voters, ballotStatus) {
