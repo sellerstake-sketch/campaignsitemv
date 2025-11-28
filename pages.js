@@ -930,6 +930,18 @@ const pageTemplates = {
                             </label>
                         </div>
                     </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h3>Enable Bottom Navigation</h3>
+                            <p>Show bottom navigation dock on mobile devices for quick access to all sections</p>
+                        </div>
+                        <div class="setting-value">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="mobile-bottom-nav-toggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -5419,6 +5431,49 @@ function downloadTextFile(content, filename) {
 window.refreshAnalytics = refreshAnalytics;
 window.generateReport = generateReport;
 
+// Update mobile bottom navigation visibility based on settings
+function updateMobileBottomNavVisibility() {
+    const mobileBottomNav = document.getElementById('mobile-bottom-nav');
+    if (!mobileBottomNav) return;
+
+    const savedSetting = localStorage.getItem('mobileBottomNavEnabled');
+    const isEnabled = savedSetting === 'true'; // Default to disabled (only enabled if explicitly set to 'true')
+
+    // Check if we're on mobile
+    const isMobile = window.innerWidth <= 768;
+
+    if (isEnabled && isMobile) {
+        mobileBottomNav.classList.remove('hidden');
+        mobileBottomNav.style.display = 'flex';
+    } else {
+        mobileBottomNav.classList.add('hidden');
+        setTimeout(() => {
+            if (mobileBottomNav.classList.contains('hidden')) {
+                mobileBottomNav.style.display = 'none';
+            }
+        }, 300);
+    }
+
+    // Update Zero Day visibility in More menu
+    updateMobileMoreMenuZeroDay();
+}
+
+// Update Zero Day visibility in mobile more menu
+function updateMobileMoreMenuZeroDay() {
+    const zeroDayNavItem = document.getElementById('mobile-more-zero-day');
+    if (!zeroDayNavItem) return;
+
+    // Check if zero day is enabled
+    if (window.campaignData && window.campaignData.zeroDayEnabled) {
+        zeroDayNavItem.style.display = 'flex';
+    } else {
+        zeroDayNavItem.style.display = 'none';
+    }
+}
+
+// Make it globally available
+window.updateMobileBottomNavVisibility = updateMobileBottomNavVisibility;
+
 // Populate settings page with campaign data
 function populateSettingsData() {
     // Initialize messenger toggle state from localStorage
@@ -5435,6 +5490,33 @@ function populateSettingsData() {
             } else if (typeof updateMessengerVisibility === 'function') {
                 updateMessengerVisibility();
             }
+
+            // Add event listener for messenger toggle
+            messengerToggle.addEventListener('change', (e) => {
+                const enabled = e.target.checked;
+                localStorage.setItem('messengerEnabled', enabled.toString());
+                if (typeof window.updateMessengerVisibility === 'function') {
+                    window.updateMessengerVisibility();
+                }
+            });
+        }
+
+        // Initialize mobile bottom nav toggle state from localStorage
+        const mobileNavToggle = document.getElementById('mobile-bottom-nav-toggle');
+        if (mobileNavToggle) {
+            const savedSetting = localStorage.getItem('mobileBottomNavEnabled');
+            const isEnabled = savedSetting === 'true'; // Default to disabled (only enabled if explicitly set to 'true')
+            mobileNavToggle.checked = isEnabled;
+
+            // Update mobile bottom nav visibility when settings page loads
+            updateMobileBottomNavVisibility();
+
+            // Add event listener for mobile bottom nav toggle
+            mobileNavToggle.addEventListener('change', (e) => {
+                const enabled = e.target.checked;
+                localStorage.setItem('mobileBottomNavEnabled', enabled.toString());
+                updateMobileBottomNavVisibility();
+            });
         }
     }, 100);
     // Get campaign data from global window object (set by app.js)
@@ -5519,6 +5601,9 @@ async function saveZeroDayToggle(enabled) {
                 zeroDayEnabled: enabled
             };
         }
+
+        // Update mobile more menu
+        updateMobileMoreMenuZeroDay();
 
         console.log('[saveZeroDayToggle] Zero Day toggle saved:', enabled);
     } catch (error) {
@@ -11487,7 +11572,10 @@ async function showAgentSelectionForVoterAssignment() {
                 island: voterData.island || 'Unknown',
                 atoll: voterData.atoll || 'Unknown',
                 constituency: voterData.constituency || 'Unknown',
-                permanentAddress: voterData.permanentAddress || 'Unknown',
+                permanentAddress: voterData.permanentAddress || voterData.address || 'Unknown',
+                ballotBox: voterData.ballotBox || voterData.ballotNumber || 'Unknown',
+                gender: voterData.gender || 'Unknown',
+                age: voterData.age || null,
                 image: voterData.image || voterData.photo || voterData.photoUrl || null,
                 currentAgent: voterData.assignedAgentId || null
             });
@@ -11533,14 +11621,8 @@ async function showAgentSelectionForVoterAssignment() {
                     </div>
                     <div style="padding: 12px; border-bottom: 2px solid var(--border-color); display: flex; flex-direction: column; gap: 10px;">
                         <div style="display: flex; gap: 8px;">
-                            <input type="text" id="voter-search-assign" placeholder="Search voters..." 
+                            <input type="text" id="voter-search-assign" placeholder="Search voters by name, ID, island, address..." 
                                    style="flex: 1; padding: 10px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 14px;">
-                            <select id="voter-sort-option" style="padding: 10px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 13px; background: white; cursor: pointer; min-width: 140px;">
-                                <option value="name">Sort by Name</option>
-                                <option value="island">Sort by Island</option>
-                                <option value="atoll">Sort by Atoll</option>
-                                <option value="idNumber">Sort by ID</option>
-                            </select>
                         </div>
                         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                             <button id="filter-toggle-btn" class="btn-secondary btn-compact" onclick="toggleVoterFilters()" style="font-size: 12px; padding: 8px 12px;">
@@ -11566,9 +11648,35 @@ async function showAgentSelectionForVoterAssignment() {
                                     </select>
                                 </div>
                                 <div style="position: relative;">
+                                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase;">Filter by Atoll</label>
+                                    <select id="filter-atoll" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 12px; background: white; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+                                        <option value="">All Atolls</option>
+                                    </select>
+                                </div>
+                                <div style="position: relative;">
+                                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase;">Filter by Constituency</label>
+                                    <select id="filter-constituency" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 12px; background: white; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+                                        <option value="">All Constituencies</option>
+                                    </select>
+                                </div>
+                                <div style="position: relative;">
                                     <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase;">Filter by Address</label>
                                     <select id="filter-address" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 12px; background: white; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none; position: relative; z-index: 1;">
                                         <option value="">All Addresses</option>
+                                    </select>
+                                </div>
+                                <div style="position: relative;">
+                                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase;">Filter by Ballot Box</label>
+                                    <select id="filter-ballot" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 12px; background: white; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+                                        <option value="">All Ballot Boxes</option>
+                                    </select>
+                                </div>
+                                <div style="position: relative;">
+                                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase;">Filter by Gender</label>
+                                    <select id="filter-gender" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 12px; background: white; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+                                        <option value="">All Genders</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
                                     </select>
                                 </div>
                                 <div style="position: relative;">
@@ -11632,51 +11740,44 @@ async function showAgentSelectionForVoterAssignment() {
             });
         }
 
-        // Add sort functionality
-        const sortSelect = document.getElementById('voter-sort-option');
-        if (sortSelect) {
-            sortSelect.addEventListener('change', () => {
-                if (window.assignmentData && window.assignmentData.selectedAgentId) {
-                    window.assignmentData.currentPage = 1; // Reset to first page
-                    window.assignmentData.cachedResults = null; // Clear cache
-                    renderVotersForAssignment(window.assignmentData.selectedAgentId);
-                }
-            });
-        }
-
-        // Add filter functionality
+        // Add filter functionality - all filter dropdowns
         const filterIsland = document.getElementById('filter-island');
+        const filterAtoll = document.getElementById('filter-atoll');
+        const filterConstituency = document.getElementById('filter-constituency');
         const filterAddress = document.getElementById('filter-address');
+        const filterBallot = document.getElementById('filter-ballot');
+        const filterGender = document.getElementById('filter-gender');
         const filterStatus = document.getElementById('filter-status');
 
+        // Helper function to handle filter changes
+        const handleFilterChange = () => {
+            if (window.assignmentData && window.assignmentData.selectedAgentId) {
+                window.assignmentData.currentPage = 1; // Reset to first page
+                window.assignmentData.cachedResults = null; // Clear cache
+                renderVotersForAssignment(window.assignmentData.selectedAgentId);
+            }
+        };
+
         if (filterIsland) {
-            filterIsland.addEventListener('change', () => {
-                if (window.assignmentData && window.assignmentData.selectedAgentId) {
-                    window.assignmentData.currentPage = 1; // Reset to first page
-                    window.assignmentData.cachedResults = null; // Clear cache
-                    renderVotersForAssignment(window.assignmentData.selectedAgentId);
-                }
-            });
+            filterIsland.addEventListener('change', handleFilterChange);
         }
-
+        if (filterAtoll) {
+            filterAtoll.addEventListener('change', handleFilterChange);
+        }
+        if (filterConstituency) {
+            filterConstituency.addEventListener('change', handleFilterChange);
+        }
         if (filterAddress) {
-            filterAddress.addEventListener('change', () => {
-                if (window.assignmentData && window.assignmentData.selectedAgentId) {
-                    window.assignmentData.currentPage = 1; // Reset to first page
-                    window.assignmentData.cachedResults = null; // Clear cache
-                    renderVotersForAssignment(window.assignmentData.selectedAgentId);
-                }
-            });
+            filterAddress.addEventListener('change', handleFilterChange);
         }
-
+        if (filterBallot) {
+            filterBallot.addEventListener('change', handleFilterChange);
+        }
+        if (filterGender) {
+            filterGender.addEventListener('change', handleFilterChange);
+        }
         if (filterStatus) {
-            filterStatus.addEventListener('change', () => {
-                if (window.assignmentData && window.assignmentData.selectedAgentId) {
-                    window.assignmentData.currentPage = 1; // Reset to first page
-                    window.assignmentData.cachedResults = null; // Clear cache
-                    renderVotersForAssignment(window.assignmentData.selectedAgentId);
-                }
-            });
+            filterStatus.addEventListener('change', handleFilterChange);
         }
 
     } catch (error) {
@@ -11733,22 +11834,25 @@ function renderVotersForAssignment(agentId) {
     const votersContainer = document.getElementById('voters-list-container');
     if (!votersContainer) return;
 
-    // Get current filter and sort settings
-    const sortOption = document.getElementById('voter-sort-option').value || 'name';
+    // Get current filter settings
     const filterIsland = document.getElementById('filter-island').value || '';
+    const filterAtoll = document.getElementById('filter-atoll').value || '';
+    const filterConstituency = document.getElementById('filter-constituency').value || '';
     const filterAddress = document.getElementById('filter-address').value || '';
+    const filterBallot = document.getElementById('filter-ballot').value || '';
+    const filterGender = document.getElementById('filter-gender').value || '';
     const filterStatus = document.getElementById('filter-status').value || '';
     const searchTerm = (document.getElementById('voter-search-assign').value || '').toLowerCase();
     const treeViewEnabled = window.assignmentData.treeViewEnabled || false;
 
-    // Check cache first (if filters haven't changed)
-    const cacheKey = `${filterIsland}-${filterAddress}-${filterStatus}-${sortOption}-${searchTerm}`;
+    // Check cache first (if filters haven't changed)x`
+    const cacheKey = `${filterIsland}-${filterAtoll}-${filterConstituency}-${filterAddress}-${filterBallot}-${filterGender}-${filterStatus}-${searchTerm}`;
     let filteredVoters;
 
     if (window.assignmentData.cachedResults && window.assignmentData.cachedResults.key === cacheKey) {
         filteredVoters = window.assignmentData.cachedResults.data;
     } else {
-        // Filter and sort voters
+        // Filter voters
         filteredVoters = [...window.assignmentData.voters];
 
         // Apply search filter first (most selective)
@@ -11758,8 +11862,13 @@ function renderVotersForAssignment(agentId) {
                 const id = (v.idNumber || '').toLowerCase();
                 const island = (v.island || '').toLowerCase();
                 const address = (v.permanentAddress || '').toLowerCase();
+                const atoll = (v.atoll || '').toLowerCase();
+                const constituency = (v.constituency || '').toLowerCase();
+                const ballot = (v.ballotBox || '').toLowerCase();
                 return name.includes(searchTerm) || id.includes(searchTerm) ||
-                    island.includes(searchTerm) || address.includes(searchTerm);
+                    island.includes(searchTerm) || address.includes(searchTerm) ||
+                    atoll.includes(searchTerm) || constituency.includes(searchTerm) ||
+                    ballot.includes(searchTerm);
             });
         }
 
@@ -11767,8 +11876,20 @@ function renderVotersForAssignment(agentId) {
         if (filterIsland) {
             filteredVoters = filteredVoters.filter(v => v.island === filterIsland);
         }
+        if (filterAtoll) {
+            filteredVoters = filteredVoters.filter(v => v.atoll === filterAtoll);
+        }
+        if (filterConstituency) {
+            filteredVoters = filteredVoters.filter(v => v.constituency === filterConstituency);
+        }
         if (filterAddress) {
             filteredVoters = filteredVoters.filter(v => v.permanentAddress === filterAddress);
+        }
+        if (filterBallot) {
+            filteredVoters = filteredVoters.filter(v => v.ballotBox === filterBallot);
+        }
+        if (filterGender) {
+            filteredVoters = filteredVoters.filter(v => v.gender === filterGender);
         }
         if (filterStatus) {
             if (filterStatus === 'unassigned') {
@@ -11780,20 +11901,9 @@ function renderVotersForAssignment(agentId) {
             }
         }
 
-        // Sort voters
+        // Sort by name by default (no sort dropdown needed)
         filteredVoters.sort((a, b) => {
-            switch (sortOption) {
-                case 'name':
-                    return (a.name || '').localeCompare(b.name || '');
-                case 'island':
-                    return (a.island || '').localeCompare(b.island || '');
-                case 'atoll':
-                    return (a.atoll || '').localeCompare(b.atoll || '');
-                case 'idNumber':
-                    return (a.idNumber || '').localeCompare(b.idNumber || '');
-                default:
-                    return 0;
-            }
+            return (a.name || '').localeCompare(b.name || '');
         });
 
         // Cache results
@@ -11808,7 +11918,7 @@ function renderVotersForAssignment(agentId) {
 
     // Update filter dropdowns with available options (only if not cached)
     if (!window.assignmentData.cachedResults || window.assignmentData.cachedResults.key !== cacheKey) {
-        updateFilterDropdowns(filteredVoters, filterIsland);
+        updateFilterDropdowns(filteredVoters, filterIsland, filterAtoll);
     }
 
     // Render based on tree view or list view
@@ -12114,14 +12224,24 @@ function renderTreeView(voters, agentId, container) {
 }
 
 // Update filter dropdowns with available options
-function updateFilterDropdowns(voters, selectedIsland) {
-    // Get unique islands and addresses from all voters (not just filtered)
+function updateFilterDropdowns(voters, selectedIsland, selectedAtoll) {
+    // Get unique values from all voters (not just filtered)
     const allVoters = window.assignmentData ? window.assignmentData.voters : voters;
-    const islands = [...new Set(allVoters.map(v => v.island).filter(Boolean))].sort();
+    const islands = [...new Set(allVoters.map(v => v.island).filter(v => v && v !== 'Unknown'))].sort();
+    const atolls = [...new Set(allVoters.map(v => v.atoll).filter(v => v && v !== 'Unknown'))].sort();
+    const constituencies = [...new Set(allVoters.map(v => v.constituency).filter(v => v && v !== 'Unknown'))].sort();
+    const ballotBoxes = [...new Set(allVoters.map(v => v.ballotBox).filter(v => v && v !== 'Unknown'))].sort();
 
     // Get permanent addresses - if island filter is selected, only show addresses from that island
     // Otherwise show all addresses from filtered voters
-    const addresses = selectedIsland ? [...new Set(allVoters.filter(v => v.island === selectedIsland).map(v => v.permanentAddress).filter(v => v && v !== 'Unknown'))].sort() : [...new Set(voters.map(v => v.permanentAddress).filter(v => v && v !== 'Unknown'))].sort();
+    let addresses;
+    if (selectedIsland) {
+        addresses = [...new Set(allVoters.filter(v => v.island === selectedIsland).map(v => v.permanentAddress).filter(v => v && v !== 'Unknown'))].sort();
+    } else if (selectedAtoll) {
+        addresses = [...new Set(allVoters.filter(v => v.atoll === selectedAtoll).map(v => v.permanentAddress).filter(v => v && v !== 'Unknown'))].sort();
+    } else {
+        addresses = [...new Set(allVoters.map(v => v.permanentAddress).filter(v => v && v !== 'Unknown'))].sort();
+    }
 
     // Update island dropdown
     const islandSelect = document.getElementById('filter-island');
@@ -12137,6 +12257,34 @@ function updateFilterDropdowns(voters, selectedIsland) {
         });
     }
 
+    // Update atoll dropdown
+    const atollSelect = document.getElementById('filter-atoll');
+    if (atollSelect) {
+        const currentValue = atollSelect.value;
+        atollSelect.innerHTML = '<option value="">All Atolls</option>';
+        atolls.forEach(atoll => {
+            const option = document.createElement('option');
+            option.value = atoll;
+            option.textContent = atoll;
+            if (atoll === currentValue) option.selected = true;
+            atollSelect.appendChild(option);
+        });
+    }
+
+    // Update constituency dropdown
+    const constituencySelect = document.getElementById('filter-constituency');
+    if (constituencySelect) {
+        const currentValue = constituencySelect.value;
+        constituencySelect.innerHTML = '<option value="">All Constituencies</option>';
+        constituencies.forEach(constituency => {
+            const option = document.createElement('option');
+            option.value = constituency;
+            option.textContent = constituency;
+            if (constituency === currentValue) option.selected = true;
+            constituencySelect.appendChild(option);
+        });
+    }
+
     // Update permanent address dropdown
     const addressSelect = document.getElementById('filter-address');
     if (addressSelect) {
@@ -12149,6 +12297,20 @@ function updateFilterDropdowns(voters, selectedIsland) {
             option.title = address; // Full address on hover
             if (address === currentValue) option.selected = true;
             addressSelect.appendChild(option);
+        });
+    }
+
+    // Update ballot box dropdown
+    const ballotSelect = document.getElementById('filter-ballot');
+    if (ballotSelect) {
+        const currentValue = ballotSelect.value;
+        ballotSelect.innerHTML = '<option value="">All Ballot Boxes</option>';
+        ballotBoxes.forEach(ballot => {
+            const option = document.createElement('option');
+            option.value = ballot;
+            option.textContent = ballot;
+            if (ballot === currentValue) option.selected = true;
+            ballotSelect.appendChild(option);
         });
     }
 }

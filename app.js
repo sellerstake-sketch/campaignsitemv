@@ -1612,10 +1612,16 @@ function initializeEventListeners() {
                     await signOut(auth);
                     showError('client-login-error', 'Onboarding incomplete. Please use the initial setup login.', true);
                     showLoading(false);
-                    // Switch to onboarding login screen
+                    // Switch to setup tab
                     setTimeout(() => {
-                        showScreen('onboarding-login-screen');
-                        document.getElementById('onboarding-email').value = email;
+                        const setupTab = document.getElementById('tab-setup');
+                        if (setupTab) {
+                            setupTab.click();
+                            const onboardingEmail = document.getElementById('onboarding-email');
+                            if (onboardingEmail) {
+                                onboardingEmail.value = email;
+                            }
+                        }
                     }, 2000);
                     return;
                 } else if (!userDoc.data().serialNumber || !userDoc.data().campaignSet) {
@@ -1643,30 +1649,115 @@ function initializeEventListeners() {
         });
     }
 
-    // Switch to onboarding login link
+    // Login Tab Switching
+    const loginTabs = document.querySelectorAll('.login-tab');
+    loginTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetTab = tab.dataset.tab;
+
+            // Remove active class from all tabs and contents
+            loginTabs.forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.login-tab-content').forEach(c => c.classList.remove('active'));
+
+            // Add active class to clicked tab and corresponding content
+            tab.classList.add('active');
+            const targetContent = document.getElementById(`tab-content-${targetTab}`);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+        });
+    });
+
+    // Switch to onboarding login link (now switches tab)
     const switchToOnboarding = document.getElementById('switch-to-onboarding');
     if (switchToOnboarding) {
         switchToOnboarding.addEventListener('click', (e) => {
             e.preventDefault();
-            showScreen('onboarding-login-screen');
+            const setupTab = document.getElementById('tab-setup');
+            if (setupTab) {
+                setupTab.click();
+            }
             // Pre-fill email if available
             const email = document.getElementById('client-login-email').value;
-            if (email) {
+            if (email && document.getElementById('onboarding-email')) {
                 document.getElementById('onboarding-email').value = email;
             }
         });
     }
 
-    // Switch to regular client login link
+    // Switch to regular client login link (now switches tab)
     const switchToClientLogin = document.getElementById('switch-to-client-login');
     if (switchToClientLogin) {
         switchToClientLogin.addEventListener('click', (e) => {
             e.preventDefault();
-            showScreen('client-login-screen');
+            const clientTab = document.getElementById('tab-client');
+            if (clientTab) {
+                clientTab.click();
+            }
             // Pre-fill email if available
             const email = document.getElementById('onboarding-email').value;
-            if (email) {
+            if (email && document.getElementById('client-login-email')) {
                 document.getElementById('client-login-email').value = email;
+            }
+        });
+    }
+
+    // Admin Login Form Handler (unified login screen)
+    const adminLoginFormUnified = document.getElementById('admin-login-form-unified');
+    if (adminLoginFormUnified) {
+        adminLoginFormUnified.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('admin-email-unified').value.trim();
+            const password = document.getElementById('admin-password-unified').value;
+            const errorEl = document.getElementById('admin-login-error-unified');
+
+            // Clear previous errors
+            if (errorEl) {
+                errorEl.textContent = '';
+                errorEl.classList.remove('show');
+            }
+
+            // Validate
+            if (!email || !email.includes('@')) {
+                if (errorEl) {
+                    errorEl.textContent = 'Please enter a valid email address.';
+                    errorEl.classList.add('show');
+                }
+                return;
+            }
+
+            if (email !== 'rixaski@gmail.com') {
+                if (errorEl) {
+                    errorEl.textContent = 'Unauthorized. Only admin can access this panel.';
+                    errorEl.classList.add('show');
+                }
+                return;
+            }
+
+            if (!password) {
+                if (errorEl) {
+                    errorEl.textContent = 'Please enter your password.';
+                    errorEl.classList.add('show');
+                }
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const {
+                    signInWithEmailAndPassword
+                } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+                await signInWithEmailAndPassword(auth, email, password);
+                // Redirect to admin panel
+                window.location.href = 'admin.html';
+            } catch (error) {
+                console.error('Admin login error:', error);
+                showLoading(false);
+                if (errorEl) {
+                    errorEl.textContent = error.message || 'Login failed. Please check your credentials.';
+                    errorEl.classList.add('show');
+                }
             }
         });
     }
@@ -2266,23 +2357,45 @@ function initializeWorkspace() {
     // Initialize Mobile Bottom Navigation
     const mobileBottomNav = document.getElementById('mobile-bottom-nav');
     if (mobileBottomNav) {
+        // Update visibility based on settings
+        if (typeof window.updateMobileBottomNavVisibility === 'function') {
+            window.updateMobileBottomNavVisibility();
+        }
+
+        // Listen for window resize to update visibility
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (typeof window.updateMobileBottomNavVisibility === 'function') {
+                    window.updateMobileBottomNavVisibility();
+                }
+            }, 250);
+        });
+
+        // Handle navigation item clicks
         mobileBottomNav.addEventListener('click', (e) => {
             const mobileNavItem = e.target.closest('.mobile-nav-item');
             if (!mobileNavItem) return;
 
+            // Skip if it's the More button
+            if (mobileNavItem.classList.contains('mobile-nav-more')) {
+                return;
+            }
+
             e.preventDefault();
+
+            const section = mobileNavItem.dataset.section;
+            if (!section) return;
 
             // Update active nav (both sidebar and mobile)
             document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(nav => nav.classList.remove('active'));
             mobileNavItem.classList.add('active');
 
             // Also update corresponding sidebar nav item
-            const section = mobileNavItem.dataset.section;
-            if (section) {
-                const sidebarNavItem = document.querySelector(`.nav-item[data-section="${section}"]`);
-                if (sidebarNavItem) {
-                    sidebarNavItem.classList.add('active');
-                }
+            const sidebarNavItem = document.querySelector(`.nav-item[data-section="${section}"]`);
+            if (sidebarNavItem) {
+                sidebarNavItem.classList.add('active');
             }
 
             // Update breadcrumb
@@ -2300,7 +2413,85 @@ function initializeWorkspace() {
             if (sidebar && sidebar.classList.contains('open')) {
                 sidebar.classList.remove('open');
             }
+
+            // Close More menu if open
+            const moreMenu = document.getElementById('mobile-more-menu');
+            if (moreMenu && moreMenu.classList.contains('show')) {
+                moreMenu.classList.remove('show');
+            }
         });
+
+        // Handle More menu button
+        const moreBtn = document.getElementById('mobile-nav-more-btn');
+        const moreMenu = document.getElementById('mobile-more-menu');
+        const moreMenuClose = document.getElementById('mobile-more-menu-close');
+        const moreMenuBackdrop = document.getElementById('mobile-more-menu-backdrop');
+
+        if (moreBtn && moreMenu) {
+            moreBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                moreMenu.classList.add('show');
+            });
+        }
+
+        if (moreMenuClose) {
+            moreMenuClose.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                moreMenu.classList.remove('show');
+            });
+        }
+
+        if (moreMenuBackdrop) {
+            moreMenuBackdrop.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                moreMenu.classList.remove('show');
+            });
+        }
+
+        // Handle More menu item clicks
+        if (moreMenu) {
+            moreMenu.addEventListener('click', (e) => {
+                const menuItem = e.target.closest('.mobile-more-menu-item');
+                if (!menuItem) return;
+
+                e.preventDefault();
+                e.stopPropagation();
+
+                const section = menuItem.dataset.section;
+                if (!section) return;
+
+                // Close menu
+                moreMenu.classList.remove('show');
+
+                // Update active nav
+                document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(nav => nav.classList.remove('active'));
+
+                // Update sidebar nav
+                const sidebarNavItem = document.querySelector(`.nav-item[data-section="${section}"]`);
+                if (sidebarNavItem) {
+                    sidebarNavItem.classList.add('active');
+                }
+
+                // Update breadcrumb
+                if (typeof updateBreadcrumb === 'function') {
+                    updateBreadcrumb(section);
+                }
+
+                // Load page content
+                if (typeof loadPageContent === 'function') {
+                    loadPageContent(section);
+                }
+
+                // Close sidebar if open on mobile
+                const sidebar = document.querySelector('.sidebar');
+                if (sidebar && sidebar.classList.contains('open')) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        }
     } else {
         // Fallback: direct attachment (for backwards compatibility)
         const navItems = document.querySelectorAll('.nav-item');
@@ -2457,6 +2648,11 @@ function initializeWorkspace() {
 
     // Profile Dropdown - Initialize using the dedicated function
     initializeProfileDropdown();
+
+    // Initialize mobile bottom nav visibility
+    if (typeof window.updateMobileBottomNavVisibility === 'function') {
+        window.updateMobileBottomNavVisibility();
+    }
 }
 
 // Logout

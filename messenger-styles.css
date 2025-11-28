@@ -3,10 +3,10 @@
 /* Messenger Toggle Button */
 .messenger-toggle-btn {
     position: fixed;
-    bottom: 10px;
-    right: 10px;
-    width: 56px;
-    height: 56px;
+    bottom: 85px;
+    right: 16px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     background: var(--gradient-primary);
     color: white;
@@ -16,8 +16,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9998;
+    z-index: 1001;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ensure chat icon is above bottom dock on mobile */
+@media (max-width: 768px) {
+    .messenger-toggle-btn {
+        bottom: 200px;
+        z-index: 1001;
+    }
 }
 
 .messenger-toggle-btn:hover {
@@ -655,7 +663,7 @@
         max-width: 400px;
         height: 60vh;
         max-height: 500px;
-        bottom: 80px;
+        bottom: 130px;
         right: 10px;
         left: auto;
         border-radius: 16px;
@@ -667,7 +675,11 @@
     }
 
     .messenger-toggle-btn {
-        bottom: 10px;
+        bottom: 130px;
+        right: 20px;
+        width: 48px;
+        height: 48px;
+        bottom: 120px;
         right: 10px;
     }
 

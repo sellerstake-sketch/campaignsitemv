@@ -82,20 +82,75 @@
 </head>
 
 <body class="loading-auth">
-    <!-- Onboarding Login Screen (First-time setup with temporary password) -->
-    <div id="onboarding-login-screen" class="screen">
+    <!-- Unified Login Screen with Tabs -->
+    <div id="client-login-screen" class="screen">
+        <div class="login-screen-bg">
+            <!-- Animated Background Elements -->
+            <div class="login-bg-text" id="login-bg-text-1">CAMPAIGN PRO</div>
+            <div class="login-bg-text" id="login-bg-text-2">CAMPAIGN PRO</div>
+            <div class="login-bg-text" id="login-bg-text-3">CAMPAIGN PRO</div>
+            <div class="login-orb login-orb-1"></div>
+            <div class="login-orb login-orb-2"></div>
+            <div class="login-orb login-orb-3"></div>
+        </div>
         <div class="auth-container">
-            <div class="auth-card">
+            <div class="auth-card login-card-modern">
                 <div class="logo-header">
-                    <h1>Election Campaign System</h1>
+                    <h1 style="background: linear-gradient(135deg, #6fc1da 0%, #8dd4e8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px;">Campaign Pro</h1>
                     <p class="subtitle">Maldives Political Campaign Management</p>
-                    <p style="font-size: 14px; color: var(--primary-color); margin-top: 12px; font-weight: 600;">
-                        Initial Account Setup
-                    </p>
-                    <p style="font-size: 12px; color: var(--text-light); margin-top: 8px;">
-                        <a href="admin.html" style="color: var(--primary-color); text-decoration: none;">Admin Login</a>
-                    </p>
                 </div>
+
+                <!-- Login Tabs -->
+                <div class="login-tabs">
+                    <button class="login-tab active" data-tab="client" id="tab-client">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        Client Login
+                    </button>
+                    <button class="login-tab" data-tab="setup" id="tab-setup">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        Initial Setup
+                    </button>
+                    <button class="login-tab" data-tab="admin" id="tab-admin">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        Admin Login
+                    </button>
+                </div>
+
+                <!-- Client Login Tab Content -->
+                <div class="login-tab-content active" id="tab-content-client">
+                    <form id="client-login-form" class="auth-form">
+                        <div class="form-group">
+                            <label for="client-login-email">Email Address</label>
+                            <input type="email" id="client-login-email" placeholder="Enter your email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="client-login-password">Password</label>
+                            <input type="password" id="client-login-password" placeholder="Enter your password" required>
+                        </div>
+                        <div id="client-login-error" class="error-message"></div>
+                        <button type="submit" class="btn-primary">Login</button>
+                        <p style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-light);">
+                            First time? <a href="#" id="switch-to-onboarding" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">Start initial setup</a>
+                        </p>
+                    </form>
+                </div>
+
+                <!-- Initial Setup Tab Content -->
+                <div class="login-tab-content" id="tab-content-setup">
                 <form id="onboarding-login-form" class="auth-form">
                     <div class="form-group">
                         <label for="onboarding-email">Email Address</label>
@@ -108,39 +163,29 @@
                     <div id="onboarding-login-error" class="error-message"></div>
                     <button type="submit" class="btn-primary">Start Setup</button>
                     <p style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-light);">
-                        Already completed setup? <a href="#" id="switch-to-client-login" style="color: var(--primary-color); text-decoration: none;">Login to your account</a>
+                            Already completed setup? <a href="#" id="switch-to-client-login" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">Login to your account</a>
                     </p>
                 </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Regular Client Login Screen (For returning clients) -->
-    <div id="client-login-screen" class="screen">
-        <div class="auth-container">
-            <div class="auth-card">
-                <div class="logo-header">
-                    <h1>Election Campaign System</h1>
-                    <p class="subtitle">Maldives Political Campaign Management</p>
-                    <p style="font-size: 12px; color: var(--text-light); margin-top: 8px;">
-                        <a href="admin.html" style="color: var(--primary-color); text-decoration: none;">Admin Login</a>
-                    </p>
                 </div>
-                <form id="client-login-form" class="auth-form">
+
+                <!-- Admin Login Tab Content -->
+                <div class="login-tab-content" id="tab-content-admin">
+                    <form id="admin-login-form-unified" class="auth-form">
                     <div class="form-group">
-                        <label for="client-login-email">Email Address</label>
-                        <input type="email" id="client-login-email" placeholder="Enter your email" required>
+                            <label for="admin-email-unified">Admin Email</label>
+                            <input type="email" id="admin-email-unified" placeholder="Enter admin email" required>
                     </div>
                     <div class="form-group">
-                        <label for="client-login-password">Password</label>
-                        <input type="password" id="client-login-password" placeholder="Enter your password" required>
+                            <label for="admin-password-unified">Password</label>
+                            <input type="password" id="admin-password-unified" placeholder="Enter password" required>
                     </div>
-                    <div id="client-login-error" class="error-message"></div>
-                    <button type="submit" class="btn-primary">Login</button>
+                        <div id="admin-login-error-unified" class="error-message"></div>
+                        <button type="submit" class="btn-primary">Login to Admin Panel</button>
                     <p style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-light);">
-                        First time? <a href="#" id="switch-to-onboarding" style="color: var(--primary-color); text-decoration: none;">Start initial setup</a>
+                            <a href="admin.html" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">Open Admin Panel Directly</a>
                     </p>
                 </form>
+                </div>
             </div>
         </div>
     </div>
@@ -389,43 +434,82 @@
 
             <!-- Mobile Bottom Navigation Dock -->
             <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
-                <a href="#" class="mobile-nav-item active" data-section="dashboard">
+                <!-- Left Side -->
+                <a href="#" class="mobile-nav-item" data-section="voters" title="Database">
+                    <span class="mobile-nav-icon" data-icon="voters"></span>
+                    <span class="mobile-nav-label">Database</span>
+                </a>
+                <a href="#" class="mobile-nav-item" data-section="pledges" title="Pledge Tracker">
+                    <span class="mobile-nav-icon" data-icon="pledges"></span>
+                    <span class="mobile-nav-label">Pledge Tracker</span>
+                </a>
+
+                <!-- Center - Dashboard (Highlighted) -->
+                <a href="#" class="mobile-nav-item mobile-nav-center active" data-section="dashboard" title="Dashboard">
                     <span class="mobile-nav-icon" data-icon="dashboard"></span>
                     <span class="mobile-nav-label">Dashboard</span>
                 </a>
-                <a href="#" class="mobile-nav-item" data-section="candidates">
-                    <span class="mobile-nav-icon" data-icon="candidates"></span>
-                    <span class="mobile-nav-label">Candidates</span>
-                </a>
-                <a href="#" class="mobile-nav-item" data-section="voters">
-                    <span class="mobile-nav-icon" data-icon="voters"></span>
-                    <span class="mobile-nav-label">Voters</span>
-                </a>
-                <a href="#" class="mobile-nav-item" data-section="events">
-                    <span class="mobile-nav-icon" data-icon="events"></span>
-                    <span class="mobile-nav-label">Events</span>
-                </a>
-                <a href="#" class="mobile-nav-item" data-section="calls">
-                    <span class="mobile-nav-icon" data-icon="calls"></span>
-                    <span class="mobile-nav-label">Calls</span>
-                </a>
-                <a href="#" class="mobile-nav-item" data-section="pledges">
-                    <span class="mobile-nav-icon" data-icon="pledges"></span>
-                    <span class="mobile-nav-label">Pledges</span>
-                </a>
-                <a href="#" class="mobile-nav-item" data-section="agents">
+
+                <!-- Right Side -->
+                <a href="#" class="mobile-nav-item" data-section="agents" title="Agent Assignment">
                     <span class="mobile-nav-icon" data-icon="agents"></span>
-                    <span class="mobile-nav-label">Agents</span>
+                    <span class="mobile-nav-label">Agent Assignment</span>
                 </a>
-                <a href="#" class="mobile-nav-item" data-section="analytics">
-                    <span class="mobile-nav-icon" data-icon="analytics"></span>
-                    <span class="mobile-nav-label">Analytics</span>
-                </a>
-                <a href="#" class="mobile-nav-item" data-section="settings">
-                    <span class="mobile-nav-icon" data-icon="settings"></span>
-                    <span class="mobile-nav-label">Settings</span>
-                </a>
+
+                <!-- More Menu -->
+                <button class="mobile-nav-item mobile-nav-more" id="mobile-nav-more-btn" title="More">
+                    <span class="mobile-nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="19" cy="12" r="1"></circle>
+                            <circle cx="5" cy="12" r="1"></circle>
+                        </svg>
+                    </span>
+                    <span class="mobile-nav-label">More</span>
+                </button>
             </nav>
+
+            <!-- More Menu Popup -->
+            <div class="mobile-more-menu" id="mobile-more-menu">
+                <div class="mobile-more-menu-content">
+                    <div class="mobile-more-menu-header">
+                        <h3>More Options</h3>
+                        <button class="mobile-more-menu-close" id="mobile-more-menu-close">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="mobile-more-menu-items">
+                        <a href="#" class="mobile-more-menu-item" data-section="events">
+                            <span class="mobile-more-menu-icon" data-icon="events"></span>
+                            <span class="mobile-more-menu-label">Campaign Events</span>
+                        </a>
+                        <a href="#" class="mobile-more-menu-item" data-section="candidates">
+                            <span class="mobile-more-menu-icon" data-icon="candidates"></span>
+                            <span class="mobile-more-menu-label">Candidates</span>
+                        </a>
+                        <a href="#" class="mobile-more-menu-item" data-section="calls">
+                            <span class="mobile-more-menu-icon" data-icon="calls"></span>
+                            <span class="mobile-more-menu-label">Calls</span>
+                        </a>
+                        <a href="#" class="mobile-more-menu-item" data-section="analytics">
+                            <span class="mobile-more-menu-icon" data-icon="analytics"></span>
+                            <span class="mobile-more-menu-label">Analytics</span>
+                        </a>
+                        <a href="#" class="mobile-more-menu-item" data-section="settings">
+                            <span class="mobile-more-menu-icon" data-icon="settings"></span>
+                            <span class="mobile-more-menu-label">Settings</span>
+                        </a>
+                        <a href="#" class="mobile-more-menu-item" data-section="zero-day" id="mobile-more-zero-day" style="display: none;">
+                            <span class="mobile-more-menu-icon" data-icon="zero-day"></span>
+                            <span class="mobile-more-menu-label">Zero Day</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="mobile-more-menu-backdrop" id="mobile-more-menu-backdrop"></div>
+            </div>
 
             <!-- Main Content Area -->
             <div class="main-content">
@@ -451,7 +535,7 @@
                                     <div class="profile-status-indicator"></div>
                                 </div>
                                 <div class="profile-info">
-                                    <span class="profile-name" id="profile-name">User</span>
+                                <span class="profile-name" id="profile-name">User</span>
                                     <span class="profile-email" id="profile-email">user@example.com</span>
                                 </div>
                                 <svg class="profile-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
