@@ -258,11 +258,28 @@ async function validateAgentCode(agentCode) {
 
         // Initialize messenger (will handle chat with Campaign Manager badge)
         // This needs to be called after window variables are set
-        setTimeout(() => {
-            if (window.initMessenger) {
-                window.initMessenger();
+        // Wait a bit longer to ensure all data is ready and messenger.js is loaded
+        const initMessengerWithRetry = (retries = 3) => {
+            if (window.initMessenger && window.agentData && window.campaignEmail) {
+                console.log('[Agent Portal] Initializing messenger with agent data:', {
+                    agentData: window.agentData,
+                    campaignEmail: window.campaignEmail,
+                    agentId: window.agentData.id
+                });
+                try {
+                    window.initMessenger();
+                } catch (error) {
+                    console.error('[Agent Portal] Error initializing messenger:', error);
+                }
+            } else if (retries > 0) {
+                console.log(`[Agent Portal] Messenger not ready, retrying... (${retries} attempts left)`);
+                setTimeout(() => initMessengerWithRetry(retries - 1), 500);
+            } else {
+                console.error('[Agent Portal] Failed to initialize messenger after retries');
             }
-        }, 500);
+        };
+
+        setTimeout(() => initMessengerWithRetry(), 1000);
 
         updateLoadingProgress(100, 'Ready!');
 
@@ -477,57 +494,41 @@ async function loadAssignedVotersSection() {
                     <td style="padding: 14px 16px; font-size: 13px; color: var(--text-color);">${voter.number || voter.phone || 'N/A'}</td>
                     <td style="padding: 14px 16px;">${pledgeStatusHtml}</td>
                     <td style="padding: 14px 16px; text-align: center; position: relative;">
-                        <div class="dropdown-menu-container" style="position: relative; display: inline-block;">
-                            <button class="three-dot-menu-btn" onclick="toggleActionsMenu('${voter.id}')" 
-                                    style="background: none; border: none; cursor: pointer; padding: 6px 8px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.2s;"
-                                    onmouseover="this.style.background='var(--border-light)'"
-                                    onmouseout="this.style.background='transparent'"
-                                    aria-label="Actions menu">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <div class="agent-voter-actions-wrapper" data-voter-id="${voter.id}">
+                            <button type="button" class="agent-voter-actions-btn" data-voter-id="${voter.id}" aria-label="Voter actions menu">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="1"></circle>
-                                    <circle cx="19" cy="12" r="1"></circle>
-                                    <circle cx="5" cy="12" r="1"></circle>
+                                    <circle cx="12" cy="5" r="1"></circle>
+                                    <circle cx="12" cy="19" r="1"></circle>
                                 </svg>
                             </button>
-                            <div id="menu-${voter.id}" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: white; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: var(--shadow-lg); z-index: 1000; min-width: 180px; padding: 6px; overflow: hidden;">
-                                <button class="menu-item" onclick="quickUpdatePledge('${voter.id}', 'yes'); closeActionsMenu('${voter.id}');" 
-                                        style="width: 100%; padding: 10px 14px; text-align: left; background: none; border: none; cursor: pointer; font-size: 13px; color: var(--text-color); font-weight: 500; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 10px; border-radius: 6px; transition: background 0.2s; ${currentPledge === 'yes' ? 'opacity: 0.6;' : ''}"
-                                        onmouseover="this.style.background='var(--light-color)'"
-                                        onmouseout="this.style.background='transparent'">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success-color)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <div class="agent-voter-actions-menu" data-menu-for="${voter.id}">
+                                <button type="button" class="agent-voter-action-item ${currentPledge === 'yes' ? 'disabled' : ''}" data-action="positive" data-voter-id="${voter.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                                         <polyline points="22 4 12 14.01 9 11.01"></polyline>
                                     </svg>
                                     <span>Mark as Positive</span>
                                 </button>
-                                <button class="menu-item" onclick="quickUpdatePledge('${voter.id}', 'no'); closeActionsMenu('${voter.id}');" 
-                                        style="width: 100%; padding: 10px 14px; text-align: left; background: none; border: none; cursor: pointer; font-size: 13px; color: var(--text-color); font-weight: 500; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 10px; border-radius: 6px; transition: background 0.2s; ${currentPledge === 'no' ? 'opacity: 0.6;' : ''}"
-                                        onmouseover="this.style.background='var(--light-color)'"
-                                        onmouseout="this.style.background='transparent'">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger-color)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <button type="button" class="agent-voter-action-item ${currentPledge === 'no' ? 'disabled' : ''}" data-action="negative" data-voter-id="${voter.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                         <circle cx="12" cy="12" r="10"></circle>
                                         <line x1="15" y1="9" x2="9" y2="15"></line>
                                         <line x1="9" y1="9" x2="15" y2="15"></line>
                                     </svg>
                                     <span>Mark as Negative</span>
                                 </button>
-                                <button class="menu-item" onclick="quickUpdatePledge('${voter.id}', 'undecided'); closeActionsMenu('${voter.id}');" 
-                                        style="width: 100%; padding: 10px 14px; text-align: left; background: none; border: none; cursor: pointer; font-size: 13px; color: var(--text-color); font-weight: 500; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 10px; border-radius: 6px; transition: background 0.2s; ${currentPledge === 'undecided' ? 'opacity: 0.6;' : ''}"
-                                        onmouseover="this.style.background='var(--light-color)'"
-                                        onmouseout="this.style.background='transparent'">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warning-color)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <button type="button" class="agent-voter-action-item ${currentPledge === 'undecided' ? 'disabled' : ''}" data-action="undecided" data-voter-id="${voter.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                         <circle cx="12" cy="12" r="10"></circle>
                                         <line x1="12" y1="8" x2="12" y2="12"></line>
                                         <line x1="12" y1="16" x2="12.01" y2="16"></line>
                                     </svg>
                                     <span>Mark as Undecided</span>
                                 </button>
-                                <div style="height: 1px; background: var(--border-light); margin: 4px 0;"></div>
-                                <button class="menu-item" onclick="addRemarkForVoter('${voter.id}'); closeActionsMenu('${voter.id}');" 
-                                        style="width: 100%; padding: 10px 14px; text-align: left; background: none; border: none; cursor: pointer; font-size: 13px; color: var(--text-color); font-weight: 500; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 10px; border-radius: 6px; transition: background 0.2s;"
-                                        onmouseover="this.style.background='var(--light-color)'"
-                                        onmouseout="this.style.background='transparent'">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <div class="agent-voter-menu-divider"></div>
+                                <button type="button" class="agent-voter-action-item" data-action="remark" data-voter-id="${voter.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                                     </svg>
                                     <span>Add Remark</span>
@@ -548,47 +549,114 @@ async function loadAssignedVotersSection() {
 
     contentArea.innerHTML = html;
 
-    // Close any open menus when clicking outside
-    document.addEventListener('click', function(event) {
-        if (!event.target.closest('.dropdown-menu-container')) {
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                menu.style.display = 'none';
+    // Menu closing is now handled by event delegation in initAgentVoterActionsMenu
+}
+
+// Initialize Agent Voter Actions Menu with Event Delegation
+(function initAgentVoterActionsMenu() {
+    // Use event delegation on the document for dynamic content
+    document.addEventListener('click', function(e) {
+        const trigger = e.target.closest('.agent-voter-actions-btn');
+        const actionBtn = e.target.closest('.agent-voter-action-item');
+        const wrapper = e.target.closest('.agent-voter-actions-wrapper');
+
+        // Handle menu trigger click
+        if (trigger) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            const voterId = trigger.getAttribute('data-voter-id');
+            const menu = document.querySelector(`.agent-voter-actions-menu[data-menu-for="${voterId}"]`);
+            const allMenus = document.querySelectorAll('.agent-voter-actions-menu');
+
+            // Close all other menus
+            allMenus.forEach(m => {
+                if (m !== menu) {
+                    m.classList.remove('is-open');
+                    const container = m.closest('.agent-voter-actions-wrapper');
+                    if (container) {
+                        container.classList.remove('active');
+                    }
+                }
+            });
+
+            // Toggle current menu
+            if (menu) {
+                menu.classList.toggle('is-open');
+                const container = menu.closest('.agent-voter-actions-wrapper');
+                if (container) {
+                    container.classList.toggle('active');
+                }
+            }
+            return;
+        }
+
+        // Handle action button click
+        if (actionBtn && !actionBtn.classList.contains('disabled')) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            const voterId = actionBtn.getAttribute('data-voter-id');
+            const action = actionBtn.getAttribute('data-action');
+            const menu = actionBtn.closest('.agent-voter-actions-menu');
+
+            // Close menu
+            if (menu) {
+                menu.classList.remove('is-open');
+                const container = menu.closest('.agent-voter-actions-wrapper');
+                if (container) {
+                    container.classList.remove('active');
+                }
+            }
+
+            // Execute action
+            if (action === 'positive') {
+                if (typeof quickUpdatePledge === 'function') {
+                    quickUpdatePledge(voterId, 'yes');
+                }
+            } else if (action === 'negative') {
+                if (typeof quickUpdatePledge === 'function') {
+                    quickUpdatePledge(voterId, 'no');
+                }
+            } else if (action === 'undecided') {
+                if (typeof quickUpdatePledge === 'function') {
+                    quickUpdatePledge(voterId, 'undecided');
+                }
+            } else if (action === 'remark') {
+                if (typeof addRemarkForVoter === 'function') {
+                    addRemarkForVoter(voterId);
+                }
+            }
+            return;
+        }
+
+        // Close all menus when clicking outside
+        if (!wrapper) {
+            document.querySelectorAll('.agent-voter-actions-menu').forEach(menu => {
+                menu.classList.remove('is-open');
+                const container = menu.closest('.agent-voter-actions-wrapper');
+                if (container) {
+                    container.classList.remove('active');
+                }
             });
         }
     });
-}
 
-// Toggle actions menu
-function toggleActionsMenu(voterId) {
-    const menu = document.getElementById(`menu-${voterId}`);
-    if (!menu) return;
-
-    // Close all other menus
-    document.querySelectorAll('.dropdown-menu').forEach(m => {
-        if (m.id !== `menu-${voterId}`) {
-            m.style.display = 'none';
+    // Handle Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.agent-voter-actions-menu').forEach(menu => {
+                menu.classList.remove('is-open');
+                const container = menu.closest('.agent-voter-actions-wrapper');
+                if (container) {
+                    container.classList.remove('active');
+                }
+            });
         }
     });
 
-    // Toggle current menu
-    if (menu.style.display === 'none' || !menu.style.display) {
-        menu.style.display = 'block';
-    } else {
-        menu.style.display = 'none';
-    }
-}
-
-// Close actions menu
-function closeActionsMenu(voterId) {
-    const menu = document.getElementById(`menu-${voterId}`);
-    if (menu) {
-        menu.style.display = 'none';
-    }
-}
-
-// Make functions globally available
-window.toggleActionsMenu = toggleActionsMenu;
-window.closeActionsMenu = closeActionsMenu;
+    console.log('[Agent Voter Actions] Menu system initialized with event delegation');
+})();
 
 // Fetch existing pledges for assigned voters
 async function fetchVoterPledges() {

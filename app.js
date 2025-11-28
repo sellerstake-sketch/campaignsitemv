@@ -1998,7 +1998,11 @@ async function loadWorkspace(data) {
         // Initialize profile dropdown immediately when workspace is shown
         setTimeout(() => {
             if (typeof initializeProfileDropdown === 'function') {
-                initializeProfileDropdown();
+                const initialized = initializeProfileDropdown();
+                if (!initialized) {
+                    // Retry if initialization failed
+                    setTimeout(() => initializeProfileDropdown(), 300);
+                }
             }
         }, 100);
 
@@ -2027,8 +2031,12 @@ async function loadWorkspace(data) {
                 const logoURL = generateCampaignLogo(data.campaignName);
                 logoEl.innerHTML = `<img src="${logoURL}" alt="Campaign Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">`;
             }
-            if (profileNameEl) {
-                profileNameEl.textContent = data.email || 'User';
+            // Update profile display with user data
+            if (typeof updateProfileDisplay === 'function') {
+                updateProfileDisplay({
+                    email: data.email || userEmail,
+                    campaignName: data.campaignName
+                });
             }
         } catch (updateError) {
             console.error('[loadWorkspace] Error updating sidebar:', updateError);
@@ -2202,12 +2210,20 @@ function initializeWorkspace() {
 
             e.preventDefault();
 
-            // Update active nav
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            // Update active nav (both sidebar and mobile)
+            document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(nav => nav.classList.remove('active'));
             navItem.classList.add('active');
 
-            // Get section ID
+            // Also update corresponding mobile nav item
             const section = navItem.dataset.section;
+            if (section) {
+                const mobileNavItem = document.querySelector(`.mobile-nav-item[data-section="${section}"]`);
+                if (mobileNavItem) {
+                    mobileNavItem.classList.add('active');
+                }
+            }
+
+            // Get section ID
             if (!section) return;
 
             // Update breadcrumb
@@ -2223,6 +2239,46 @@ function initializeWorkspace() {
 
         // Attach listener
         navContainer.addEventListener('click', navContainer._navClickHandler);
+    }
+
+    // Initialize Mobile Bottom Navigation
+    const mobileBottomNav = document.getElementById('mobile-bottom-nav');
+    if (mobileBottomNav) {
+        mobileBottomNav.addEventListener('click', (e) => {
+            const mobileNavItem = e.target.closest('.mobile-nav-item');
+            if (!mobileNavItem) return;
+
+            e.preventDefault();
+
+            // Update active nav (both sidebar and mobile)
+            document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(nav => nav.classList.remove('active'));
+            mobileNavItem.classList.add('active');
+
+            // Also update corresponding sidebar nav item
+            const section = mobileNavItem.dataset.section;
+            if (section) {
+                const sidebarNavItem = document.querySelector(`.nav-item[data-section="${section}"]`);
+                if (sidebarNavItem) {
+                    sidebarNavItem.classList.add('active');
+                }
+            }
+
+            // Update breadcrumb
+            if (typeof updateBreadcrumb === 'function') {
+                updateBreadcrumb(section);
+            }
+
+            // Load page content
+            if (typeof loadPageContent === 'function') {
+                loadPageContent(section);
+            }
+
+            // Close sidebar if open on mobile
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+            }
+        });
     } else {
         // Fallback: direct attachment (for backwards compatibility)
         const navItems = document.querySelectorAll('.nav-item');
@@ -2970,66 +3026,254 @@ window.trackPageLoad = trackPageLoad;
 window.startPageTracking = startPageTracking;
 window.stopPageTracking = stopPageTracking;
 
-// Initialize Profile Dropdown (fallback - ensures it works even if initializeWorkspace hasn't run)
+// Update profile display with user information
+function updateProfileDisplay(userData) {
+    const profileName = document.getElementById('profile-name');
+    const profileEmail = document.getElementById('profile-email');
+    const profileInitials = document.getElementById('profile-initials');
+    const profileAvatar = document.getElementById('profile-avatar');
+    const profileMenuName = document.getElementById('profile-menu-name');
+    const profileMenuEmail = document.getElementById('profile-menu-email');
+    const profileMenuInitials = document.getElementById('profile-menu-initials');
+    const profileMenuAvatar = document.getElementById('profile-menu-avatar');
+
+    // Get user email
+    const email = userEmail || (userData && userData.email) || 'user@example.com';
+    const name = (userData && userData.campaignName) || email.split('@')[0] || 'User';
+
+    // Generate initials
+    const getInitials = (str) => {
+        if (!str) return 'U';
+        const words = str.trim().split(/\s+/);
+        if (words.length >= 2) {
+            return (words[0][0] + words[1][0]).toUpperCase();
+        }
+        return str.substring(0, 2).toUpperCase();
+    };
+
+    const initials = getInitials(name);
+
+    // Update profile trigger
+    if (profileName) profileName.textContent = name;
+    if (profileEmail) profileEmail.textContent = email;
+    if (profileInitials) profileInitials.textContent = initials;
+
+    // Update profile menu
+    if (profileMenuName) profileMenuName.textContent = name;
+    if (profileMenuEmail) profileMenuEmail.textContent = email;
+    if (profileMenuInitials) profileMenuInitials.textContent = initials;
+
+    // Generate gradient color based on name
+    const generateColor = (str) => {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const colors = [
+            ['rgba(91, 33, 182, 0.9)', 'rgba(124, 58, 237, 0.85)'],
+            ['rgba(8, 145, 178, 0.9)', 'rgba(6, 182, 212, 0.85)'],
+            ['rgba(5, 150, 105, 0.9)', 'rgba(16, 185, 129, 0.85)'],
+            ['rgba(220, 38, 38, 0.9)', 'rgba(239, 68, 68, 0.85)'],
+            ['rgba(217, 119, 6, 0.9)', 'rgba(245, 158, 11, 0.85)'],
+        ];
+        return colors[Math.abs(hash) % colors.length];
+    };
+
+    const [color1, color2] = generateColor(name);
+    if (profileAvatar) {
+        profileAvatar.style.background = `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`;
+    }
+    if (profileMenuAvatar) {
+        profileMenuAvatar.style.background = `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`;
+    }
+}
+
+// Initialize Profile Dropdown (modern implementation)
 function initializeProfileDropdown() {
     const profileBtn = document.getElementById('profile-btn');
     const profileMenu = document.getElementById('profile-menu');
+    const profileDropdown = document.querySelector('.profile-dropdown');
 
-    if (!profileBtn || !profileMenu) {
-        console.warn('[Profile Dropdown] Profile button or menu not found');
-        return;
+    if (!profileBtn || !profileMenu || !profileDropdown) {
+        console.warn('[Profile Dropdown] Profile elements not found', {
+            btn: !!profileBtn,
+            menu: !!profileMenu,
+            dropdown: !!profileDropdown
+        });
+        return false;
     }
 
     // Only attach click listener once
     if (!profileBtn.hasAttribute('data-listener-attached')) {
         profileBtn.setAttribute('data-listener-attached', 'true');
-        profileBtn.addEventListener('click', (e) => {
+
+        // Button click handler
+        profileBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             e.preventDefault();
+
             const isShowing = profileMenu.classList.contains('show');
+
             // Close all other dropdowns first
-            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+            document.querySelectorAll('.profile-menu.show, .dropdown-menu.show').forEach(menu => {
                 if (menu !== profileMenu) {
                     menu.classList.remove('show');
+                    menu.closest('.profile-dropdown').classList.remove('active');
                 }
             });
+
             // Toggle this dropdown
-            profileMenu.classList.toggle('show');
-            console.log('[Profile Dropdown] Toggled, isShowing:', !isShowing);
+            if (isShowing) {
+                profileMenu.classList.remove('show');
+                profileDropdown.classList.remove('active');
+            } else {
+                profileMenu.classList.add('show');
+                profileDropdown.classList.add('active');
+            }
         });
         console.log('[Profile Dropdown] Click listener attached');
     }
 
-    // Click outside to close - only add once globally
-    if (!window.profileDropdownClickHandler) {
-        window.profileDropdownClickHandler = (e) => {
-            if (!e.target.closest('.profile-dropdown')) {
-                const menu = document.getElementById('profile-menu');
-                if (menu && menu.classList.contains('show')) {
-                    menu.classList.remove('show');
-                    console.log('[Profile Dropdown] Closed by outside click');
-                }
+    // Click outside to close - remove old handler if exists, then add new one
+    if (window.profileDropdownClickHandler) {
+        document.removeEventListener('click', window.profileDropdownClickHandler, true);
+    }
+
+    window.profileDropdownClickHandler = function(e) {
+        // Check if click is outside the profile dropdown area
+        if (!profileDropdown.contains(e.target)) {
+            if (profileMenu && profileMenu.classList.contains('show')) {
+                profileMenu.classList.remove('show');
+                profileDropdown.classList.remove('active');
+            }
+        }
+    };
+
+    // Use capture phase to ensure it runs before other handlers
+    document.addEventListener('click', window.profileDropdownClickHandler, true);
+    console.log('[Profile Dropdown] Outside click handler attached');
+
+    // Also handle Escape key
+    if (!window.profileDropdownEscapeHandler) {
+        window.profileDropdownEscapeHandler = function(e) {
+            if (e.key === 'Escape' && profileMenu && profileMenu.classList.contains('show')) {
+                profileMenu.classList.remove('show');
+                profileDropdown.classList.remove('active');
             }
         };
-        document.addEventListener('click', window.profileDropdownClickHandler);
-        console.log('[Profile Dropdown] Outside click handler attached');
+        document.addEventListener('keydown', window.profileDropdownEscapeHandler);
+    }
+
+    // Add click handlers for menu items
+    const profileMenuItem = document.getElementById('profile-menu-profile');
+    const settingsMenuItem = document.getElementById('profile-menu-settings');
+    const logoutMenuItem = document.getElementById('logout-btn');
+
+    if (profileMenuItem) {
+        profileMenuItem.addEventListener('click', (e) => {
+            e.preventDefault();
+            profileMenu.classList.remove('show');
+            profileDropdown.classList.remove('active');
+            // Navigate to settings page
+            if (typeof loadPageContent === 'function') {
+                loadPageContent('settings');
+                // Update breadcrumb
+                if (typeof updateBreadcrumb === 'function') {
+                    updateBreadcrumb('settings');
+                }
+            } else if (typeof navigateToSection === 'function') {
+                navigateToSection('settings');
+            }
+        });
+    }
+
+    if (settingsMenuItem) {
+        settingsMenuItem.addEventListener('click', (e) => {
+            e.preventDefault();
+            profileMenu.classList.remove('show');
+            profileDropdown.classList.remove('active');
+            // Navigate to settings page
+            if (typeof loadPageContent === 'function') {
+                loadPageContent('settings');
+                // Update breadcrumb
+                if (typeof updateBreadcrumb === 'function') {
+                    updateBreadcrumb('settings');
+                }
+            } else if (typeof navigateToSection === 'function') {
+                navigateToSection('settings');
+            }
+        });
+    }
+
+    if (logoutMenuItem) {
+        logoutMenuItem.addEventListener('click', (e) => {
+            e.preventDefault();
+            profileMenu.classList.remove('show');
+            profileDropdown.classList.remove('active');
+            // Logout will be handled by existing logout handler
+        });
+    }
+
+    // Update profile display with current user data
+    if (userEmail && typeof db !== 'undefined') {
+        getDoc(doc(db, 'clients', userEmail)).then(docSnap => {
+            if (docSnap.exists()) {
+                updateProfileDisplay(docSnap.data());
+            } else {
+                updateProfileDisplay({
+                    email: userEmail
+                });
+            }
+        }).catch(() => {
+            updateProfileDisplay({
+                email: userEmail
+            });
+        });
+    } else if (userEmail) {
+        updateProfileDisplay({
+            email: userEmail
+        });
     }
 
     window.profileDropdownInitialized = true;
     console.log('[Profile Dropdown] Initialized successfully');
+    return true;
 }
 
 // Try to initialize profile dropdown when workspace screen becomes visible
-const profileDropdownObserver = new MutationObserver(() => {
-    const workspaceScreen = document.getElementById('workspace-screen');
-    if (workspaceScreen && workspaceScreen.style.display !== 'none') {
-        initializeProfileDropdown();
-    }
-});
+let profileDropdownObserver = null;
 
-// Start observing when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+function setupProfileDropdownObserver() {
+    if (profileDropdownObserver) {
+        return; // Already set up
+    }
+
+    profileDropdownObserver = new MutationObserver(() => {
+        const workspaceScreen = document.getElementById('workspace-screen');
+        if (workspaceScreen && workspaceScreen.style.display !== 'none' && workspaceScreen.style.display !== '') {
+            // Only initialize if not already initialized or if elements are available
+            if (!window.profileDropdownInitialized) {
+                initializeProfileDropdown();
+            }
+        }
+    });
+
+    // Start observing when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            const workspaceScreen = document.getElementById('workspace-screen');
+            if (workspaceScreen) {
+                profileDropdownObserver.observe(workspaceScreen, {
+                    attributes: true,
+                    attributeFilter: ['style', 'class']
+                });
+            }
+            // Try multiple times to ensure it works
+            setTimeout(() => initializeProfileDropdown(), 100);
+            setTimeout(() => initializeProfileDropdown(), 500);
+            setTimeout(() => initializeProfileDropdown(), 1000);
+        });
+    } else {
         const workspaceScreen = document.getElementById('workspace-screen');
         if (workspaceScreen) {
             profileDropdownObserver.observe(workspaceScreen, {
@@ -3037,9 +3281,12 @@ if (document.readyState === 'loading') {
                 attributeFilter: ['style', 'class']
             });
         }
-        // Also try immediately
-        setTimeout(initializeProfileDropdown, 500);
-    });
-} else {
-    setTimeout(initializeProfileDropdown, 500);
+        // Try multiple times to ensure it works
+        setTimeout(() => initializeProfileDropdown(), 100);
+        setTimeout(() => initializeProfileDropdown(), 500);
+        setTimeout(() => initializeProfileDropdown(), 1000);
+    }
 }
+
+// Setup observer
+setupProfileDropdownObserver();

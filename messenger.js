@@ -102,8 +102,18 @@ function initMessenger() {
         if (window.agentData && window.agentData.id) {
             userEmail = `agent_${window.agentData.id}`;
         } else {
-            console.error('[Messenger] Agent ID not found in agentData');
-            return; // Can't proceed without agent ID
+            console.error('[Messenger] Agent ID not found in agentData:', {
+                agentData: window.agentData,
+                hasId: !!(window.agentData && window.agentData.id)
+            });
+            // Don't return - try to continue with what we have
+            if (window.agentData) {
+                userEmail = `agent_${window.agentData.agentAccessCode || 'unknown'}`;
+                console.warn('[Messenger] Using agentAccessCode as fallback:', userEmail);
+            } else {
+                console.error('[Messenger] Cannot initialize - no agent data available');
+                return;
+            }
         }
         userSerialNumber = null; // Agents don't use serial numbers
 
@@ -117,11 +127,14 @@ function initMessenger() {
         console.log('[Messenger] Agent portal initialized:', {
             userEmail,
             agentId: window.agentData.id,
-            campaignEmail: window.campaignEmail
+            campaignEmail: window.campaignEmail,
+            agentData: window.agentData
         });
 
         // Load online users (Campaign Manager + other agents)
-        loadOnlineUsers();
+        loadOnlineUsers().catch(error => {
+            console.error('[Messenger] Error loading online users:', error);
+        });
 
         // Listen for messages (agent-specific)
         listenForMessages();
@@ -655,12 +668,8 @@ function showUsersInChatWindow() {
 
     messagesContainer.innerHTML = filteredUsers.map(user => {
         const initials = user.name.substring(0, 2).toUpperCase();
-        let displayName = user.name;
-
-        // Add agent code if present
-        if (user.agentCode) {
-            displayName += ` (${user.agentCode})`;
-        }
+        // Show only name, no email or agent code
+        const displayName = user.name;
 
         // Check if Campaign Manager
         const isCampaignManager = user.isCampaignManager === true;
@@ -733,10 +742,8 @@ async function openChat(userId) {
     const chatBackBtn = document.getElementById('chat-back-btn');
 
     if (chatUserName) {
-        let displayName = user.name;
-        if (user.agentCode) {
-            displayName += ` (${user.agentCode})`;
-        }
+        // Show only name, no email or agent code
+        const displayName = user.name;
 
         // Show Campaign Manager badge in chat header
         if (user.isAdmin) {
@@ -1011,7 +1018,25 @@ async function sendMessage() {
     const messageInput = document.getElementById('chat-message-input');
     const sendBtn = document.getElementById('chat-send-btn');
 
-    if (!messageInput || !selectedUserId || !userEmail) return;
+    if (!messageInput || !selectedUserId || !userEmail) {
+        console.error('[Messenger] Cannot send message - missing required data:', {
+            hasInput: !!messageInput,
+            selectedUserId,
+            userEmail
+        });
+        return;
+    }
+
+    // Check authentication
+    if (!auth.currentUser) {
+        console.error('[Messenger] Cannot send message - user not authenticated');
+        if (window.showErrorDialog) {
+            window.showErrorDialog('You must be authenticated to send messages. Please refresh the page.', 'Authentication Required');
+        } else {
+            alert('You must be authenticated to send messages. Please refresh the page.');
+        }
+        return;
+    }
 
     const text = messageInput.value.trim();
 
@@ -1024,6 +1049,33 @@ async function sendMessage() {
     try {
         // Create conversation ID
         const conversationId = [userEmail, selectedUserId].sort().join('_');
+
+        console.log('[Messenger] Sending message:', {
+            conversationId,
+            senderId: userEmail,
+            receiverId: selectedUserId,
+            isAnonymous: auth.currentUser ? .isAnonymous,
+            authEmail: auth.currentUser ? .email
+        });
+
+        // Ensure conversation document exists (Firestore allows subcollections without parent doc, but it's good practice)
+        try {
+            const conversationRef = doc(db, 'conversations', conversationId);
+            const conversationDoc = await getDoc(conversationRef);
+            if (!conversationDoc.exists()) {
+                // Create conversation document if it doesn't exist
+                await setDoc(conversationRef, {
+                    participants: [userEmail, selectedUserId].sort(),
+                    lastMessage: text || (attachedFiles.length > 0 ? 'File attachment' : ''),
+                    lastMessageTime: serverTimestamp(),
+                    createdAt: serverTimestamp()
+                });
+                console.log('[Messenger] Created conversation document:', conversationId);
+            }
+        } catch (convError) {
+            console.warn('[Messenger] Could not create conversation document (may not be needed):', convError);
+            // Continue anyway - messages can exist without parent doc
+        }
 
         // Upload files if any
         const fileData = [];
@@ -1059,7 +1111,9 @@ async function sendMessage() {
             messageData.files = fileData;
         }
 
+        console.log('[Messenger] Adding message to Firestore:', messageData);
         await addDoc(collection(db, 'conversations', conversationId, 'messages'), messageData);
+        console.log('[Messenger] Message sent successfully');
 
         // Clear input and files
         messageInput.value = '';
@@ -1075,11 +1129,30 @@ async function sendMessage() {
         if (sendBtn) sendBtn.disabled = false;
         messageInput.focus();
     } catch (error) {
-        console.error('Error sending message:', error);
+        console.error('[Messenger] Error sending message:', error);
+        console.error('[Messenger] Error details:', {
+            code: error.code,
+            message: error.message,
+            stack: error.stack,
+            userEmail,
+            selectedUserId,
+            conversationId: userEmail && selectedUserId ? [userEmail, selectedUserId].sort().join('_') : 'N/A',
+            isAuthenticated: auth.currentUser != null,
+            isAnonymous: auth.currentUser ? .isAnonymous,
+            authEmail: auth.currentUser ? .email
+        });
+
+        let errorMessage = 'Failed to send message. Please try again.';
+        if (error.code === 'permission-denied') {
+            errorMessage = 'Permission denied. Please check your authentication status.';
+        } else if (error.message) {
+            errorMessage = `Failed to send message: ${error.message}`;
+        }
+
         if (window.showErrorDialog) {
-            window.showErrorDialog('Failed to send message. Please try again.', 'Send Failed');
+            window.showErrorDialog(errorMessage, 'Send Failed');
         } else {
-            alert('Failed to send message. Please try again.');
+            alert(errorMessage);
         }
         if (sendBtn) sendBtn.disabled = false;
     }
@@ -1100,12 +1173,42 @@ function listenForMessages() {
 }
 
 // Initialize when DOM is ready
+// For agent portal, wait for agent data to be set before initializing
+// For other portals, initialize normally
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(initMessenger, 500);
+        // Check if we're in agent portal - if so, don't auto-initialize (will be called from agent.js)
+        const isAgentPortal = window.location.pathname.includes('agent.html');
+        if (!isAgentPortal) {
+            setTimeout(initMessenger, 500);
+        } else {
+            // For agent portal, wait a bit longer and check if agent data is available
+            setTimeout(() => {
+                if (window.agentData && window.campaignEmail) {
+                    // Agent data is available, initialize
+                    initMessenger();
+                } else {
+                    // Agent data not available yet, will be initialized from agent.js
+                    console.log('[Messenger] Waiting for agent data to be set...');
+                }
+            }, 2000);
+        }
     });
 } else {
-    setTimeout(initMessenger, 500);
+    // DOM already loaded
+    const isAgentPortal = window.location.pathname.includes('agent.html');
+    if (!isAgentPortal) {
+        setTimeout(initMessenger, 500);
+    } else {
+        // For agent portal, wait for agent data
+        setTimeout(() => {
+            if (window.agentData && window.campaignEmail) {
+                initMessenger();
+            } else {
+                console.log('[Messenger] Waiting for agent data to be set...');
+            }
+        }, 2000);
+    }
 }
 
 // Make functions available globally

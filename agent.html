@@ -397,29 +397,149 @@
             }
         }
 
-        /* Three-dot menu styles */
-        .three-dot-menu-btn {
+        /* Agent Voter Actions Dropdown Menu */
+        .agent-voter-actions-wrapper {
             position: relative;
+            display: inline-block;
         }
 
-        .dropdown-menu {
-            animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        .agent-voter-actions-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-color);
         }
 
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-8px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .agent-voter-actions-btn:hover {
+            background: rgba(91, 33, 182, 0.08);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            transform: translateY(-1px);
         }
 
-        .menu-item svg {
+        .agent-voter-actions-btn:active {
+            transform: translateY(0) scale(0.95);
+        }
+
+        .agent-voter-actions-wrapper.active .agent-voter-actions-btn {
+            background: rgba(91, 33, 182, 0.12);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .agent-voter-actions-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 220px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translateY(-8px);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 6px 0;
+        }
+
+        .agent-voter-actions-menu.is-open {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .agent-voter-action-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 10px 16px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-color);
+            transition: all 0.2s ease;
+            text-align: left;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .agent-voter-action-item svg {
+            color: var(--text-light);
+            transition: color 0.2s ease;
             flex-shrink: 0;
+        }
+
+        .agent-voter-action-item[data-action="positive"] svg {
+            color: var(--success-color);
+        }
+
+        .agent-voter-action-item[data-action="negative"] svg {
+            color: var(--danger-color);
+        }
+
+        .agent-voter-action-item[data-action="undecided"] svg {
+            color: var(--warning-color);
+        }
+
+        .agent-voter-action-item:hover:not(.disabled) {
+            background: rgba(91, 33, 182, 0.06);
+        }
+
+        .agent-voter-action-item[data-action="positive"]:hover:not(.disabled) {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .agent-voter-action-item[data-action="positive"]:hover:not(.disabled) svg {
+            color: var(--success-color);
+        }
+
+        .agent-voter-action-item[data-action="negative"]:hover:not(.disabled) {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger-color);
+        }
+
+        .agent-voter-action-item[data-action="negative"]:hover:not(.disabled) svg {
+            color: var(--danger-color);
+        }
+
+        .agent-voter-action-item[data-action="undecided"]:hover:not(.disabled) {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+
+        .agent-voter-action-item[data-action="undecided"]:hover:not(.disabled) svg {
+            color: var(--warning-color);
+        }
+
+        .agent-voter-action-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .agent-voter-action-item.disabled:hover {
+            background: transparent;
+        }
+
+        .agent-voter-menu-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.08);
+            margin: 6px 0;
         }
     </style>
 
@@ -571,13 +691,6 @@
             </div>
         </div>
 
-        <!-- Messenger Toggle Button -->
-        <button id="messenger-toggle-btn" class="messenger-toggle-btn" title="Open Messages">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <span class="messenger-badge" id="messenger-badge">0</span>
-        </button>
     </div>
 
     <!-- Modal Overlay -->

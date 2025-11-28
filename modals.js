@@ -1361,6 +1361,23 @@ async function handleFormSubmit(type, formData) {
                     // Don't fail the pledge update if voter update fails
                 }
             }
+
+            // Show success message
+            if (window.showSuccess) {
+                window.showSuccess('Pledge updated successfully!', 'Success');
+            }
+
+            // Close modal
+            closeModal();
+
+            // Reload pledges table
+            if (window.reloadTableData) {
+                window.reloadTableData('pledge', null, editPledgeId);
+            } else if (window.loadPageContent) {
+                setTimeout(() => {
+                    window.loadPageContent('pledges');
+                }, 500);
+            }
         } else if (editAgentId && type === 'agent') {
             // Update existing agent (preserve createdAt, agentAccessCode, callsMade, successRate)
             const {

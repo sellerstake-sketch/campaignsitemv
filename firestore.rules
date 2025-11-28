@@ -151,10 +151,12 @@ service cloud.firestore {
       // Security is enforced by checking senderId/receiverId in message data
       allow read: if request.auth != null;
       
-      // Allow authenticated users to create conversations
+      // Allow authenticated users (including anonymous agents) to create conversations
+      // This is needed when creating the first message in a conversation
       allow create: if request.auth != null;
       
-      // Allow authenticated users to update conversations
+      // Allow authenticated users (including anonymous agents) to update conversations
+      // This is needed to update lastMessage and lastMessageTime
       allow update: if request.auth != null;
       
       // Messages subcollection

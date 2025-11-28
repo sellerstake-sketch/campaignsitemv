@@ -605,6 +605,27 @@
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
 }
 
+.icon-btn-link {
+    color: var(--info-color);
+}
+
+.icon-btn-link:hover {
+    background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+    color: white;
+    border-color: var(--info-color);
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.25);
+}
+
+.icon-btn-edit {
+    color: var(--primary-color);
+}
+
+.icon-btn-edit:hover {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(91, 33, 182, 0.25);
+}
+
 .icon-btn-sm {
     padding: 10px 18px;
     background: var(--white);
@@ -633,6 +654,119 @@
 
 .icon-btn-sm:active {
     transform: translateY(0);
+}
+
+/* Agent Actions Menu - New Design */
+.agent-actions-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.agent-menu-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-color);
+}
+
+.agent-menu-trigger:hover {
+    background: rgba(91, 33, 182, 0.08);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.agent-menu-trigger:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.agent-actions-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 200px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 6px 0;
+}
+
+.agent-actions-menu.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.agent-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 16px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-color);
+    transition: all 0.2s ease;
+    text-align: left;
+    font-family: 'Poppins', sans-serif;
+}
+
+.agent-action-btn svg {
+    color: var(--text-light);
+    transition: color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.agent-action-btn:hover {
+    background: rgba(91, 33, 182, 0.06);
+    color: var(--primary-color);
+}
+
+.agent-action-btn:hover svg {
+    color: var(--primary-color);
+}
+
+.agent-action-danger {
+    color: #dc2626;
+}
+
+.agent-action-danger:hover {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+}
+
+.agent-action-danger svg {
+    color: #dc2626;
+}
+
+.agent-action-danger:hover svg {
+    color: #dc2626;
+}
+
+.agent-menu-divider {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.08);
+    margin: 6px 0;
 }
 
 /* Status Badges */

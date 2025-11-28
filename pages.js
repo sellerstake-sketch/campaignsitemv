@@ -3938,7 +3938,7 @@ async function loadAgentsData(forceRefresh = false) {
                                 <circle cx="12" cy="12" r="3"></circle>
                             </svg>
                         </button>
-                        <button class="icon-btn" onclick="viewAssignedVotersList('${id}')" title="View List">
+                        <button class="icon-btn" onclick="viewAssignedVotersList('${id}')" title="View Assigned Voters">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="8" y1="6" x2="21" y2="6"></line>
                                 <line x1="8" y1="12" x2="21" y2="12"></line>
@@ -3948,39 +3948,24 @@ async function loadAgentsData(forceRefresh = false) {
                                 <line x1="3" y1="18" x2="3.01" y2="18"></line>
                             </svg>
                         </button>
-                        <div class="dropdown-menu-container" style="position: relative;">
-                            <button class="icon-btn" onclick="toggleAgentMenu('${id}')" title="More Options">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="1"></circle>
-                                    <circle cx="12" cy="5" r="1"></circle>
-                                    <circle cx="12" cy="19" r="1"></circle>
-                                </svg>
-                            </button>
-                            <div id="agent-menu-${id}" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: var(--shadow-lg); z-index: 1000; min-width: 180px; margin-top: 4px;">
-                                <button class="dropdown-menu-item" onclick="closeAgentMenu('${id}'); generateAgentLink('${id}');" style="width: 100%; text-align: left; padding: 10px 16px; border: none; background: none; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-color); transition: background 0.2s;" onmouseover="this.style.background='var(--light-color)'" onmouseout="this.style.background='transparent'">
+                        <button class="icon-btn icon-btn-link" onclick="generateAgentLink('${id}')" title="Generate Link">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
                             </svg>
-                                    Generate Link
                         </button>
-                                <button class="dropdown-menu-item" onclick="closeAgentMenu('${id}'); editAgent('${id}');" style="width: 100%; text-align: left; padding: 10px 16px; border: none; background: none; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-color); transition: background 0.2s;" onmouseover="this.style.background='var(--light-color)'" onmouseout="this.style.background='transparent'">
+                        <button class="icon-btn icon-btn-edit" onclick="editAgent('${id}')" title="Edit Agent">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                             </svg>
-                                    Edit
                         </button>
-                                <div style="height: 1px; background: var(--border-color); margin: 4px 0;"></div>
-                                <button class="dropdown-menu-item" onclick="closeAgentMenu('${id}'); deleteAgent('${id}');" style="width: 100%; text-align: left; padding: 10px 16px; border: none; background: none; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--danger-color); transition: background 0.2s;" onmouseover="this.style.background='rgba(220, 38, 38, 0.1)'" onmouseout="this.style.background='transparent'">
+                        <button class="icon-btn icon-btn-danger" onclick="deleteAgent('${id}')" title="Delete Agent">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                             </svg>
-                                    Delete
                         </button>
-                            </div>
-                        </div>
                     </div>
                 </td>
             `;
@@ -4126,14 +4111,14 @@ function renderCachedAgentsData() {
                 <span style="font-weight: 600; color: ${successRate >= 70 ? 'var(--success-color)' : successRate >= 50 ? 'var(--warning-color)' : 'var(--text-light)'};">${successRate}%</span>
             </td>
             <td>
-                <div class="table-actions-compact" style="display: flex; align-items: center; gap: 8px;">
+                <div class="table-actions-compact" style="display: flex; align-items: center; gap: 6px; flex-wrap: nowrap;">
                     <button class="icon-btn" onclick="viewAgentDetails('${id}')" title="View Details">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                             <circle cx="12" cy="12" r="3"></circle>
                         </svg>
                     </button>
-                    <button class="icon-btn" onclick="viewAssignedVotersList('${id}')" title="View List">
+                    <button class="icon-btn" onclick="viewAssignedVotersList('${id}')" title="View Assigned Voters">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="8" y1="6" x2="21" y2="6"></line>
                             <line x1="8" y1="12" x2="21" y2="12"></line>
@@ -4143,39 +4128,24 @@ function renderCachedAgentsData() {
                             <line x1="3" y1="18" x2="3.01" y2="18"></line>
                         </svg>
                     </button>
-                    <div class="dropdown-menu-container" style="position: relative;">
-                        <button class="icon-btn" onclick="toggleAgentMenu('${id}')" title="More Options">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="1"></circle>
-                                <circle cx="12" cy="5" r="1"></circle>
-                                <circle cx="12" cy="19" r="1"></circle>
-                            </svg>
-                        </button>
-                        <div id="agent-menu-${id}" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: var(--shadow-lg); z-index: 1000; min-width: 180px; margin-top: 4px;">
-                            <button class="dropdown-menu-item" onclick="closeAgentMenu('${id}'); generateAgentLink('${id}');" style="width: 100%; text-align: left; padding: 10px 16px; border: none; background: none; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-color); transition: background 0.2s;" onmouseover="this.style.background='var(--light-color)'" onmouseout="this.style.background='transparent'">
+                    <button class="icon-btn icon-btn-link" onclick="generateAgentLink('${id}')" title="Generate Link">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
                         </svg>
-                                Generate Link
                     </button>
-                            <button class="dropdown-menu-item" onclick="closeAgentMenu('${id}'); editAgent('${id}');" style="width: 100%; text-align: left; padding: 10px 16px; border: none; background: none; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-color); transition: background 0.2s;" onmouseover="this.style.background='var(--light-color)'" onmouseout="this.style.background='transparent'">
+                    <button class="icon-btn icon-btn-edit" onclick="editAgent('${id}')" title="Edit Agent">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
-                                Edit
                     </button>
-                            <div style="height: 1px; background: var(--border-color); margin: 4px 0;"></div>
-                            <button class="dropdown-menu-item" onclick="closeAgentMenu('${id}'); deleteAgent('${id}');" style="width: 100%; text-align: left; padding: 10px 16px; border: none; background: none; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--danger-color); transition: background 0.2s;" onmouseover="this.style.background='rgba(220, 38, 38, 0.1)'" onmouseout="this.style.background='transparent'">
+                    <button class="icon-btn icon-btn-danger" onclick="deleteAgent('${id}')" title="Delete Agent">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         </svg>
-                                Delete
                     </button>
-                        </div>
-                    </div>
                 </div>
             </td>
         `;
@@ -11419,37 +11389,84 @@ window.viewAssignedVotersList = viewAssignedVotersList;
 window.downloadAssignedVotersList = downloadAssignedVotersList;
 
 // Toggle agent menu dropdown
-function toggleAgentMenu(agentId) {
-    // Close all other menus first
-    document.querySelectorAll('.dropdown-menu').forEach(menu => {
-        if (menu.id !== `agent-menu-${agentId}`) {
-            menu.style.display = 'none';
+// Initialize Agent Actions Menu with Event Delegation
+(function initAgentActionsMenu() {
+    // Use event delegation on the document for dynamic content
+    document.addEventListener('click', function(e) {
+        const trigger = e.target.closest('.agent-menu-trigger');
+        const actionBtn = e.target.closest('.agent-action-btn');
+        const wrapper = e.target.closest('.agent-actions-wrapper');
+
+        // Handle menu trigger click
+        if (trigger) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            const agentId = trigger.getAttribute('data-agent-id');
+            const menu = document.querySelector(`.agent-actions-menu[data-menu-for="${agentId}"]`);
+            const allMenus = document.querySelectorAll('.agent-actions-menu');
+
+            // Close all other menus
+            allMenus.forEach(m => {
+                if (m !== menu) {
+                    m.classList.remove('is-open');
+                }
+            });
+
+            // Toggle current menu
+            if (menu) {
+                menu.classList.toggle('is-open');
+            }
+            return;
+        }
+
+        // Handle action button click
+        if (actionBtn) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            const agentId = actionBtn.getAttribute('data-agent-id');
+            const action = actionBtn.getAttribute('data-action');
+            const menu = actionBtn.closest('.agent-actions-menu');
+
+            // Close menu
+            if (menu) {
+                menu.classList.remove('is-open');
+            }
+
+            // Execute action
+            if (action === 'link') {
+                if (typeof generateAgentLink === 'function') {
+                    generateAgentLink(agentId);
+                }
+            } else if (action === 'edit') {
+                if (typeof editAgent === 'function') {
+                    editAgent(agentId);
+                }
+            } else if (action === 'delete') {
+                if (typeof deleteAgent === 'function') {
+                    deleteAgent(agentId);
+                }
+            }
+            return;
+        }
+
+        // Close all menus when clicking outside
+        if (!wrapper) {
+            document.querySelectorAll('.agent-actions-menu').forEach(menu => {
+                menu.classList.remove('is-open');
+            });
         }
     });
 
-    // Toggle current menu
-    const menu = document.getElementById(`agent-menu-${agentId}`);
-    if (menu) {
-        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-    }
-}
+    // Handle Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.agent-actions-menu').forEach(menu => {
+                menu.classList.remove('is-open');
+            });
+        }
+    });
 
-// Close agent menu
-function closeAgentMenu(agentId) {
-    const menu = document.getElementById(`agent-menu-${agentId}`);
-    if (menu) {
-        menu.style.display = 'none';
-    }
-}
-
-// Close all dropdown menus when clicking outside
-document.addEventListener('click', function(event) {
-    if (!event.target.closest('.dropdown-menu-container')) {
-        document.querySelectorAll('.dropdown-menu').forEach(menu => {
-            menu.style.display = 'none';
-        });
-    }
-});
-
-window.toggleAgentMenu = toggleAgentMenu;
-window.closeAgentMenu = closeAgentMenu;
+    console.log('[Agent Actions] Menu system initialized with event delegation');
+})();
