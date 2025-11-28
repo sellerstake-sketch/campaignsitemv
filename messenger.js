@@ -97,9 +97,28 @@ function initMessenger() {
         messengerEnabled = true;
         updateMessengerVisibility();
 
-        // Set agent email for messaging (use agent ID or name)
-        userEmail = `agent_${window.agentData.id}`;
+        // Set agent email for messaging (must match the format used in onlineUsers: agent_${id})
+        // This format is used to create conversation IDs consistently
+        if (window.agentData && window.agentData.id) {
+            userEmail = `agent_${window.agentData.id}`;
+        } else {
+            console.error('[Messenger] Agent ID not found in agentData');
+            return; // Can't proceed without agent ID
+        }
         userSerialNumber = null; // Agents don't use serial numbers
+
+        // Set currentUser for agent (needed for some checks)
+        // Create a minimal user object for agents
+        currentUser = {
+            email: userEmail,
+            uid: window.agentData.id || userEmail
+        };
+
+        console.log('[Messenger] Agent portal initialized:', {
+            userEmail,
+            agentId: window.agentData.id,
+            campaignEmail: window.campaignEmail
+        });
 
         // Load online users (Campaign Manager + other agents)
         loadOnlineUsers();
@@ -453,12 +472,12 @@ async function loadOnlineUsersBySerialNumber() {
         return;
     }
 
-    if (!userSerialNumber) return;
-
+    // For all campaign managers (not just admin), show all online users
+    // This allows all campaign managers to see and chat with each other
     try {
+        // Load all users (not just same serial number) so all campaign managers can see each other
         const usersQuery = query(
             collection(db, 'users'),
-            where('serialNumber', '==', userSerialNumber),
             where('email', '!=', userEmail)
         );
 
@@ -466,16 +485,20 @@ async function loadOnlineUsersBySerialNumber() {
             onlineUsers = [];
             snapshot.forEach((doc) => {
                 const userData = doc.data();
-                onlineUsers.push({
-                    id: doc.id,
-                    email: doc.id,
-                    name: userData.email.split('@')[0] || 'User',
-                    isOnline: userData.isOnline || false,
-                    agentCode: userData.agentCode || null,
-                    isCampaignManager: false,
-                    isAdmin: false,
-                    lastSeen: userData.lastSeen
-                });
+                // Only show users who have completed campaign setup (have serialNumber)
+                if (userData.serialNumber && userData.campaignSet) {
+                    onlineUsers.push({
+                        id: doc.id,
+                        email: doc.id,
+                        name: userData.campaignName || userData.email.split('@')[0] || 'User',
+                        isOnline: userData.isOnline || false,
+                        agentCode: userData.agentCode || null,
+                        isCampaignManager: true,
+                        isAdmin: false,
+                        lastSeen: userData.lastSeen,
+                        campaignName: userData.campaignName || null
+                    });
+                }
             });
 
             // Add admin to online users if admin is online
@@ -1064,10 +1087,16 @@ async function sendMessage() {
 
 // Listen for new messages
 function listenForMessages() {
-    if (!userEmail || !userSerialNumber) return;
+    if (!userEmail) return;
+
+    // For agents, userSerialNumber is null, so allow them to listen for messages
+    // For regular users, require userSerialNumber
+    const isAgentPortal = window.agentData && window.campaignEmail;
+    if (!isAgentPortal && !userSerialNumber) return;
 
     // This will be handled per conversation when opened
     // We can also set up a global listener for unread counts
+    console.log('[Messenger] Listening for messages for:', userEmail);
 }
 
 // Initialize when DOM is ready

@@ -460,6 +460,43 @@ function showScreen(screenId) {
 let loadingProgressInterval = null;
 let currentProgress = 0;
 
+// Page Loading Tracker
+let pageLoadingTracker = {
+    pages: new Set(),
+    loadedPages: new Set(),
+    isLoading: false,
+    onAllPagesLoaded: null
+};
+
+function trackPageLoad(pageName) {
+    if (!pageLoadingTracker.isLoading) return;
+    pageLoadingTracker.loadedPages.add(pageName);
+    console.log(`[Page Tracker] Page loaded: ${pageName} (${pageLoadingTracker.loadedPages.size}/${pageLoadingTracker.pages.size})`);
+
+    // Check if all pages are loaded
+    if (pageLoadingTracker.loadedPages.size >= pageLoadingTracker.pages.size) {
+        console.log('[Page Tracker] All pages loaded!');
+        if (pageLoadingTracker.onAllPagesLoaded) {
+            pageLoadingTracker.onAllPagesLoaded();
+        }
+    }
+}
+
+function startPageTracking(pages, onComplete) {
+    pageLoadingTracker.pages = new Set(pages);
+    pageLoadingTracker.loadedPages = new Set();
+    pageLoadingTracker.isLoading = true;
+    pageLoadingTracker.onAllPagesLoaded = onComplete;
+    console.log(`[Page Tracker] Started tracking ${pages.length} pages:`, pages);
+}
+
+function stopPageTracking() {
+    pageLoadingTracker.isLoading = false;
+    pageLoadingTracker.pages.clear();
+    pageLoadingTracker.loadedPages.clear();
+    pageLoadingTracker.onAllPagesLoaded = null;
+}
+
 function showLoading(show = true, options = {}) {
     // Try both loading-overlay (main app) and loading-screen (agent portal)
     const overlay = document.getElementById('loading-overlay') || document.getElementById('loading-screen');
@@ -467,6 +504,7 @@ function showLoading(show = true, options = {}) {
     const subtitleEl = document.getElementById('loading-subtitle');
     const percentageEl = document.getElementById('loading-percentage');
     const progressBar = document.getElementById('loading-progress-bar');
+    const workspaceScreen = document.getElementById('workspace-screen');
 
     if (!overlay) {
         // This is expected in some pages - no error needed
@@ -474,6 +512,11 @@ function showLoading(show = true, options = {}) {
     }
 
     if (show) {
+        // Add blur to workspace screen
+        if (workspaceScreen) {
+            workspaceScreen.classList.add('loading-blur');
+        }
+
         // Reset progress
         currentProgress = options.percent || 0;
 
@@ -508,6 +551,11 @@ function showLoading(show = true, options = {}) {
             overlay.classList.add('active');
         }
     } else {
+        // Remove blur from workspace screen
+        if (workspaceScreen) {
+            workspaceScreen.classList.remove('loading-blur');
+        }
+
         // Hide overlay immediately
         overlay.style.display = 'none';
         if (overlay.classList) {
@@ -1947,6 +1995,13 @@ async function loadWorkspace(data) {
         // Switch to workspace screen IMMEDIATELY - show UI first
         showScreen('workspace-screen');
 
+        // Initialize profile dropdown immediately when workspace is shown
+        setTimeout(() => {
+            if (typeof initializeProfileDropdown === 'function') {
+                initializeProfileDropdown();
+            }
+        }, 100);
+
         // Update sidebar IMMEDIATELY (progressive rendering)
         try {
             const campaignNameEl = document.getElementById('sidebar-campaign-name');
@@ -2010,6 +2065,23 @@ async function loadWorkspace(data) {
             }, 2000); // Wait 2 seconds for everything to initialize
         }
 
+        // Start page loading tracking for critical pages that load data on initialization
+        const criticalPages = ['dashboard', 'voters'];
+        const allPages = ['dashboard', 'voters', 'candidates', 'events', 'calls', 'pledges', 'agents', 'analytics', 'settings'];
+
+        startPageTracking(allPages, () => {
+            // All pages loaded - hide loading screen
+            console.log('[loadWorkspace] All pages loaded successfully ✓');
+            const subtitleEl = document.getElementById('loading-subtitle');
+            if (subtitleEl) {
+                subtitleEl.textContent = 'Application ready!';
+            }
+            setTimeout(() => {
+                showLoading(false);
+                stopPageTracking();
+            }, 500); // Small delay to show completion
+        });
+
         // Load dashboard content IMMEDIATELY (will use cache if available)
         if (typeof loadPageContent === 'function') {
             loadPageContent('dashboard');
@@ -2022,32 +2094,51 @@ async function loadWorkspace(data) {
                 loadNotifications();
             }
 
-            // Load dashboard data
+            // Load dashboard data and track it
             if (typeof loadDashboardData === 'function') {
-                await loadDashboardData(true); // forceRefresh = true to get latest data
+                updateLoadingProgress(30, 'Loading dashboard data...');
+                try {
+                    await loadDashboardData(true);
+                    trackPageLoad('dashboard');
+                    console.log('[loadWorkspace] Dashboard data loaded ✓');
+                } catch (error) {
+                    console.error('[loadWorkspace] Error loading dashboard data:', error);
+                    trackPageLoad('dashboard'); // Track even on error to prevent hanging
+                }
+            } else {
+                trackPageLoad('dashboard');
             }
 
-            // Load voter data
+            // Load voter data and track it
             if (typeof loadVotersData === 'function') {
-                await loadVotersData(true); // forceRefresh = true to get latest data
+                updateLoadingProgress(50, 'Loading voter data...');
+                try {
+                    await loadVotersData(true);
+                    trackPageLoad('voters');
+                    console.log('[loadWorkspace] Voter data loaded ✓');
+                } catch (error) {
+                    console.error('[loadWorkspace] Error loading voter data:', error);
+                    trackPageLoad('voters'); // Track even on error to prevent hanging
+                }
+            } else {
+                trackPageLoad('voters');
             }
 
-            console.log('[loadWorkspace] Data loading completed ✓');
-
-            // Close loading screen after data is loaded
-            const subtitleEl = document.getElementById('loading-subtitle');
-            if (subtitleEl) {
-                subtitleEl.textContent = 'Application ready!';
-            }
+            // Mark other pages as ready (they load on-demand when navigated to)
+            // Give a small delay to ensure initial pages are rendered
+            updateLoadingProgress(80, 'Preparing application...');
             setTimeout(() => {
-                showLoading(false);
-            }, 500); // Small delay to show completion
+                ['candidates', 'events', 'calls', 'pledges', 'agents', 'analytics', 'settings'].forEach(page => {
+                    trackPageLoad(page);
+                });
+                console.log('[loadWorkspace] All pages marked as ready ✓');
+            }, 1500); // Give time for initial pages to render
+
+            console.log('[loadWorkspace] Initial data loading completed ✓');
         } catch (preloadError) {
             console.error('[loadWorkspace] Error loading data:', preloadError);
-            // Close loading screen even on error
-            setTimeout(() => {
-                showLoading(false);
-            }, 500);
+            // Track all pages as loaded even on error to prevent hanging
+            allPages.forEach(page => trackPageLoad(page));
         }
 
         console.log('[loadWorkspace] Workspace initialized successfully ✓');
@@ -2058,28 +2149,24 @@ async function loadWorkspace(data) {
     }
 }
 
-// Update breadcrumb function
+// Update breadcrumb function - Only show Home button
 function updateBreadcrumb(currentSection) {
     const breadcrumb = document.getElementById('breadcrumb');
     if (breadcrumb) {
-        const sectionNames = {
-            'dashboard': 'Dashboard',
-            'zero-day': 'Zero Day',
-            'candidates': 'Candidate Management',
-            'voters': 'Voter Database',
-            'events': 'Campaign Events',
-            'calls': 'Call Management',
-            'pledges': 'Pledge Tracker',
-            'agents': 'Agent Assignment',
-            'analytics': 'Analytics',
-            'settings': 'Settings'
-        };
-        const displayName = sectionNames[currentSection] || currentSection;
         breadcrumb.innerHTML = `
-            <a href="#" class="breadcrumb-item">Home</a>
-            <span class="breadcrumb-separator">/</span>
-            <span class="breadcrumb-item active">${displayName}</span>
+            <a href="#" class="breadcrumb-item" id="breadcrumb-home">Home</a>
         `;
+
+        // Add click handler to navigate to dashboard
+        const homeLink = document.getElementById('breadcrumb-home');
+        if (homeLink) {
+            homeLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (typeof loadPageContent === 'function') {
+                    loadPageContent('dashboard');
+                }
+            });
+        }
     }
 }
 
@@ -2088,6 +2175,17 @@ window.updateBreadcrumb = updateBreadcrumb;
 
 // Initialize workspace functionality
 function initializeWorkspace() {
+    // Initialize Home breadcrumb link
+    const breadcrumbHome = document.getElementById('breadcrumb-home');
+    if (breadcrumbHome) {
+        breadcrumbHome.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof loadPageContent === 'function') {
+                loadPageContent('dashboard');
+            }
+        });
+    }
+
     // Workspace Navigation - Use event delegation to handle dynamically added nav items
     // Remove existing listener if any (to prevent duplicates)
     const navContainer = document.querySelector('.sidebar-nav') || document.querySelector('.nav');
@@ -2204,26 +2302,8 @@ function initializeWorkspace() {
         });
     }
 
-    // Profile Dropdown
-    const profileBtn = document.getElementById('profile-btn');
-    if (profileBtn) {
-        profileBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const profileMenu = document.getElementById('profile-menu');
-            if (profileMenu) {
-                profileMenu.classList.toggle('show');
-            }
-        });
-    }
-
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.profile-dropdown')) {
-            const profileMenu = document.getElementById('profile-menu');
-            if (profileMenu) {
-                profileMenu.classList.remove('show');
-            }
-        }
-    });
+    // Profile Dropdown - Initialize using the dedicated function
+    initializeProfileDropdown();
 }
 
 // Logout
@@ -2884,3 +2964,82 @@ if (document.readyState === 'loading') {
 
 // Make initIcons globally available
 window.initIcons = initIcons;
+
+// Make page tracking functions globally available
+window.trackPageLoad = trackPageLoad;
+window.startPageTracking = startPageTracking;
+window.stopPageTracking = stopPageTracking;
+
+// Initialize Profile Dropdown (fallback - ensures it works even if initializeWorkspace hasn't run)
+function initializeProfileDropdown() {
+    const profileBtn = document.getElementById('profile-btn');
+    const profileMenu = document.getElementById('profile-menu');
+
+    if (!profileBtn || !profileMenu) {
+        console.warn('[Profile Dropdown] Profile button or menu not found');
+        return;
+    }
+
+    // Only attach click listener once
+    if (!profileBtn.hasAttribute('data-listener-attached')) {
+        profileBtn.setAttribute('data-listener-attached', 'true');
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            const isShowing = profileMenu.classList.contains('show');
+            // Close all other dropdowns first
+            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                if (menu !== profileMenu) {
+                    menu.classList.remove('show');
+                }
+            });
+            // Toggle this dropdown
+            profileMenu.classList.toggle('show');
+            console.log('[Profile Dropdown] Toggled, isShowing:', !isShowing);
+        });
+        console.log('[Profile Dropdown] Click listener attached');
+    }
+
+    // Click outside to close - only add once globally
+    if (!window.profileDropdownClickHandler) {
+        window.profileDropdownClickHandler = (e) => {
+            if (!e.target.closest('.profile-dropdown')) {
+                const menu = document.getElementById('profile-menu');
+                if (menu && menu.classList.contains('show')) {
+                    menu.classList.remove('show');
+                    console.log('[Profile Dropdown] Closed by outside click');
+                }
+            }
+        };
+        document.addEventListener('click', window.profileDropdownClickHandler);
+        console.log('[Profile Dropdown] Outside click handler attached');
+    }
+
+    window.profileDropdownInitialized = true;
+    console.log('[Profile Dropdown] Initialized successfully');
+}
+
+// Try to initialize profile dropdown when workspace screen becomes visible
+const profileDropdownObserver = new MutationObserver(() => {
+    const workspaceScreen = document.getElementById('workspace-screen');
+    if (workspaceScreen && workspaceScreen.style.display !== 'none') {
+        initializeProfileDropdown();
+    }
+});
+
+// Start observing when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        const workspaceScreen = document.getElementById('workspace-screen');
+        if (workspaceScreen) {
+            profileDropdownObserver.observe(workspaceScreen, {
+                attributes: true,
+                attributeFilter: ['style', 'class']
+            });
+        }
+        // Also try immediately
+        setTimeout(initializeProfileDropdown, 500);
+    });
+} else {
+    setTimeout(initializeProfileDropdown, 500);
+}

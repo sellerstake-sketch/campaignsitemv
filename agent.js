@@ -17,7 +17,8 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import {
     getAuth,
-    signOut
+    signOut,
+    signInAnonymously
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import {
     getFirestore,
@@ -64,6 +65,21 @@ async function updateAgentPresence(isOnline) {
 // Initialize agent portal
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Agent Portal] Initializing...');
+
+    // Sign in anonymously for Firestore access (required for messenger)
+    try {
+        const userCredential = await signInAnonymously(auth);
+        console.log('[Agent Portal] Anonymous authentication successful', {
+            uid: userCredential.user.uid,
+            isAnonymous: userCredential.user.isAnonymous
+        });
+    } catch (error) {
+        console.error('[Agent Portal] Error signing in anonymously:', error);
+        // Show error to user if anonymous auth fails
+        if (error.code === 'auth/operation-not-allowed') {
+            alert('Anonymous authentication is not enabled in Firebase. Please contact your administrator.');
+        }
+    }
 
     // Hide loading screen initially, show access code modal
     // Don't check URL for code anymore - always prompt for access code
@@ -207,10 +223,28 @@ async function validateAgentCode(agentCode) {
         }
         window.agentName = currentAgentData.name || 'Agent';
 
-        // Set agent as online
-        updateAgentPresence(true).catch(err => {
-            console.error('Error setting agent online:', err);
-        });
+        // Set agent as online (ensure auth is ready first)
+        // Wait a moment to ensure anonymous auth is complete
+        setTimeout(async () => {
+            try {
+                // Verify auth state before updating
+                if (auth.currentUser) {
+                    await updateAgentPresence(true);
+                } else {
+                    console.warn('[Agent Portal] Not authenticated yet, retrying...');
+                    // Retry after auth state is ready
+                    setTimeout(async () => {
+                        if (auth.currentUser) {
+                            await updateAgentPresence(true);
+                        } else {
+                            console.error('[Agent Portal] Failed to authenticate - cannot update presence');
+                        }
+                    }, 1000);
+                }
+            } catch (err) {
+                console.error('Error setting agent online:', err);
+            }
+        }, 500);
 
         updateLoadingProgress(60, 'Loading assigned voters...');
 

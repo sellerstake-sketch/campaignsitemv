@@ -270,7 +270,7 @@
 /* Admin Stats Grid */
 .stats-grid-admin {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     margin-bottom: 30px;
 }
@@ -278,12 +278,14 @@
 .stat-card-admin {
     background: var(--white);
     border-radius: 12px;
-    padding: 20px;
+    padding: 16px 20px;
     box-shadow: var(--shadow);
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     transition: var(--transition);
+    min-width: 0;
+    /* Allow cards to shrink if needed */
 }
 
 .stat-card-admin:hover {
@@ -292,9 +294,9 @@
 }
 
 .stat-icon-admin {
-    width: 56px;
-    height: 56px;
-    border-radius: 12px;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -302,8 +304,8 @@
 }
 
 .stat-icon-admin svg {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     color: white;
 }
 
@@ -325,14 +327,15 @@
 
 .stat-content-admin h3 {
     margin: 0 0 4px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-light);
+    white-space: nowrap;
 }
 
 .stat-number-admin {
     margin: 0;
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 600;
     color: var(--text-color);
 }
@@ -914,7 +917,9 @@ label span[data-icon] svg {
     }
 
     .stats-grid-admin {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        /* Reduced gap for mobile */
     }
 
     .admin-content {
@@ -1042,6 +1047,12 @@ label span[data-icon] svg {
 
 /* Extra small mobile devices */
 @media (max-width: 480px) {
+    .stats-grid-admin {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        /* Even smaller gap for very small screens */
+    }
+
     .admin-content {
         padding: 15px 10px;
     }
