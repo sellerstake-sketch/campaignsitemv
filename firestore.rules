@@ -264,6 +264,12 @@ service cloud.firestore {
       // This is limited to queries that filter by campaignEmail matching the callLink
       allow read: if request.auth == null && 
                    resource.data.campaignEmail != null;
+                   
+      // Allow anonymous users (signed in but no email) to read voters by campaignEmail
+      // This allows call link users who sign in anonymously to search voters
+      allow read: if request.auth != null && 
+                   (request.auth.token.email == null || request.auth.token.email == '') &&
+                   resource.data.campaignEmail != null;
       
       // Users can update/delete voters for their own campaign
       allow update, delete: if request.auth != null && 

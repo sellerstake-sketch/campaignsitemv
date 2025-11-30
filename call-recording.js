@@ -16,7 +16,8 @@ import {
     initializeApp
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import {
-    getAuth
+    getAuth,
+    signInAnonymously
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import {
     getFirestore,
@@ -49,6 +50,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!linkId) {
         showAccessCodeError('Invalid link. No link ID found.');
+        return;
+    }
+
+    // Sign in anonymously for Firestore access (required for voter queries)
+    try {
+        const userCredential = await signInAnonymously(auth);
+        console.log('[Call Recording] Anonymous authentication successful', {
+            uid: userCredential.user.uid,
+            isAnonymous: userCredential.user.isAnonymous
+        });
+    } catch (error) {
+        console.error('[Call Recording] Error signing in anonymously:', error);
+        // Show error to user if anonymous auth fails
+        if (error.code === 'auth/operation-not-allowed') {
+            showAccessCodeError('Authentication is not enabled. Please contact your administrator.');
+        } else {
+            showAccessCodeError('Failed to initialize. Please check your connection and try again.');
+        }
         return;
     }
 
@@ -161,7 +180,7 @@ async function validateAccessCode(accessCode) {
 }
 
 // Show call recording interface
-function showCallRecordingInterface() {
+async function showCallRecordingInterface() {
     const modal = document.getElementById('access-code-modal');
     const container = document.getElementById('call-recording-container');
     const mainContent = document.getElementById('call-recording-main');
@@ -169,9 +188,9 @@ function showCallRecordingInterface() {
     if (modal) modal.style.display = 'none';
     if (container) container.style.display = 'block';
 
-    // Load call form
+    // Load call form (await to ensure it completes)
     if (mainContent && currentLinkData) {
-        loadCallForm(mainContent);
+        await loadCallForm(mainContent);
     }
 
     // Setup logout button
@@ -186,7 +205,7 @@ function showCallRecordingInterface() {
 }
 
 // Load call form
-function loadCallForm(container) {
+async function loadCallForm(container) {
     if (!currentLinkData || !currentLinkData.callerNames || currentLinkData.callerNames.length === 0) {
         container.innerHTML = `
             <div style="text-align: center; padding: 40px;">
@@ -250,13 +269,10 @@ function loadCallForm(container) {
                 <label for="call-status">Call Status *</label>
                 <select id="call-status" name="call-status" required>
                     <option value="">Select status</option>
-                    <option value="Answered">Answered</option>
-                    <option value="No Answer">No Answer</option>
-                    <option value="Busy">Busy</option>
-                    <option value="Wrong Number">Wrong Number</option>
-                    <option value="Not Interested">Not Interested</option>
-                    <option value="Interested">Interested</option>
-                    <option value="Pledged">Pledged</option>
+                    <option value="answered">Answered</option>
+                    <option value="no-answer">No Answer</option>
+                    <option value="busy">Busy</option>
+                    <option value="failed">Failed</option>
                 </select>
             </div>
 
@@ -281,8 +297,8 @@ function loadCallForm(container) {
         dateInput.value = today;
     }
 
-    // Setup voter name search
-    setupVoterSearch();
+    // Setup voter name search (await to ensure voters are loaded)
+    await setupVoterSearch();
 
     // Setup form submission
     const form = document.getElementById('call-recording-form');
@@ -321,6 +337,9 @@ async function setupVoterSearch() {
 
     // Filter and display voters
     function filterVoters(searchTerm) {
+        console.log('[Call Recording] Filtering voters with term:', searchTerm);
+        console.log('[Call Recording] Total voters available:', allVotersForCall.length);
+
         if (!searchTerm || searchTerm.trim() === '') {
             voterDropdown.style.display = 'none';
             return;
@@ -340,6 +359,8 @@ async function setupVoterSearch() {
                 island.includes(term) ||
                 address.includes(term);
         }).slice(0, 20); // Limit to 20 results for performance
+
+        console.log('[Call Recording] Filtered voters:', filtered.length);
 
         if (filtered.length === 0) {
             voterDropdown.innerHTML = '<div style="padding: 15px; text-align: center; color: var(--text-light);">No voters found</div>';
@@ -406,16 +427,42 @@ async function setupVoterSearch() {
 
     // Search input handler with debounce
     const debouncedFilter = debounceSearch(filterVoters, 300);
-    voterInput.addEventListener('input', (e) => {
-        debouncedFilter(e.target.value);
-    });
+
+    // Remove any existing listeners by cloning the input
+    const newVoterInput = voterInput.cloneNode(true);
+    voterInput.parentNode.replaceChild(newVoterInput, voterInput);
+    const updatedVoterInput = document.getElementById('call-voter-name');
+
+    if (updatedVoterInput) {
+        updatedVoterInput.addEventListener('input', (e) => {
+            console.log('[Call Recording] Search input changed:', e.target.value);
+            debouncedFilter(e.target.value);
+        });
+
+        updatedVoterInput.addEventListener('focus', () => {
+            console.log('[Call Recording] Voter input focused');
+            if (updatedVoterInput.value.trim()) {
+                filterVoters(updatedVoterInput.value);
+            }
+        });
+    }
 
     // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!voterInput.contains(e.target) && !voterDropdown.contains(e.target)) {
-            voterDropdown.style.display = 'none';
+    const clickOutsideHandler = (e) => {
+        const updatedInput = document.getElementById('call-voter-name');
+        const updatedDropdown = document.getElementById('call-voter-dropdown');
+        if (updatedInput && updatedDropdown &&
+            !updatedInput.contains(e.target) &&
+            !updatedDropdown.contains(e.target)) {
+            updatedDropdown.style.display = 'none';
         }
-    });
+    };
+
+    // Use a single document-level listener
+    document.removeEventListener('click', clickOutsideHandler); // Remove if exists
+    document.addEventListener('click', clickOutsideHandler);
+
+    console.log('[Call Recording] Voter search setup completed. Voters loaded:', allVotersForCall.length);
 }
 
 // Load all voters for the campaign
@@ -423,8 +470,11 @@ async function loadVotersForCall() {
     try {
         if (!currentLinkData || !currentLinkData.campaignEmail) {
             console.warn('[Call Recording] No campaign email available for voter loading');
+            allVotersForCall = [];
             return;
         }
+
+        console.log('[Call Recording] Loading voters for campaign:', currentLinkData.campaignEmail);
 
         const {
             collection,
@@ -439,6 +489,8 @@ async function loadVotersForCall() {
         );
 
         const snapshot = await getDocs(votersQuery);
+        console.log('[Call Recording] Voters query result:', snapshot.size, 'documents');
+
         allVotersForCall = snapshot.docs.map(doc => {
             const data = doc.data();
             return {
@@ -452,10 +504,20 @@ async function loadVotersForCall() {
             };
         });
 
-        console.log(`[Call Recording] Loaded ${allVotersForCall.length} voters for campaign`);
+        console.log(`[Call Recording] Successfully loaded ${allVotersForCall.length} voters for campaign`);
+
+        if (allVotersForCall.length === 0) {
+            console.warn('[Call Recording] No voters found for this campaign. Check if campaignEmail matches.');
+        }
     } catch (error) {
         console.error('[Call Recording] Error loading voters:', error);
+        console.error('[Call Recording] Error details:', error.message, error.code);
         allVotersForCall = [];
+
+        // Show user-friendly error if possible
+        if (window.showError) {
+            window.showError('Failed to load voters. Please check your connection and try again.', 'Error');
+        }
     }
 }
 
