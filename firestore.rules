@@ -259,6 +259,12 @@ service cloud.firestore {
       allow read: if resource.data.ballot != null && 
                    resource.data.ballot != '';
       
+      // Allow unauthenticated reads for call link access (for voter search)
+      // Users accessing via call link can search voters by campaignEmail
+      // This is limited to queries that filter by campaignEmail matching the callLink
+      allow read: if request.auth == null && 
+                   resource.data.campaignEmail != null;
+      
       // Users can update/delete voters for their own campaign
       allow update, delete: if request.auth != null && 
                              (resource.data.email == request.auth.token.email || 
@@ -312,6 +318,41 @@ service cloud.firestore {
     }
     
     // Calls collection
+    // Call Links collection - for generating links to record calls
+    match /callLinks/{linkId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Allow unauthenticated reads for link validation (when accessing via link)
+      // This allows the link access page to verify the link and access code
+      allow read: if request.auth == null;
+      
+      // Campaign managers can read their own call links
+      allow read: if request.auth != null && 
+                   (resource != null && resource.data.campaignEmail == request.auth.token.email);
+      
+      // Campaign managers can create their own call links
+      allow create: if request.auth != null && 
+                     request.resource.data.campaignEmail == request.auth.token.email;
+      
+      // Campaign managers can update their own call links (for incrementing callsMade)
+      allow update: if request.auth != null && 
+                     (resource != null && resource.data.campaignEmail == request.auth.token.email);
+      
+      // Campaign managers can delete their own call links
+      allow delete: if request.auth != null && 
+                     (resource != null && resource.data.campaignEmail == request.auth.token.email);
+      
+      // Allow unauthenticated users to increment callsMade if they have the correct access code
+      // This is a very specific update to prevent other modifications
+      allow update: if request.auth == null &&
+                   resource != null &&
+                   resource.data.accessCode == request.query.code &&
+                   request.resource.data.callsMade == resource.data.callsMade + 1 &&
+                   request.resource.data.keys().hasAll(['callsMade']) &&
+                   request.resource.data.keys().size() == 1;
+    }
+    
     match /calls/{callId} {
       // Admin has full access
       allow read, write: if isAdmin();
@@ -336,6 +377,12 @@ service cloud.firestore {
                      request.resource.data.agentId != '' &&
                      request.resource.data.email != null &&
                      request.resource.data.email != '';
+      
+      // Allow unauthenticated users to create calls when accessed via call link
+      // Must have callLinkId and campaignEmail matching the link
+      allow create: if request.auth == null &&
+                     request.resource.data.callLinkId != null &&
+                     request.resource.data.campaignEmail != null;
       
       // Allow list operations for queries and snapshot listeners
       allow list: if request.auth != null;

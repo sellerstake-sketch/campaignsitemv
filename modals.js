@@ -323,7 +323,12 @@ function getCallFormTemplate() {
             <div class="form-row">
                 <div class="form-group">
                     <label for="call-caller-name">Caller Name *</label>
-                    <input type="text" id="call-caller-name" name="call-caller-name" placeholder="Enter caller name" required>
+                    <div id="call-caller-name-container">
+                        <input type="text" id="call-caller-name" name="call-caller-name" placeholder="Enter caller name" required style="display: none;">
+                        <select id="call-caller-name-dropdown" name="call-caller-name-dropdown" required style="display: none;">
+                            <option value="">Select caller name</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="call-date">Call Date *</label>
@@ -909,7 +914,10 @@ async function handleFormSubmit(type, formData) {
                 const callVoterName = formData.get('call-voter-name');
                 const callVoterId = formData.get('call-voter-id');
                 const callVoterPhone = formData.get('call-voter-phone');
-                const callCallerName = formData.get('call-caller-name');
+                // Check both input and dropdown for caller name
+                const callCallerNameInput = formData.get('call-caller-name');
+                const callCallerNameDropdown = formData.get('call-caller-name-dropdown');
+                const callCallerName = callCallerNameDropdown || callCallerNameInput;
                 const callDateValue = formData.get('call-date');
                 const callStatus = formData.get('call-status');
                 const callNotes = formData.get('call-notes');
@@ -1680,6 +1688,30 @@ async function handleFormSubmit(type, formData) {
                 console.log(`[handleFormSubmit] Saving ${type} to collection "${collectionName}":`, JSON.stringify(dataToSave, null, 2));
                 const docRef = await addDoc(collection(window.db, collectionName), dataToSave);
                 console.log(`[handleFormSubmit] Successfully saved ${type} with ID:`, docRef.id);
+
+                // If call was made via link, increment call count
+                if (type === 'call') {
+                    const callLinkId = window.callLinkData.linkId;
+                    if (callLinkId) {
+                        try {
+                            const {
+                                doc,
+                                getDoc,
+                                updateDoc
+                            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                            const linkRef = doc(window.db, 'callLinks', callLinkId);
+                            const linkSnap = await getDoc(linkRef);
+                            if (linkSnap.exists()) {
+                                const currentCount = linkSnap.data().callCount || 0;
+                                await updateDoc(linkRef, {
+                                    callCount: currentCount + 1
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Error incrementing call count:', error);
+                        }
+                    }
+                }
                 console.log(`[handleFormSubmit] Verifying saved data...`);
 
                 // Verify the data was saved correctly
@@ -1857,6 +1889,11 @@ function openModal(type, itemId = null) {
                 } else if (type === 'call') {
                     freshForm.dataset.editCallId = itemId;
                 }
+            }
+
+            // Setup caller dropdown for call form if accessed via link
+            if (type === 'call') {
+                setTimeout(() => setupCallFormForLink(), 100);
             }
 
             freshForm.addEventListener('submit', async (e) => {
@@ -3257,10 +3294,54 @@ function setupTransportationFormTabs() {
     });
 }
 
+// Setup call form for link access
+async function setupCallFormForLink() {
+    const callerInput = document.getElementById('call-caller-name');
+    const callerDropdown = document.getElementById('call-caller-name-dropdown');
+
+    if (!callerInput || !callerDropdown) return;
+
+    // Check if accessed via link (use stored callLinkData)
+    const callLinkData = window.callLinkData;
+
+    // If accessed via link and verified, show dropdown; otherwise show input
+    if (callLinkData && callLinkData.linkId && callLinkData.accessCode) {
+        try {
+            // Use caller names from stored link data (already verified)
+            const callerNames = callLinkData.callerNames || [];
+
+
+            // Populate dropdown with caller names
+            if (callerNames && callerNames.length > 0) {
+                callerDropdown.innerHTML = '<option value="">Select caller name</option>' +
+                    callerNames.map(name => `<option value="${name}">${name}</option>`).join('');
+
+                callerInput.style.display = 'none';
+                callerInput.removeAttribute('required');
+                callerDropdown.style.display = 'block';
+                callerDropdown.setAttribute('required', 'required');
+            }
+        } catch (error) {
+            console.error('Error loading call link:', error);
+            if (window.showError) {
+                window.showError('Failed to load caller names. Please try again.');
+            }
+        }
+    } else {
+        // Normal access - show input field
+        callerInput.style.display = 'block';
+        callerInput.setAttribute('required', 'required');
+        callerDropdown.style.display = 'none';
+        callerDropdown.removeAttribute('required');
+    }
+}
+
 window.openModal = openModal;
 window.setupBallotDropdown = setupBallotDropdown;
 window.closeModal = closeModal;
 window.calculateAge = calculateAge;
+window.setupCallFormForLink = setupCallFormForLink;
+window.ensureModalExists = ensureModalExists;
 
 // Export for module systems
 if (typeof module !== 'undefined' && module.exports) {

@@ -225,10 +225,16 @@ const pageTemplates = {
                 <h1>Call Management</h1>
                 <p class="page-subtitle">Track and manage campaign calls</p>
             </div>
-            <button class="btn-primary btn-compact">
+            <div style="display: flex; gap: 12px;">
+                <button class="btn-secondary btn-compact" onclick="openCallLinkModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; display: inline-block;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    Generate Link
+                </button>
+                <button class="btn-primary btn-compact" onclick="window.openModal('call')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; display: inline-block;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 Make Call
             </button>
+            </div>
         </div>
         
         <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px;">
@@ -12834,3 +12840,565 @@ window.downloadAssignedVotersList = downloadAssignedVotersList;
 
     console.log('[Agent Actions] Menu system initialized with event delegation');
 })();
+
+// ==================== Call Link Generation Functions ====================
+
+// Open Call Link Generation Modal
+async function openCallLinkModal() {
+    if (!window.db || !window.userEmail) {
+        if (window.showError) {
+            window.showError('Database not initialized. Please refresh the page.');
+        }
+        return;
+    }
+
+    // Use the existing modal system
+    if (window.ensureModalExists && typeof window.ensureModalExists === 'function') {
+        const modalOverlay = window.ensureModalExists();
+        const modalBody = document.getElementById('modal-body');
+        const modalTitle = document.getElementById('modal-title');
+
+        if (!modalBody || !modalTitle) {
+            if (window.showError) {
+                window.showError('Modal elements not found. Please refresh the page.');
+            }
+            return;
+        }
+
+        modalTitle.textContent = 'Generate Call Recording Link';
+        modalBody.innerHTML = `
+        <form id="call-link-form" class="modal-form">
+            <div class="form-group">
+                <label for="call-link-callers">Caller Name(s) *</label>
+                <div id="callers-list" style="margin-bottom: 10px;"></div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="call-link-caller-input" placeholder="Enter caller name" style="flex: 1;">
+                    <button type="button" class="btn-secondary btn-compact" onclick="addCallerName()">Add</button>
+                </div>
+                <small style="color: var(--text-light); font-size: 12px; margin-top: 5px; display: block;">Add one or more caller names. These will appear in the dropdown when recording calls via the generated link.</small>
+            </div>
+            <div id="call-link-error" class="error-message" style="display: none;"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary btn-compact" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary btn-compact">Generate Link & Code</button>
+            </div>
+        </form>
+        <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid var(--border-color);">
+            <h3 style="margin-bottom: 16px; font-size: 16px; font-weight: 600;">Generated Links History</h3>
+            <div id="call-links-history" style="max-height: 400px; overflow-y: auto;">
+                <p style="text-align: center; color: var(--text-light); padding: 20px;">Loading history...</p>
+            </div>
+        </div>
+    `;
+
+        // Show modal
+        modalOverlay.style.display = 'flex';
+        if (document.body) {
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Load history
+        await loadCallLinksHistory();
+
+        // Form submission
+        const form = document.getElementById('call-link-form');
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await generateCallLink();
+            });
+        }
+    } else {
+        // Fallback: try to use window.openModal if available
+        if (window.openModal) {
+            // Create a custom modal type or use a workaround
+            console.warn('ensureModalExists not available, using fallback');
+        } else {
+            if (window.showError) {
+                window.showError('Modal system not available. Please refresh the page.');
+            }
+        }
+    }
+}
+
+// Add caller name to list
+let callerNamesList = [];
+
+function addCallerName() {
+    const input = document.getElementById('call-link-caller-input');
+    const name = input.value.trim();
+
+    if (!name) {
+        window.showError('Please enter a caller name.');
+        return;
+    }
+
+    if (callerNamesList.includes(name)) {
+        window.showError('This caller name is already added.');
+        return;
+    }
+
+    callerNamesList.push(name);
+    input.value = '';
+    updateCallersList();
+}
+
+// Update callers list display
+function updateCallersList() {
+    const list = document.getElementById('callers-list');
+    if (!list) return;
+
+    if (callerNamesList.length === 0) {
+        list.innerHTML = '<p style="color: var(--text-light); font-size: 12px; margin: 0;">No callers added yet.</p>';
+        return;
+    }
+
+    list.innerHTML = callerNamesList.map((name, index) => `
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--light-color); border-radius: 8px; margin-bottom: 8px;">
+            <span style="font-size: 14px; font-weight: 500;">${name}</span>
+            <button type="button" onclick="removeCallerName(${index})" style="background: transparent; border: none; color: var(--danger-color); cursor: pointer; padding: 4px 8px; cursor: pointer; border-radius: 4px; transition: background 0.2s;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+    `).join('');
+}
+
+// Remove caller name
+function removeCallerName(index) {
+    callerNamesList.splice(index, 1);
+    updateCallersList();
+}
+
+// Generate call link
+async function generateCallLink() {
+    if (!window.db || !window.userEmail) {
+        window.showError('Database not initialized.');
+        return;
+    }
+
+    if (callerNamesList.length === 0) {
+        window.showError('Please add at least one caller name.');
+        return;
+    }
+
+    const errorDiv = document.getElementById('call-link-error');
+    errorDiv.style.display = 'none';
+
+    try {
+        // Generate access code (6-digit random number)
+        const accessCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Generate unique link ID
+        const linkId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        // Import Firebase functions
+        const {
+            doc,
+            setDoc,
+            serverTimestamp
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Create link document
+        const linkData = {
+            linkId: linkId,
+            accessCode: accessCode,
+            callerNames: callerNamesList,
+            campaignEmail: window.userEmail,
+            createdAt: serverTimestamp(),
+            callsMade: 0,
+            active: true
+        };
+
+        await setDoc(doc(window.db, 'callLinks', linkId), linkData);
+
+        // Reset form
+        callerNamesList = [];
+        updateCallersList();
+
+        // Generate link to dedicated call recording page (like agent.html)
+        // Use a more robust method that works across browsers and devices
+        let baseUrl = '';
+
+        // Method 1: Try to get base URL from current location
+        try {
+            const currentUrl = new URL(window.location.href);
+            // Remove the filename (index.html) from the path
+            const pathParts = currentUrl.pathname.split('/').filter(p => p && !p.endsWith('.html'));
+            const basePath = pathParts.length > 0 ? '/' + pathParts.join('/') + '/' : '/';
+            baseUrl = currentUrl.origin + basePath;
+        } catch (e) {
+            // Fallback: Use origin + current directory
+            const pathname = window.location.pathname;
+            const lastSlash = pathname.lastIndexOf('/');
+            const basePath = lastSlash >= 0 ? pathname.substring(0, lastSlash + 1) : '/';
+            baseUrl = window.location.origin + basePath;
+        }
+
+        // Ensure baseUrl ends with /
+        if (!baseUrl.endsWith('/')) {
+            baseUrl += '/';
+        }
+
+        // Generate link to call-recording.html (will create this page)
+        const linkUrl = `${baseUrl}call-recording.html?linkId=${linkId}`;
+
+        // Close the generation modal first
+        if (window.closeModal) {
+            window.closeModal();
+        }
+
+        // Show results in a new modal
+        showCallLinkResultsModal(linkUrl, accessCode);
+
+        // Reload history
+        await loadCallLinksHistory();
+    } catch (error) {
+        console.error('Error generating call link:', error);
+        errorDiv.textContent = 'Failed to generate link. Please try again.';
+        errorDiv.style.display = 'block';
+    }
+}
+
+// Load call links history
+async function loadCallLinksHistory() {
+    if (!window.db || !window.userEmail) return;
+
+    const historyDiv = document.getElementById('call-links-history');
+    if (!historyDiv) return;
+
+    try {
+        const {
+            collection,
+            query,
+            where,
+            orderBy,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        let snapshot;
+        try {
+            // Try query with orderBy first
+            const q = query(
+                collection(window.db, 'callLinks'),
+                where('campaignEmail', '==', window.userEmail),
+                orderBy('createdAt', 'desc')
+            );
+            snapshot = await getDocs(q);
+        } catch (indexError) {
+            // If index doesn't exist, try without orderBy
+            console.warn('Index not found, fetching without orderBy:', indexError);
+            const q = query(
+                collection(window.db, 'callLinks'),
+                where('campaignEmail', '==', window.userEmail)
+            );
+            snapshot = await getDocs(q);
+        }
+
+        if (snapshot.empty) {
+            historyDiv.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">No links generated yet.</p>';
+            return;
+        }
+
+        const links = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            // Use doc.id as the primary ID, but also check if linkId exists in data
+            links.push({
+                id: doc.id, // Firestore document ID
+                linkId: data.linkId || doc.id, // Stored linkId or fallback to doc.id
+                ...data
+            });
+        });
+
+        // Sort by createdAt descending (client-side) if orderBy wasn't used
+        links.sort((a, b) => {
+            const dateA = a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+            const dateB = b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+            return dateB - dateA;
+        });
+
+        historyDiv.innerHTML = `
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color);">
+                        <th style="text-align: left; padding: 12px; font-size: 13px; font-weight: 600; color: var(--text-color);">Callers</th>
+                        <th style="text-align: left; padding: 12px; font-size: 13px; font-weight: 600; color: var(--text-color);">Date & Time</th>
+                        <th style="text-align: center; padding: 12px; font-size: 13px; font-weight: 600; color: var(--text-color);">Calls</th>
+                        <th style="text-align: center; padding: 12px; font-size: 13px; font-weight: 600; color: var(--text-color);">Code</th>
+                        <th style="text-align: center; padding: 12px; font-size: 13px; font-weight: 600; color: var(--text-color);">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${links.map(link => {
+                        let date;
+                        try {
+                            if (link.createdAt?.toDate) {
+                                date = link.createdAt.toDate();
+                            } else if (link.createdAt?.seconds) {
+                                date = new Date(link.createdAt.seconds * 1000);
+                            } else if (link.createdAt) {
+                                date = new Date(link.createdAt);
+                            } else {
+                                date = new Date();
+                            }
+                        } catch (e) {
+                            date = new Date();
+                        }
+                        
+                        const dateStr = date instanceof Date && !isNaN(date) 
+                            ? date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+                            : 'N/A';
+                        
+                        const callerNamesStr = (link.callerNames && Array.isArray(link.callerNames)) 
+                            ? link.callerNames.join(', ') 
+                            : 'N/A';
+                        
+                        // Use linkId if available, otherwise use doc.id
+                        const deleteId = link.linkId || link.id;
+                        
+                        return '<tr style="border-bottom: 1px solid var(--border-color);">' +
+                            '<td style="padding: 12px; font-size: 13px;">' + callerNamesStr + '</td>' +
+                            '<td style="padding: 12px; font-size: 13px; color: var(--text-light);">' + dateStr + '</td>' +
+                            '<td style="padding: 12px; text-align: center; font-size: 13px; font-weight: 600; color: var(--primary-color);">' + (link.callsMade || 0) + '</td>' +
+                            '<td style="padding: 12px; text-align: center; font-size: 13px; font-family: monospace; color: var(--text-color);">' + (link.accessCode || 'N/A') + '</td>' +
+                            '<td style="padding: 12px; text-align: center;">' +
+                            '<button onclick="deleteCallLink(\'' + deleteId.replace(/'/g, "\\'") + '\')" class="btn-danger btn-compact" style="padding: 6px 12px; font-size: 12px;">Delete</button>' +
+                            '</td>' +
+                            '</tr>';
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+    } catch (error) {
+        console.error('Error loading call links history:', error);
+        let errorMessage = 'Error loading history.';
+        if (error.code === 'failed-precondition') {
+            errorMessage = 'Firestore index required. Please create an index for callLinks collection with fields: campaignEmail (Ascending), createdAt (Descending).';
+        } else if (error.message) {
+            errorMessage = `Error: ${error.message}`;
+        }
+        historyDiv.innerHTML = `<p style="text-align: center; color: var(--danger-color); padding: 20px;">${errorMessage}</p>`;
+    }
+}
+
+// Delete call link
+async function deleteCallLink(linkId) {
+    if (!window.db || !window.userEmail) return;
+
+    // Use custom dialog instead of browser confirm
+    let confirmed = false;
+    if (window.showDialog) {
+        try {
+            confirmed = await window.showDialog({
+                type: 'confirm',
+                title: 'Delete Call Link',
+                message: 'Are you sure you want to delete this link? This action cannot be undone.',
+                confirmText: 'Delete',
+                cancelText: 'Cancel'
+            });
+        } catch (error) {
+            console.error('[deleteCallLink] Error showing confirm dialog:', error);
+            // Fallback to browser confirm
+            confirmed = confirm('Are you sure you want to delete this link? This action cannot be undone.');
+        }
+    } else {
+        // Fallback to browser confirm if custom dialog not available
+        confirmed = confirm('Are you sure you want to delete this link? This action cannot be undone.');
+    }
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const {
+            doc,
+            deleteDoc,
+            getDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        console.log('[deleteCallLink] Attempting to delete link:', linkId);
+        console.log('[deleteCallLink] User email:', window.userEmail);
+
+        // First, verify the document exists and check permissions
+        const linkRef = doc(window.db, 'callLinks', linkId);
+        const linkSnap = await getDoc(linkRef);
+
+        if (!linkSnap.exists()) {
+            console.error('[deleteCallLink] Link not found:', linkId);
+            window.showError('Link not found. It may have already been deleted.');
+            await loadCallLinksHistory(); // Reload to refresh the table
+            return;
+        }
+
+        const linkData = linkSnap.data();
+        console.log('[deleteCallLink] Link data:', linkData);
+        console.log('[deleteCallLink] Link campaignEmail:', linkData.campaignEmail);
+        console.log('[deleteCallLink] Current user email:', window.userEmail);
+
+        // Verify ownership before deleting
+        if (linkData.campaignEmail !== window.userEmail) {
+            console.error('[deleteCallLink] Permission denied - email mismatch');
+            window.showError('Permission denied. You can only delete your own call links.');
+            return;
+        }
+
+        // Delete the document
+        await deleteDoc(linkRef);
+
+        console.log('[deleteCallLink] Link deleted successfully');
+        window.showSuccess('Link deleted successfully.', 'Deleted');
+        await loadCallLinksHistory();
+    } catch (error) {
+        console.error('[deleteCallLink] Error deleting call link:', error);
+        console.error('[deleteCallLink] Error code:', error.code);
+        console.error('[deleteCallLink] Error message:', error.message);
+        console.error('[deleteCallLink] Full error:', error);
+
+        let errorMessage = 'Failed to delete link. Please try again.';
+        if (error.code === 'permission-denied') {
+            errorMessage = 'Permission denied. You can only delete your own call links. Please check the browser console for details.';
+        } else if (error.code === 'not-found') {
+            errorMessage = 'Link not found. It may have already been deleted.';
+        } else if (error.message) {
+            errorMessage = `Failed to delete link: ${error.message}`;
+        }
+
+        window.showError(errorMessage);
+    }
+}
+
+// Show call link results modal
+function showCallLinkResultsModal(linkUrl, accessCode) {
+    const modalOverlay = window.ensureModalExists ? window.ensureModalExists() : null;
+    if (!modalOverlay) {
+        window.showError('Modal system not available.');
+        return;
+    }
+
+    const modalBody = document.getElementById('modal-body');
+    const modalTitle = document.getElementById('modal-title');
+    if (!modalBody || !modalTitle) {
+        window.showError('Modal elements not found.');
+        return;
+    }
+
+    modalTitle.textContent = 'Link & Access Code Generated';
+    modalBody.innerHTML = `
+        <div style="padding: 20px 0;">
+            <div style="background: linear-gradient(135deg, rgba(111, 193, 218, 0.1) 0%, rgba(141, 212, 232, 0.1) 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid rgba(111, 193, 218, 0.2);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary-color);">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-color);">Link Generated Successfully!</h3>
+                </div>
+                <p style="margin: 0; font-size: 13px; color: var(--text-light); line-height: 1.6;">Share the link and access code with your callers. They will need both to access the call recording page.</p>
+            </div>
+
+            <div style="background: var(--light-color); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); margin-bottom: 8px;">Generated Link:</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="text" id="generated-link-input-modal" value="${linkUrl}" readonly style="flex: 1; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; background: white; font-size: 13px; font-family: monospace; cursor: text;">
+                    <button onclick="copyCallLinkFromModal()" class="btn-primary btn-compact" style="padding: 12px 20px; white-space: nowrap;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; display: inline-block; vertical-align: middle;">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Copy Link
+                    </button>
+                </div>
+            </div>
+
+            <div style="background: var(--light-color); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); margin-bottom: 8px;">Access Code:</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="text" id="generated-code-input-modal" value="${accessCode}" readonly style="flex: 1; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; background: white; font-size: 18px; font-family: monospace; font-weight: 600; text-align: center; letter-spacing: 3px; cursor: text;">
+                    <button onclick="copyCallCodeFromModal()" class="btn-primary btn-compact" style="padding: 12px 20px; white-space: nowrap;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; display: inline-block; vertical-align: middle;">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Copy Code
+                    </button>
+                </div>
+                <p style="font-size: 11px; color: var(--text-light); margin-top: 10px; margin-bottom: 0; line-height: 1.5;">
+                    <strong>Important:</strong> Share this access code separately from the link. Users will need to enter it when accessing the link.
+                </p>
+            </div>
+        </div>
+        <div class="modal-footer" style="margin-top: 0; padding-top: 20px; border-top: 1px solid var(--border-color);">
+            <button type="button" class="btn-primary btn-compact" onclick="closeModal()" style="width: 100%;">Done</button>
+        </div>
+    `;
+
+    // Show modal
+    modalOverlay.style.display = 'flex';
+    if (document.body) {
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Select all text in inputs when clicked for easy copying
+    setTimeout(() => {
+        const linkInput = document.getElementById('generated-link-input-modal');
+        const codeInput = document.getElementById('generated-code-input-modal');
+
+        if (linkInput) {
+            linkInput.addEventListener('click', function() {
+                this.select();
+            });
+        }
+
+        if (codeInput) {
+            codeInput.addEventListener('click', function() {
+                this.select();
+            });
+        }
+    }, 100);
+}
+
+// Copy call link from modal
+async function copyCallLinkFromModal() {
+    const linkInput = document.getElementById('generated-link-input-modal');
+    if (linkInput && linkInput.value) {
+        try {
+            await navigator.clipboard.writeText(linkInput.value);
+            window.showSuccess('Link copied to clipboard!', 'Copied');
+        } catch (error) {
+            console.error('Error copying link:', error);
+            // Fallback: select text
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+            window.showError('Failed to copy. Text is selected - press Ctrl+C to copy.');
+        }
+    }
+}
+
+// Copy call code from modal
+async function copyCallCodeFromModal() {
+    const codeInput = document.getElementById('generated-code-input-modal');
+    if (codeInput && codeInput.value) {
+        try {
+            await navigator.clipboard.writeText(codeInput.value);
+            window.showSuccess('Access code copied to clipboard!', 'Copied');
+        } catch (error) {
+            console.error('Error copying code:', error);
+            // Fallback: select text
+            codeInput.select();
+            codeInput.setSelectionRange(0, 99999);
+            window.showError('Failed to copy. Text is selected - press Ctrl+C to copy.');
+        }
+    }
+}
+
+// Make functions globally available
+window.openCallLinkModal = openCallLinkModal;
+window.addCallerName = addCallerName;
+window.removeCallerName = removeCallerName;
+window.deleteCallLink = deleteCallLink;
+window.copyCallLinkFromModal = copyCallLinkFromModal;
+window.copyCallCodeFromModal = copyCallCodeFromModal;

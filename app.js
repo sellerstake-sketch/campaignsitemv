@@ -2120,6 +2120,20 @@ async function loadWorkspace(data) {
 
         campaignData = data;
 
+        // Check if accessed via call link (without code - will prompt for code)
+        const urlParams = new URLSearchParams(window.location.search);
+        const callLinkId = urlParams.get('callLink');
+
+        console.log('[loadWorkspace] Checking for call link, callLinkId:', callLinkId);
+
+        if (callLinkId) {
+            console.log('[loadWorkspace] Call link detected, prompting for access code');
+            // Wait a bit for modal system to be ready
+            setTimeout(async () => {
+                await promptCallLinkAccessCode(callLinkId);
+            }, 500);
+        }
+
         // Update global references for pages.js and messenger.js
         window.campaignData = campaignData;
         window.userEmail = userEmail;
@@ -3350,6 +3364,191 @@ window.initIcons = initIcons;
 window.trackPageLoad = trackPageLoad;
 window.startPageTracking = startPageTracking;
 window.stopPageTracking = stopPageTracking;
+
+// Prompt for access code when accessing via call link
+async function promptCallLinkAccessCode(linkId) {
+    if (!window.db) {
+        console.error('[promptCallLinkAccessCode] Database not initialized');
+        // Wait a bit and retry
+        setTimeout(() => {
+            if (window.db) {
+                promptCallLinkAccessCode(linkId);
+            } else {
+                if (window.showError) {
+                    window.showError('Database not initialized. Please refresh the page.');
+                }
+            }
+        }, 1000);
+        return;
+    }
+
+    console.log('[promptCallLinkAccessCode] Prompting for access code, linkId:', linkId);
+
+    // Create access code entry modal
+    const modalOverlay = window.ensureModalExists ? window.ensureModalExists() : null;
+    if (!modalOverlay) {
+        console.error('[promptCallLinkAccessCode] Modal system not available');
+        if (window.showError) {
+            window.showError('Modal system not available.');
+        }
+        return;
+    }
+
+    const modalBody = document.getElementById('modal-body');
+    const modalTitle = document.getElementById('modal-title');
+    if (!modalBody || !modalTitle) {
+        if (window.showError) {
+            window.showError('Modal elements not found.');
+        }
+        return;
+    }
+
+    modalTitle.textContent = 'Enter Access Code';
+    modalBody.innerHTML = `
+        <div class="modal-form">
+            <div class="form-group">
+                <label for="call-link-access-code">Access Code *</label>
+                <input type="text" id="call-link-access-code" placeholder="Enter 6-digit access code" maxlength="6" pattern="[0-9]{6}" required style="font-size: 18px; font-family: monospace; letter-spacing: 4px; text-align: center; font-weight: 600;">
+                <small style="color: var(--text-light); font-size: 12px; margin-top: 5px; display: block;">Please enter the access code provided with the link.</small>
+            </div>
+            <div id="call-link-verify-error" class="error-message" style="display: none;"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary btn-compact" onclick="closeModal(); window.location.href = window.location.pathname;">Cancel</button>
+                <button type="button" class="btn-primary btn-compact" onclick="verifyCallLinkAccessCode('${linkId}')">Verify & Continue</button>
+            </div>
+        </div>
+    `;
+
+    // Show modal
+    modalOverlay.style.display = 'flex';
+    if (document.body) {
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Focus on input and allow Enter key
+    setTimeout(() => {
+        const codeInput = document.getElementById('call-link-access-code');
+        if (codeInput) {
+            codeInput.focus();
+            codeInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    verifyCallLinkAccessCode(linkId);
+                }
+            });
+        }
+    }, 100);
+}
+
+// Verify access code and store link data
+async function verifyCallLinkAccessCode(linkId) {
+    if (!window.db) return;
+
+    const codeInput = document.getElementById('call-link-access-code');
+    const errorDiv = document.getElementById('call-link-verify-error');
+
+    if (!codeInput) return;
+
+    const accessCode = codeInput.value.trim();
+
+    if (!accessCode || accessCode.length !== 6) {
+        if (errorDiv) {
+            errorDiv.textContent = 'Please enter a valid 6-digit access code.';
+            errorDiv.style.display = 'block';
+        }
+        return;
+    }
+
+    try {
+        const {
+            doc,
+            getDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        console.log('[verifyCallLinkAccessCode] Verifying link:', linkId);
+        console.log('[verifyCallLinkAccessCode] Access code entered:', accessCode);
+
+        const linkRef = doc(window.db, 'callLinks', linkId);
+        const linkDoc = await getDoc(linkRef);
+
+        console.log('[verifyCallLinkAccessCode] Link document exists:', linkDoc.exists());
+
+        if (linkDoc.exists()) {
+            const linkData = linkDoc.data();
+            console.log('[verifyCallLinkAccessCode] Link data retrieved:', {
+                hasAccessCode: !!linkData.accessCode,
+                hasCallerNames: !!linkData.callerNames,
+                campaignEmail: linkData.campaignEmail
+            });
+
+            if (linkData.accessCode === accessCode) {
+                // Store link info globally
+                window.callLinkData = {
+                    linkId: linkId,
+                    accessCode: accessCode,
+                    callerNames: linkData.callerNames || []
+                };
+
+                // Set flag to indicate link access
+                window.isCallLinkAccess = true;
+
+                // Hide sidebar and top navigation for link access
+                const sidebar = document.getElementById('sidebar');
+                const topNav = document.getElementById('top-nav');
+                if (sidebar) sidebar.style.display = 'none';
+                if (topNav) topNav.style.display = 'none';
+
+                // Close modal
+                if (window.closeModal) {
+                    window.closeModal();
+                }
+
+                // Auto-navigate to calls page
+                setTimeout(() => {
+                    if (window.loadPageContent) {
+                        window.loadPageContent('calls');
+                        if (window.updateBreadcrumb) {
+                            window.updateBreadcrumb('calls');
+                        }
+                    }
+                }, 500);
+            } else {
+                if (errorDiv) {
+                    errorDiv.textContent = 'Invalid access code. Please check and try again.';
+                    errorDiv.style.display = 'block';
+                }
+                codeInput.focus();
+                codeInput.select();
+            }
+        } else {
+            console.error('[verifyCallLinkAccessCode] Link document does not exist:', linkId);
+            if (errorDiv) {
+                errorDiv.textContent = 'Invalid call link. Please check the link and try again.';
+                errorDiv.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('[verifyCallLinkAccessCode] Error verifying call link:', error);
+        console.error('[verifyCallLinkAccessCode] Error code:', error.code);
+        console.error('[verifyCallLinkAccessCode] Error message:', error.message);
+
+        let errorMessage = 'Failed to verify access code. Please try again.';
+        if (error.code === 'permission-denied') {
+            errorMessage = 'Permission denied. Please check the link and try again.';
+        } else if (error.code === 'not-found') {
+            errorMessage = 'Link not found. The link may be invalid or expired.';
+        } else if (error.message) {
+            errorMessage = `Error: ${error.message}`;
+        }
+
+        if (errorDiv) {
+            errorDiv.textContent = errorMessage;
+            errorDiv.style.display = 'block';
+        }
+    }
+}
+
+// Make functions globally available
+window.verifyCallLinkAccessCode = verifyCallLinkAccessCode;
 
 // Update profile display with user information
 function updateProfileDisplay(userData) {
