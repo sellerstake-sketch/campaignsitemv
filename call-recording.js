@@ -17,8 +17,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import {
     getAuth,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword
+    signInAnonymously
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import {
     getFirestore,
@@ -222,35 +221,23 @@ async function validateAccessCode(email, password) {
 
         console.log('[Call Recording] All credentials verified. Authenticating...');
 
-        // Authenticate with email and password
+        // Use anonymous authentication (credentials already verified against callLink)
+        // This allows access without conflicting with existing user accounts
         try {
             updateLoadingProgress(40, 'Authenticating...');
-            // Try to sign in first
             try {
-                await signInWithEmailAndPassword(auth, email, password);
-                console.log('[Call Recording] Signed in with existing account');
-            } catch (signInError) {
-                // If user doesn't exist, create account
-                if (signInError.code === 'auth/user-not-found') {
-                    console.log('[Call Recording] User not found, creating account...');
-                    await createUserWithEmailAndPassword(auth, email, password);
-                    console.log('[Call Recording] Account created and signed in');
-                } else {
-                    throw signInError;
-                }
+                await signInAnonymously(auth);
+                console.log('[Call Recording] Anonymous authentication successful');
+            } catch (anonError) {
+                // If anonymous auth fails, log warning but continue
+                // Firestore rules should allow unauthenticated access for call links
+                console.warn('[Call Recording] Anonymous authentication not available:', anonError.code);
+                console.warn('[Call Recording] Continuing without authentication - Firestore rules should allow access');
             }
         } catch (authError) {
             console.error('[Call Recording] Authentication error:', authError);
-            hideLoading();
-            showAccessCodeModal();
-            if (authError.code === 'auth/wrong-password') {
-                showAccessCodeError('Incorrect password. Please check and try again.');
-            } else if (authError.code === 'auth/invalid-email') {
-                showAccessCodeError('Invalid email address.');
-            } else {
-                showAccessCodeError('Authentication failed: ' + (authError.message || authError.code || 'Unknown error'));
-            }
-            return;
+            // Don't block access - credentials are already verified against callLink
+            console.warn('[Call Recording] Continuing without authentication');
         }
 
         // Store link data globally
@@ -552,7 +539,9 @@ async function setupVoterSearch() {
             const idNumber = voter.voterId || voter.idNumber || 'N/A';
             const phone = voter.phone || voter.phoneNumber || voter.mobile || '';
             const island = voter.island || voter.constituency || '';
-            const address = (voter.address || voter.permanentAddress || '').replace(/"/g, '&quot;');
+            const address = (voter.address || '').replace(/"/g, '&quot;');
+            // Get permanent address separately
+            const permanentAddress = (voter.permanentAddress || '').replace(/"/g, '&quot;');
 
             return `
                 <div class="dropdown-option" 
@@ -562,11 +551,13 @@ async function setupVoterSearch() {
                      data-voter-phone="${phone}" 
                      data-voter-island="${island}" 
                      data-voter-address="${address}" 
+                     data-voter-permanent-address="${permanentAddress}"
                      style="padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border-light); transition: background 0.2s;">
                     <div style="font-weight: 600; color: var(--text-color); margin-bottom: 4px;">${name}</div>
                     <div style="font-size: 12px; color: var(--text-light);">
                         ID: ${idNumber}${phone ? ` • Phone: ${phone}` : ''}${island ? ` • ${island}` : ''}
                     </div>
+                    ${permanentAddress ? `<div style="font-size: 11px; color: var(--text-light); margin-top: 4px; font-style: italic;">Address: ${permanentAddress}</div>` : ''}
                 </div>
             `;
         }).join('');
@@ -580,16 +571,38 @@ async function setupVoterSearch() {
                 const voterPhone = option.dataset.voterPhone || '';
                 const voterIsland = option.dataset.voterIsland || '';
                 const voterAddress = option.dataset.voterAddress || '';
+                const voterPermanentAddress = option.dataset.voterPermanentAddress || '';
 
-                // Fill all form fields
-                voterInput.value = voterName;
-                if (voterIdInput) voterIdInput.value = voterIdNumber;
-                if (voterPhoneInput) voterPhoneInput.value = voterPhone;
-                if (voterIslandInput) voterIslandInput.value = voterIsland;
-                if (voterAddressInput) voterAddressInput.value = voterAddress;
-                if (voterIdHidden) voterIdHidden.value = voterId;
+                // Get fresh references to all form elements (in case they were replaced)
+                const currentVoterInput = document.getElementById('call-voter-name');
+                const currentVoterIdInput = document.getElementById('call-voter-id');
+                const currentVoterPhoneInput = document.getElementById('call-voter-phone');
+                const currentVoterIslandInput = document.getElementById('call-voter-island');
+                const currentVoterAddressInput = document.getElementById('call-voter-address');
+                const currentVoterIdHidden = document.getElementById('call-voter-id-hidden');
 
-                voterDropdown.style.display = 'none';
+                // Fill all form fields with fresh element references
+                if (currentVoterInput) {
+                    currentVoterInput.value = voterName;
+                    console.log('[Call Recording] Set voter name to:', voterName);
+                } else {
+                    console.error('[Call Recording] Voter name input not found!');
+                }
+
+                if (currentVoterIdInput) currentVoterIdInput.value = voterIdNumber;
+                if (currentVoterPhoneInput) currentVoterPhoneInput.value = voterPhone;
+                if (currentVoterIslandInput) currentVoterIslandInput.value = voterIsland;
+                if (currentVoterAddressInput) {
+                    // Show permanent address if available, otherwise show regular address
+                    currentVoterAddressInput.value = voterPermanentAddress || voterAddress;
+                }
+                if (currentVoterIdHidden) currentVoterIdHidden.value = voterId;
+
+                // Hide dropdown
+                const currentDropdown = document.getElementById('call-voter-dropdown');
+                if (currentDropdown) {
+                    currentDropdown.style.display = 'none';
+                }
             });
 
             option.addEventListener('mouseenter', () => {
@@ -809,7 +822,8 @@ async function loadVotersForCall() {
                 idNumber: data.idNumber || data.voterId || '',
                 phone: data.phone || data.phoneNumber || data.mobile || data.contact || data.number || '',
                 island: data.island || data.constituency || '',
-                address: data.address || data.permanentAddress || data.location || '',
+                address: data.address || data.location || '',
+                permanentAddress: data.permanentAddress || data.address || data.location || '',
                 // Include email fields for debugging
                 campaignEmail: data.campaignEmail || data.email || '',
                 email: data.email || ''
@@ -1007,7 +1021,7 @@ function showAccessCodeModal() {
     // Clear inputs
     const emailInput = document.getElementById('login-email');
     const passwordInput = document.getElementById('login-password');
-    
+
     if (emailInput) emailInput.value = '';
     if (passwordInput) {
         passwordInput.value = '';
