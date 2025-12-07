@@ -1822,7 +1822,9 @@ const paginationState = {
     },
     pledges: {
         currentPage: 1,
-        recordsPerPage: 15
+        recordsPerPage: 15,
+        lastSearchTerm: '',
+        lastFilterValue: ''
     },
     agents: {
         currentPage: 1,
@@ -2910,9 +2912,15 @@ function renderCachedVotersData() {
     if (verifiedEl) verifiedEl.textContent = safeStats.verified || 0;
     if (pendingEl) pendingEl.textContent = safeStats.pending || 0;
 
-    // Reset to first page when searching
-    if (searchTerm) {
+    // Track search state to detect changes - only reset to page 1 when search actually changes
+    if (!paginationState.voters.lastSearchTerm) paginationState.voters.lastSearchTerm = '';
+    
+    const searchChanged = paginationState.voters.lastSearchTerm !== searchTerm;
+    
+    // Only reset to page 1 if search changed (not on pagination navigation)
+    if (searchChanged) {
         paginationState.voters.currentPage = 1;
+        paginationState.voters.lastSearchTerm = searchTerm;
     }
 
     // Render table
@@ -4642,12 +4650,36 @@ function renderCachedPledgesData() {
         });
     }
 
-    // Reset to first page when searching/filtering
-    if (searchTerm || filterValue) {
+    // Initialize filter tracking if not exists
+    if (!paginationState.pledges.hasOwnProperty('lastSearchTerm')) {
+        paginationState.pledges.lastSearchTerm = '';
+    }
+    if (!paginationState.pledges.hasOwnProperty('lastFilterValue')) {
+        paginationState.pledges.lastFilterValue = '';
+    }
+    
+    // Check if filter/search changed - only reset to page 1 if filter actually changed
+    const previousSearchTerm = paginationState.pledges.lastSearchTerm || '';
+    const previousFilterValue = paginationState.pledges.lastFilterValue || '';
+    
+    // Only reset to page 1 if the filter/search actually changed (not on pagination navigation)
+    const filterChanged = (searchTerm !== previousSearchTerm) || (filterValue !== previousFilterValue);
+    
+    if (filterChanged) {
+        console.log('[Pagination] Filter/search changed, resetting to page 1', {
+            previousSearch: previousSearchTerm,
+            newSearch: searchTerm,
+            previousFilter: previousFilterValue,
+            newFilter: filterValue
+        });
         paginationState.pledges.currentPage = 1;
     }
+    
+    // Always update the last known filter/search values (to track current state)
+    paginationState.pledges.lastSearchTerm = searchTerm;
+    paginationState.pledges.lastFilterValue = filterValue;
 
-    // Update statistics
+    // Update statistics based on filtered results
     updatePledgeStatisticsFromArray(filteredPledges);
 
     if (filteredPledges.length === 0) {
@@ -4657,8 +4689,16 @@ function renderCachedPledgesData() {
         return true;
     }
 
-    // Pagination
+    // Pagination - use filtered results for pagination
     const state = paginationState.pledges;
+    const totalFiltered = filteredPledges.length;
+    const maxPage = Math.ceil(totalFiltered / state.recordsPerPage);
+    
+    // Ensure current page doesn't exceed max page for filtered results
+    if (state.currentPage > maxPage && maxPage > 0) {
+        state.currentPage = maxPage;
+    }
+    
     const startIndex = (state.currentPage - 1) * state.recordsPerPage;
     const endIndex = startIndex + state.recordsPerPage;
     const paginatedPledges = filteredPledges.slice(startIndex, endIndex);
@@ -4748,7 +4788,8 @@ function renderCachedPledgesData() {
     requestAnimationFrame(() => {
         tbody.textContent = '';
         tbody.appendChild(fragment);
-        renderPagination('pledges', filteredPledges.length);
+        // Use filtered count for pagination (not total count)
+        renderPagination('pledges', filteredPledges.length, state.recordsPerPage);
     });
     return true;
 }
