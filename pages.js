@@ -2286,6 +2286,9 @@ const imageFilenameCache = new Map();
 const imageNotFoundCache = new Set();
 // Pending image lookups to avoid duplicate requests
 const pendingImageLookups = new Map();
+// Image index loaded from images/index.json (for static hosting)
+let imageIndex = null;
+let imageIndexLoading = null;
 
 // Function to get voter image URL, checking images folder first based on ID card number
 // Returns the best available image URL (existing imageUrl takes priority, then images folder)
@@ -2330,8 +2333,52 @@ function getVoterImageUrl(voterData, idCardNumber = null) {
     return '';
 }
 
+// Helper function to load the image index from images/index.json
+async function loadImageIndex() {
+    if (imageIndex !== null) {
+        return imageIndex; // Already loaded
+    }
+
+    if (imageIndexLoading) {
+        return await imageIndexLoading; // Already loading, wait for it
+    }
+
+    imageIndexLoading = (async () => {
+        try {
+            const response = await fetch('/images/index.json');
+            if (response.ok) {
+                imageIndex = await response.json();
+                console.log(`[Image Index] Loaded ${Object.keys(imageIndex).length} image mappings`);
+                return imageIndex;
+            } else {
+                console.log('[Image Index] index.json not found, will use fallback methods');
+                imageIndex = {}; // Empty object means index doesn't exist
+                return imageIndex;
+            }
+        } catch (error) {
+            console.log('[Image Index] Failed to load index.json:', error);
+            imageIndex = {}; // Empty object means index doesn't exist
+            return imageIndex;
+        }
+    })();
+
+    return await imageIndexLoading;
+}
+
+// Helper function to check if an image URL exists (for static hosting fallback)
+async function checkImageExists(url) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = url;
+        // Timeout after 2 seconds
+        setTimeout(() => resolve(false), 2000);
+    });
+}
+
 // Async function to lookup image from images folder by ID card number
-// This calls the server endpoint to find matching images
+// This calls the server endpoint to find matching images, with fallback for static hosting
 async function lookupImageFromFolder(idCardNumber) {
     if (!idCardNumber || !idCardNumber.trim()) {
         return null;
@@ -2357,26 +2404,77 @@ async function lookupImageFromFolder(idCardNumber) {
     // Create a promise for this lookup
     const lookupPromise = (async () => {
         try {
+            // First, try the image index (fastest, works with static hosting)
+            const index = await loadImageIndex();
+            if (index && index[normalizedId]) {
+                const imageUrl = '/' + index[normalizedId].replace(/^\/+/, ''); // Ensure leading slash
+                imageFilenameCache.set(normalizedId, imageUrl);
+                console.log(`[Image Lookup] Found image via index for ${normalizedId}: ${imageUrl}`);
+                return imageUrl;
+            }
+
+            // Second, try the API endpoint (for local development with Python server)
             const apiUrl = `/api/find-image?id=${encodeURIComponent(normalizedId)}`;
             console.log(`[Image Lookup] Searching for image with ID: ${normalizedId}`);
-            const response = await fetch(apiUrl);
-            if (response.ok) {
-                const data = await response.json();
-                console.log(`[Image Lookup] Response for ${normalizedId}:`, data);
-                if (data.found && data.url) {
-                    // Cache the result
-                    imageFilenameCache.set(normalizedId, data.url);
-                    console.log(`[Image Lookup] Found image for ${normalizedId}: ${data.url}`);
-                    return data.url;
-                } else {
-                    // No image found, cache the negative result
-                    imageNotFoundCache.add(normalizedId);
-                    console.log(`[Image Lookup] No image found for ${normalizedId}`);
-                    return null;
+
+            try {
+                const response = await fetch(apiUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(`[Image Lookup] Response for ${normalizedId}:`, data);
+                    if (data.found && data.url) {
+                        // Cache the result
+                        imageFilenameCache.set(normalizedId, data.url);
+                        console.log(`[Image Lookup] Found image for ${normalizedId}: ${data.url}`);
+                        return data.url;
+                    }
                 }
-            } else {
-                console.warn(`[Image Lookup] API request failed for ${normalizedId}:`, response.status, response.statusText);
+            } catch (apiError) {
+                // API endpoint not available (likely static hosting), try direct image URLs
+                console.log(`[Image Lookup] API not available, trying direct image URLs for ${normalizedId}`);
             }
+
+            // Fallback: Try direct image URLs (for static hosting when index doesn't exist)
+            // Try common patterns: {ID}.png, {ID}.jpg, {ID}.jpeg, and variations
+            const extensions = ['.png', '.jpg', '.jpeg', '.PNG', '.JPG', '.JPEG'];
+            const baseUrl = `/images/${normalizedId}`;
+
+            for (const ext of extensions) {
+                const testUrl = baseUrl + ext;
+                const exists = await checkImageExists(testUrl);
+                if (exists) {
+                    imageFilenameCache.set(normalizedId, testUrl);
+                    console.log(`[Image Lookup] Found image via direct check: ${testUrl}`);
+                    return testUrl;
+                }
+            }
+
+            // Try pattern matching: {ID}.*.{ext} (for files like "A241695.Photo ID.171348.png")
+            // We'll try a few common patterns
+            const patternExtensions = ['.png', '.jpg', '.jpeg'];
+            for (const ext of patternExtensions) {
+                // Try common patterns that might exist
+                const patterns = [
+                    `${normalizedId}.Photo ID.${ext}`,
+                    `${normalizedId}.Photo${ext}`,
+                    `${normalizedId}${ext}`
+                ];
+
+                for (const pattern of patterns) {
+                    const testUrl = `/images/${pattern}`;
+                    const exists = await checkImageExists(testUrl);
+                    if (exists) {
+                        imageFilenameCache.set(normalizedId, testUrl);
+                        console.log(`[Image Lookup] Found image via pattern check: ${testUrl}`);
+                        return testUrl;
+                    }
+                }
+            }
+
+            // No image found, cache the negative result
+            imageNotFoundCache.add(normalizedId);
+            console.log(`[Image Lookup] No image found for ${normalizedId}`);
+            return null;
         } catch (error) {
             console.warn(`[Image Lookup] Failed to lookup image for ID ${normalizedId}:`, error);
         } finally {
@@ -13020,7 +13118,7 @@ $ {
     stroke - linejoin = "round" >
         <
         polyline points = "15 18 9 12 15 6" > < /polyline> < /
-        svg >
+    svg >
         Previous <
         /button> <
     span style = "color: var(--text-light); font-size: 12px; padding: 8px 8px; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;" >
@@ -13049,9 +13147,9 @@ $ {
     stroke - linejoin = "round" >
         <
         polyline points = "9 18 15 12 9 6" > < /polyline> < /
-        svg > <
+    svg > <
         /button> < /
-        div > <
+    div > <
         /div>
 } <
 /div> < /
