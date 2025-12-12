@@ -10134,28 +10134,61 @@ async function viewVoterDetails(voterId, navigateDirection = null) {
         // Create modal HTML
         const modalHTML = `
             <div class="voter-details-modal" style="max-width: 600px; margin: 0 auto;">
-                <!-- Actions at top -->
-                <div style="display: flex; flex-wrap: nowrap; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color); overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                <!-- Navigation and Actions at top -->
+                <div style="display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color); overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <!-- Navigation controls on left -->
                     <div style="display: flex; gap: 6px; flex-wrap: nowrap; flex-shrink: 0;">
                         <button 
-                            class="btn-primary btn-compact" 
-                            onclick="editVoter('${voterId}')"
-                            style="white-space: nowrap; display: flex; align-items: center; gap: 6px;">
+                            id="voter-nav-prev" 
+                            class="btn-secondary btn-compact" 
+                            ${currentIndex === 0 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
+                            onclick="viewVoterDetails('${voterId}', 'prev')"
+                            style="display: flex; align-items: center; gap: 6px;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                            Previous
+                        </button>
+                        <span style="color: var(--text-light); font-size: 12px; padding: 8px 8px; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;">
+                            ${currentIndex + 1} of ${allVoters.length}
+                        </span>
+                        <button 
+                            id="voter-nav-next" 
+                            class="btn-secondary btn-compact" 
+                            ${currentIndex === allVoters.length - 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
+                            onclick="viewVoterDetails('${voterId}', 'next')"
+                            style="display: flex; align-items: center; gap: 6px;">
+                            Next
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- CRUD actions on right -->
+                    <div style="display: flex; gap: 8px; flex-wrap: nowrap; flex-shrink: 0;">
+                        <button 
+                            type="button"
+                            title="Edit Voter"
+                            onclick="editVoter('${voterId}')"
+                            onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(111, 193, 218, 0.4)'"
+                            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(111, 193, 218, 0.3)'"
+                            style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: linear-gradient(135deg, #6fc1da 0%, #8dd4e8 100%); color: white; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(111, 193, 218, 0.3);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                             </svg>
-                            Edit
                         </button>
                         <button 
-                            class="btn-secondary btn-compact" 
+                            type="button"
+                            title="Delete Voter"
                             onclick="deleteVoter('${voterId}')"
-                            style="display: flex; align-items: center; gap: 6px; background: var(--danger-color); color: white; border-color: var(--danger-color); white-space: nowrap;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(220, 38, 38, 0.4)'"
+                            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(220, 38, 38, 0.3)'"
+                            style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: #dc2626; color: white; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                             </svg>
-                            Delete
                         </button>
                     </div>
                 </div>
@@ -10225,37 +10258,6 @@ async function viewVoterDetails(voterId, navigateDirection = null) {
                     <div class="detail-item">
                         <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Registered</label>
                         <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${registeredDisplay}</p>
-                    </div>
-                </div>
-
-                <!-- Navigation at bottom -->
-                <div style="display: flex; flex-wrap: nowrap; justify-content: center; align-items: center; gap: 8px; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--border-color); overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                    <div style="display: flex; gap: 6px; flex-wrap: nowrap; flex-shrink: 0;">
-                        <button 
-                            id="voter-nav-prev" 
-                            class="btn-secondary btn-compact" 
-                            ${currentIndex === 0 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
-                            onclick="viewVoterDetails('${voterId}', 'prev')"
-                            style="display: flex; align-items: center; gap: 6px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                            Previous
-                        </button>
-                        <span style="color: var(--text-light); font-size: 12px; padding: 8px 8px; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;">
-                            ${currentIndex + 1} of ${allVoters.length}
-                        </span>
-                        <button 
-                            id="voter-nav-next" 
-                            class="btn-secondary btn-compact" 
-                            ${currentIndex === allVoters.length - 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
-                            onclick="viewVoterDetails('${voterId}', 'next')"
-                            style="display: flex; align-items: center; gap: 6px;">
-                            Next
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -10822,18 +10824,6 @@ async function viewPledgeDetails(pledgeId, navigateDirection = null) {
             minute: '2-digit'
         });
 
-        // Get voter name - prioritize voter data
-        const voterName = voterData ? (voterData.name || pledgeData.voterName || 'N/A') : (pledgeData.voterName || 'N/A');
-        // Get image URL using the function that checks images folder
-        let imageUrl = getVoterImageUrl(voterData || pledgeData, idNumber !== 'N/A' ? idNumber : null);
-        const initials = voterName && voterName !== 'N/A' ? voterName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NA';
-
-        // If no image URL found, try to lookup from images folder asynchronously
-        let imageLookupPromise = null;
-        if (!imageUrl && idNumber && idNumber !== 'N/A' && idNumber.trim()) {
-            imageLookupPromise = lookupImageFromFolder(idNumber);
-        }
-
         // Get ID number - prioritize voter data fields, NEVER use document IDs
         let idNumber = 'N/A';
         if (voterData) {
@@ -10849,6 +10839,18 @@ async function viewPledgeDetails(pledgeId, navigateDirection = null) {
         // Ensure we never use document IDs - if idNumber looks like a Firestore ID, set to N/A
         if (idNumber && idNumber.length === 20 && /^[A-Za-z0-9]{20}$/.test(idNumber)) {
             idNumber = 'N/A'; // Likely a Firestore document ID, don't use it
+        }
+
+        // Get voter name - prioritize voter data
+        const voterName = voterData ? (voterData.name || pledgeData.voterName || 'N/A') : (pledgeData.voterName || 'N/A');
+        // Get image URL using the function that checks images folder
+        let imageUrl = getVoterImageUrl(voterData || pledgeData, idNumber !== 'N/A' ? idNumber : null);
+        const initials = voterName && voterName !== 'N/A' ? voterName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NA';
+
+        // If no image URL found, try to lookup from images folder asynchronously
+        let imageLookupPromise = null;
+        if (!imageUrl && idNumber && idNumber !== 'N/A' && idNumber.trim()) {
+            imageLookupPromise = lookupImageFromFolder(idNumber);
         }
 
         // Get permanent address and current location
@@ -10884,28 +10886,61 @@ async function viewPledgeDetails(pledgeId, navigateDirection = null) {
         // Create modal HTML
         const modalHTML = `
             <div class="pledge-details-modal" style="max-width: 600px; margin: 0 auto;">
-                <!-- Actions at top -->
-                <div style="display: flex; flex-wrap: nowrap; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color); overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                <!-- Navigation and Actions at top -->
+                <div style="display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color); overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <!-- Navigation controls on left -->
                     <div style="display: flex; gap: 6px; flex-wrap: nowrap; flex-shrink: 0;">
                         <button 
-                            class="btn-primary btn-compact" 
-                            onclick="editPledge('${pledgeId}')"
-                            style="white-space: nowrap; display: flex; align-items: center; gap: 6px;">
+                            id="pledge-nav-prev" 
+                            class="btn-secondary btn-compact" 
+                            ${currentIndex === 0 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
+                            onclick="viewPledgeDetails('${pledgeId}', 'prev')"
+                            style="display: flex; align-items: center; gap: 6px;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                            Previous
+                        </button>
+                        <span style="color: var(--text-light); font-size: 12px; padding: 8px 8px; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;">
+                            ${currentIndex + 1} of ${allPledges.length}
+                        </span>
+                        <button 
+                            id="pledge-nav-next" 
+                            class="btn-secondary btn-compact" 
+                            ${currentIndex === allPledges.length - 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
+                            onclick="viewPledgeDetails('${pledgeId}', 'next')"
+                            style="display: flex; align-items: center; gap: 6px;">
+                            Next
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- CRUD actions on right -->
+                    <div style="display: flex; gap: 8px; flex-wrap: nowrap; flex-shrink: 0;">
+                        <button 
+                            type="button"
+                            title="Edit Pledge"
+                            onclick="editPledge('${pledgeId}')"
+                            onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(111, 193, 218, 0.4)'"
+                            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(111, 193, 218, 0.3)'"
+                            style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: linear-gradient(135deg, #6fc1da 0%, #8dd4e8 100%); color: white; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(111, 193, 218, 0.3);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                             </svg>
-                            Edit
                         </button>
                         <button 
-                            class="btn-secondary btn-compact" 
+                            type="button"
+                            title="Delete Pledge"
                             onclick="deletePledge('${pledgeId}')"
-                            style="display: flex; align-items: center; gap: 6px; background: var(--danger-color); color: white; border-color: var(--danger-color); white-space: nowrap;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(220, 38, 38, 0.4)'"
+                            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(220, 38, 38, 0.3)'"
+                            style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: #dc2626; color: white; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                             </svg>
-                            Delete
                         </button>
                     </div>
                 </div>
@@ -10999,37 +11034,6 @@ async function viewPledgeDetails(pledgeId, navigateDirection = null) {
                         <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${displayData.number}</p>
                     </div>
                 ` : ''}
-
-                <!-- Navigation at bottom -->
-                <div style="display: flex; flex-wrap: nowrap; justify-content: center; align-items: center; gap: 8px; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--border-color); overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                    <div style="display: flex; gap: 6px; flex-wrap: nowrap; flex-shrink: 0;">
-                        <button 
-                            id="pledge-nav-prev" 
-                            class="btn-secondary btn-compact" 
-                            ${currentIndex === 0 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
-                            onclick="viewPledgeDetails('${pledgeId}', 'prev')"
-                            style="display: flex; align-items: center; gap: 6px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                            Previous
-                        </button>
-                        <span style="color: var(--text-light); font-size: 12px; padding: 8px 8px; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;">
-                            ${currentIndex + 1} of ${allPledges.length}
-                        </span>
-                        <button 
-                            id="pledge-nav-next" 
-                            class="btn-secondary btn-compact" 
-                            ${currentIndex === allPledges.length - 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
-                            onclick="viewPledgeDetails('${pledgeId}', 'next')"
-                            style="display: flex; align-items: center; gap: 6px;">
-                            Next
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
             </div>
         `;
 
@@ -12439,11 +12443,27 @@ async function viewAgentDetails(agentId, navigateDirection = null) {
 
         modalBody.innerHTML = `
             <div style="max-width: 700px; margin: 0 auto;">
-                <!-- Actions at top -->
+                <!-- Actions at top right -->
                 <div style="display: flex; flex-wrap: nowrap; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color); overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                    <div style="display: flex; gap: 6px; flex-wrap: nowrap; flex-shrink: 0;">
-                        <button class="btn-secondary" onclick="closeModal();" style="white-space: nowrap; padding: 16px 28px; height: auto; min-height: 48px; display: inline-flex; align-items: center; justify-content: center;">Close</button>
-                        <button class="btn-primary" onclick="closeModal(); viewAgentPerformance('${agentId}');" style="white-space: nowrap;">View Performance</button>
+                    <div style="display: flex; gap: 8px; flex-wrap: nowrap; flex-shrink: 0;">
+                        <button class="icon-btn" onclick="closeModal(); generateAgentLink('${agentId}');" title="Generate Link" style="width: 40px; height: 40px; background: linear-gradient(135deg, #6fc1da 0%, #8dd4e8 100%); color: white; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(111, 193, 218, 0.3); display: inline-flex; align-items: center; justify-content: center; padding: 0;" onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(111, 193, 218, 0.4)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(111, 193, 218, 0.3)'">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                            </svg>
+                        </button>
+                        <button class="icon-btn" onclick="closeModal(); viewAgentPerformance('${agentId}');" title="View Performance" style="width: 40px; height: 40px; background: var(--white); color: var(--text-color); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); display: inline-flex; align-items: center; justify-content: center; padding: 0;" onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)'; this.style.borderColor='var(--primary-color)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(0, 0, 0, 0.1)'; this.style.borderColor='var(--border-color)'">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                        <button class="icon-btn" onclick="closeModal(); editAgent('${agentId}');" title="Edit Agent" style="width: 40px; height: 40px; background: var(--white); color: var(--text-color); border: 2px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); display: inline-flex; align-items: center; justify-content: center; padding: 0;" onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)'; this.style.borderColor='var(--primary-color)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(0, 0, 0, 0.1)'; this.style.borderColor='var(--border-color)'">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
@@ -12488,28 +12508,6 @@ async function viewAgentDetails(agentId, navigateDirection = null) {
                         <div style="font-size: 28px; font-weight: 700; color: ${successRate >= 70 ? 'var(--success-color)' : successRate >= 50 ? 'var(--warning-color)' : 'var(--text-light)'}; margin-bottom: 5px;">${successRate}%</div>
                         <div style="font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Success Rate</div>
                     </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
-                    <button class="icon-btn" onclick="closeModal(); generateAgentLink('${agentId}');" title="Generate Link" style="width: 48px; height: 48px; background: var(--gradient-primary); color: white;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                        </svg>
-                    </button>
-                    <button class="icon-btn" onclick="closeModal(); viewAgentPerformance('${agentId}');" title="View Performance" style="width: 48px; height: 48px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                    </button>
-                    <button class="icon-btn" onclick="closeModal(); editAgent('${agentId}');" title="Edit Agent" style="width: 48px; height: 48px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                    </button>
                 </div>
             </div>
         `;

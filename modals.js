@@ -147,11 +147,30 @@ function getVoterFormTemplate() {
         <!-- Single Import Form -->
         <form id="modal-form" class="modal-form import-form" data-import-mode="single" enctype="multipart/form-data" style="display: block;">
             <div class="form-group">
-                <label for="voter-image">Image</label>
-                <input type="file" id="voter-image" name="voter-image" accept="image/*">
-                <small>Upload voter photo (optional)</small>
-                <div id="voter-image-preview" style="margin-top: 10px; display: none;">
-                    <img id="voter-image-preview-img" src="" alt="Preview" style="max-width: 100px; max-height: 100px; border-radius: 8px; border: 2px solid var(--border-color);">
+                <label for="voter-image" style="display: block; font-size: 14px; font-weight: 600; color: var(--text-color); margin-bottom: 8px;">Image</label>
+                <div id="voter-image-upload-area" style="position: relative; border: 2px dashed var(--border-color); border-radius: 12px; padding: 32px 20px; text-align: center; background: var(--light-color); transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.borderColor='var(--primary-color)'; this.style.background='var(--primary-50)'" onmouseout="this.style.borderColor='var(--border-color)'; this.style.background='var(--light-color)'">
+                    <input type="file" id="voter-image" name="voter-image" accept="image/*" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; z-index: 1;" onchange="handleImagePreview(this)">
+                    <div style="pointer-events: none; z-index: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 12px; display: block;">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 600; color: var(--text-color);">Upload voter photo</p>
+                        <p style="margin: 0; font-size: 13px; color: var(--text-light);">Click to browse or drag and drop</p>
+                        <p style="margin: 8px 0 0 0; font-size: 12px; color: var(--text-muted);">(Optional - JPG, PNG up to 5MB)</p>
+                    </div>
+                </div>
+                <div id="voter-image-preview" style="margin-top: 16px; display: none; text-align: center;">
+                    <div style="position: relative; display: inline-block;">
+                        <img id="voter-image-preview-img" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 12px; border: 3px solid var(--primary-color); box-shadow: 0 4px 12px rgba(111, 193, 218, 0.2); object-fit: cover;">
+                        <button type="button" onclick="removeImagePreview()" style="position: absolute; top: -8px; right: -8px; width: 32px; height: 32px; border-radius: 50%; background: var(--danger-color); color: white; border: 2px solid white; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Remove image">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="form-group">
@@ -1981,21 +2000,40 @@ function openModal(type, itemId = null) {
                 const imageInput = document.getElementById('voter-image');
                 const imagePreview = document.getElementById('voter-image-preview');
                 const imagePreviewImg = document.getElementById('voter-image-preview-img');
+                const uploadArea = document.getElementById('voter-image-upload-area');
 
                 if (imageInput && imagePreview && imagePreviewImg) {
+                    // Handle file selection
                     imageInput.addEventListener('change', (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (event) => {
-                                imagePreviewImg.src = event.target.result;
-                                imagePreview.style.display = 'block';
-                            };
-                            reader.readAsDataURL(file);
-                        } else {
-                            imagePreview.style.display = 'none';
-                        }
+                        handleImagePreview(e.target);
                     });
+
+                    // Drag and drop functionality
+                    if (uploadArea) {
+                        uploadArea.addEventListener('dragover', (e) => {
+                            e.preventDefault();
+                            uploadArea.style.borderColor = 'var(--primary-color)';
+                            uploadArea.style.background = 'var(--primary-50)';
+                        });
+
+                        uploadArea.addEventListener('dragleave', (e) => {
+                            e.preventDefault();
+                            uploadArea.style.borderColor = 'var(--border-color)';
+                            uploadArea.style.background = 'var(--light-color)';
+                        });
+
+                        uploadArea.addEventListener('drop', (e) => {
+                            e.preventDefault();
+                            uploadArea.style.borderColor = 'var(--border-color)';
+                            uploadArea.style.background = 'var(--light-color)';
+                            
+                            const files = e.dataTransfer.files;
+                            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                                imageInput.files = files;
+                                handleImagePreview(imageInput);
+                            }
+                        });
+                    }
                 }
 
                 // Auto-calculate age from date of birth
@@ -3400,12 +3438,72 @@ async function setupCallFormForLink() {
     }
 }
 
+// Handle image preview
+function handleImagePreview(input) {
+    const file = input.files && input.files[0];
+    const imagePreview = document.getElementById('voter-image-preview');
+    const imagePreviewImg = document.getElementById('voter-image-preview-img');
+    const uploadArea = document.getElementById('voter-image-upload-area');
+    
+    if (file && imagePreview && imagePreviewImg) {
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            if (window.showErrorDialog) {
+                window.showErrorDialog('Image file is too large. Please select an image smaller than 5MB.', 'File Too Large');
+            }
+            input.value = '';
+            return;
+        }
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            if (window.showErrorDialog) {
+                window.showErrorDialog('Please select a valid image file (JPG, PNG, etc.).', 'Invalid File Type');
+            }
+            input.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            imagePreviewImg.src = event.target.result;
+            imagePreview.style.display = 'block';
+            if (uploadArea) {
+                uploadArea.style.display = 'none';
+            }
+        };
+        reader.readAsDataURL(file);
+    } else {
+        if (imagePreview) imagePreview.style.display = 'none';
+        if (uploadArea) uploadArea.style.display = 'block';
+    }
+}
+
+// Remove image preview
+function removeImagePreview() {
+    const imageInput = document.getElementById('voter-image');
+    const imagePreview = document.getElementById('voter-image-preview');
+    const uploadArea = document.getElementById('voter-image-upload-area');
+    
+    if (imageInput) {
+        imageInput.value = '';
+    }
+    if (imagePreview) {
+        imagePreview.style.display = 'none';
+    }
+    if (uploadArea) {
+        uploadArea.style.display = 'block';
+    }
+}
+
 window.openModal = openModal;
 window.setupBallotDropdown = setupBallotDropdown;
 window.closeModal = closeModal;
 window.calculateAge = calculateAge;
 window.setupCallFormForLink = setupCallFormForLink;
 window.ensureModalExists = ensureModalExists;
+window.handleImagePreview = handleImagePreview;
+window.removeImagePreview = removeImagePreview;
 
 // Export for module systems
 if (typeof module !== 'undefined' && module.exports) {
