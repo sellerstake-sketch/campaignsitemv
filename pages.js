@@ -4528,19 +4528,23 @@ async function loadCallsData(forceRefresh = false) {
     const tbody = document.getElementById('calls-table-body');
     if (!tbody) return;
 
-    // Check cache first
-    if (!forceRefresh && isCacheValid('calls')) {
+    // Check cache first, but only use it if it has actual data
+    if (!forceRefresh && isCacheValid('calls') && dataCache.calls.data && dataCache.calls.data.calls && dataCache.calls.data.calls.length > 0) {
         console.log('[loadCallsData] Using cached data - instant load');
         renderCachedCallsData();
         return;
+    }
+
+    // If cache is empty or invalid, clear it and force fresh load
+    if (dataCache.calls.data && (!dataCache.calls.data.calls || dataCache.calls.data.calls.length === 0)) {
+        console.log('[loadCallsData] Cache is empty, forcing fresh load');
+        clearCache('calls');
     }
 
     // Show skeleton loading
     showTableSkeleton(tbody, 5, 6);
 
     try {
-        (tbody, 20);
-
         const {
             collection,
             query,
@@ -4549,21 +4553,68 @@ async function loadCallsData(forceRefresh = false) {
             getDocs
         } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
 
-        (tbody, 40);
+        // Query calls by both campaignEmail and email fields to catch all records
+        let snapshot1, snapshot2;
+        const allCalls = new Map(); // Use Map to avoid duplicates
 
-        let snapshot;
         try {
-            const callsQuery = query(collection(window.db, 'calls'), where('campaignEmail', '==', window.userEmail), orderBy('callDate', 'desc'));
-            snapshot = await getDocs(callsQuery);
-        } catch (queryError) {
-            // If index missing, query without orderBy and sort in JavaScript
-            if (queryError.code === 'failed-precondition' && queryError.message.includes('index')) {
-                console.warn('Calls index missing, sorting in JavaScript');
-                const fallbackQuery = query(collection(window.db, 'calls'), where('campaignEmail', '==', window.userEmail));
-                snapshot = await getDocs(fallbackQuery);
-            } else {
-                throw queryError;
+            // Try querying by campaignEmail first
+            try {
+                const callsQuery1 = query(collection(window.db, 'calls'), where('campaignEmail', '==', window.userEmail), orderBy('callDate', 'desc'));
+                snapshot1 = await getDocs(callsQuery1);
+                snapshot1.forEach(doc => {
+                    allCalls.set(doc.id, {
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+            } catch (queryError1) {
+                // If index missing, query without orderBy
+                if (queryError1.code === 'failed-precondition' && queryError1.message.includes('index')) {
+                    console.warn('Calls index missing for campaignEmail, querying without orderBy');
+                    const fallbackQuery1 = query(collection(window.db, 'calls'), where('campaignEmail', '==', window.userEmail));
+                    snapshot1 = await getDocs(fallbackQuery1);
+                    snapshot1.forEach(doc => {
+                        allCalls.set(doc.id, {
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                }
             }
+
+            // Also query by email field to catch records that might only have email
+            try {
+                const callsQuery2 = query(collection(window.db, 'calls'), where('email', '==', window.userEmail), orderBy('callDate', 'desc'));
+                snapshot2 = await getDocs(callsQuery2);
+                snapshot2.forEach(doc => {
+                    // Only add if not already in map (avoid duplicates)
+                    if (!allCalls.has(doc.id)) {
+                        allCalls.set(doc.id, {
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    }
+                });
+            } catch (queryError2) {
+                // If index missing, query without orderBy
+                if (queryError2.code === 'failed-precondition' && queryError2.message.includes('index')) {
+                    console.warn('Calls index missing for email, querying without orderBy');
+                    const fallbackQuery2 = query(collection(window.db, 'calls'), where('email', '==', window.userEmail));
+                    snapshot2 = await getDocs(fallbackQuery2);
+                    snapshot2.forEach(doc => {
+                        if (!allCalls.has(doc.id)) {
+                            allCalls.set(doc.id, {
+                                id: doc.id,
+                                ...doc.data()
+                            });
+                        }
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error querying calls:', error);
+            throw error;
         }
 
         // Update statistics
@@ -4576,19 +4627,14 @@ async function loadCallsData(forceRefresh = false) {
             answered = 0,
             pending = 0;
 
-        (tbody, 60);
+        // Convert Map to array for processing
+        const callsArray = Array.from(allCalls.values());
 
-        // Convert to array for sorting if needed
-        const callsArray = [];
-        snapshot.forEach(doc => {
+        // Process statistics
+        callsArray.forEach(callData => {
             total++;
-            const data = doc.data();
-            if (data.status === 'answered') answered++;
+            if (callData.status === 'answered') answered++;
             else pending++;
-            callsArray.push({
-                id: doc.id,
-                ...data
-            });
         });
 
         // Sort by callDate descending if not already sorted
@@ -4599,8 +4645,6 @@ async function loadCallsData(forceRefresh = false) {
         });
 
         const successRate = total > 0 ? Math.round((answered / total) * 100) : 0;
-
-        (tbody, 90);
 
         // Store in cache
         dataCache.calls.data = {
@@ -4614,8 +4658,6 @@ async function loadCallsData(forceRefresh = false) {
         };
         dataCache.calls.timestamp = Date.now();
         dataCache.calls.userEmail = window.userEmail;
-
-        (tbody, 100);
 
         if (totalEl) totalEl.textContent = total;
         if (answeredEl) answeredEl.textContent = answered;
