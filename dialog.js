@@ -79,7 +79,8 @@ function showDialog(options = {}) {
             cancelText = 'Cancel',
             showCancel = false,
             onConfirm = null,
-            onCancel = null
+            onCancel = null,
+            buttons = null // Support custom buttons array
     } = options;
 
     const dialog = overlay.querySelector('.custom-dialog');
@@ -104,36 +105,106 @@ function showDialog(options = {}) {
         messageEl.textContent = message;
     }
 
-    // Set button texts
-    confirmBtn.textContent = confirmText;
-    cancelBtn.textContent = cancelText;
-
-    // Show/hide footer based on type
-    if (type === 'confirm' || showCancel) {
-        footerEl.style.display = 'flex';
-        cancelBtn.style.display = 'inline-flex';
-    } else {
-        footerEl.style.display = 'flex';
-        cancelBtn.style.display = 'none';
-    }
-
-    // Remove previous event listeners by cloning
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    const newCancelBtn = cancelBtn.cloneNode(true);
-    confirmBtn.replaceWith(newConfirmBtn);
-    cancelBtn.replaceWith(newCancelBtn);
-
-    // Add new event listeners
-    document.getElementById('dialog-confirm-btn').addEventListener('click', () => {
-        closeDialog();
-        if (onConfirm) onConfirm();
-    });
-
-    if (showCancel || type === 'confirm') {
-        document.getElementById('dialog-cancel-btn').addEventListener('click', () => {
-            closeDialog();
-            if (onCancel) onCancel();
+    // Handle custom buttons array
+    if (buttons && Array.isArray(buttons) && buttons.length > 0) {
+        // Clear existing buttons
+        footerEl.innerHTML = '';
+        
+        // Create custom buttons
+        buttons.forEach(button => {
+            const btn = document.createElement('button');
+            btn.textContent = button.text || 'OK';
+            
+            // Map button classes to dialog button classes
+            let btnClass = 'custom-dialog-btn';
+            if (button.class) {
+                if (button.class.includes('btn-primary') || button.class.includes('primary')) {
+                    btnClass += ' custom-dialog-btn-primary';
+                } else if (button.class.includes('btn-secondary') || button.class.includes('secondary')) {
+                    btnClass += ' custom-dialog-btn-secondary';
+                } else {
+                    btnClass += ' ' + button.class;
+                }
+            } else {
+                btnClass += ' custom-dialog-btn-primary';
+            }
+            btn.className = btnClass;
+            
+            // Add click handler
+            btn.addEventListener('click', () => {
+                if (button.onclick) {
+                    button.onclick();
+                } else {
+                    closeDialog();
+                }
+            });
+            
+            footerEl.appendChild(btn);
         });
+        
+        footerEl.style.display = 'flex';
+    } else {
+        // Use default buttons - restore them if they were removed by custom buttons
+        if (!confirmBtn || !cancelBtn) {
+            footerEl.innerHTML = `
+                <button class="custom-dialog-btn custom-dialog-btn-secondary" id="dialog-cancel-btn"></button>
+                <button class="custom-dialog-btn custom-dialog-btn-primary" id="dialog-confirm-btn"></button>
+            `;
+        }
+        
+        // Get buttons again (they might have been restored)
+        const restoredConfirmBtn = document.getElementById('dialog-confirm-btn');
+        const restoredCancelBtn = document.getElementById('dialog-cancel-btn');
+        
+        // Make sure buttons exist before setting text
+        if (restoredConfirmBtn) {
+            restoredConfirmBtn.textContent = confirmText;
+        }
+        if (restoredCancelBtn) {
+            restoredCancelBtn.textContent = cancelText;
+        }
+
+        // Show/hide footer based on type
+        if (type === 'confirm' || showCancel) {
+            footerEl.style.display = 'flex';
+            if (restoredCancelBtn) {
+                restoredCancelBtn.style.display = 'inline-flex';
+            }
+        } else {
+            footerEl.style.display = 'flex';
+            if (restoredCancelBtn) {
+                restoredCancelBtn.style.display = 'none';
+            }
+        }
+
+        // Remove previous event listeners by cloning
+        // Only clone if buttons exist (they might be null if custom buttons were used previously)
+        if (restoredConfirmBtn) {
+            const clonedConfirmBtn = restoredConfirmBtn.cloneNode(true);
+            restoredConfirmBtn.replaceWith(clonedConfirmBtn);
+        }
+        if (restoredCancelBtn) {
+            const clonedCancelBtn = restoredCancelBtn.cloneNode(true);
+            restoredCancelBtn.replaceWith(clonedCancelBtn);
+        }
+
+        // Add new event listeners (get buttons again after cloning)
+        const finalConfirmBtn = document.getElementById('dialog-confirm-btn');
+        const finalCancelBtn = document.getElementById('dialog-cancel-btn');
+        
+        if (finalConfirmBtn) {
+            finalConfirmBtn.addEventListener('click', () => {
+                closeDialog();
+                if (onConfirm) onConfirm();
+            });
+        }
+
+        if ((showCancel || type === 'confirm') && finalCancelBtn) {
+            finalCancelBtn.addEventListener('click', () => {
+                closeDialog();
+                if (onCancel) onCancel();
+            });
+        }
     }
 
     // Show dialog
@@ -143,16 +214,23 @@ function showDialog(options = {}) {
     // Return promise for confirm dialogs
     if (type === 'confirm') {
         return new Promise((resolve) => {
-            document.getElementById('dialog-confirm-btn').addEventListener('click', () => {
-                resolve(true);
-            }, {
-                once: true
-            });
-            document.getElementById('dialog-cancel-btn').addEventListener('click', () => {
-                resolve(false);
-            }, {
-                once: true
-            });
+            const confirmBtnForPromise = document.getElementById('dialog-confirm-btn');
+            const cancelBtnForPromise = document.getElementById('dialog-cancel-btn');
+            
+            if (confirmBtnForPromise) {
+                confirmBtnForPromise.addEventListener('click', () => {
+                    resolve(true);
+                }, {
+                    once: true
+                });
+            }
+            if (cancelBtnForPromise) {
+                cancelBtnForPromise.addEventListener('click', () => {
+                    resolve(false);
+                }, {
+                    once: true
+                });
+            }
         });
     }
 

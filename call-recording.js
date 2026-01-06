@@ -2,14 +2,15 @@
 // Handles call link access code validation and call recording
 
 // Firebase Configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "AIzaSyApT0uj8sz3mC8bDtLQeHHodAtZlqfJDns",
-    authDomain: "rajjecampaign.firebaseapp.com",
-    projectId: "rajjecampaign",
-    storageBucket: "rajjecampaign.firebasestorage.app",
-    messagingSenderId: "480799282234",
-    appId: "1:480799282234:web:a35c084610bcdfc2ed9103",
-    measurementId: "G-2K7J967N1V"
+    apiKey: "AIzaSyBd2G37d-hkM_AkFaEtHofE8ISNOvnNXiY",
+    authDomain: "version6-7c39b.firebaseapp.com",
+    projectId: "version6-7c39b",
+    storageBucket: "version6-7c39b.firebasestorage.app",
+    messagingSenderId: "284487082378",
+    appId: "1:284487082378:web:bdf11ca6c99f3758a6a873",
+    measurementId: "G-H1VWHNF8Z7"
 };
 
 import {

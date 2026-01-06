@@ -70,15 +70,36 @@ function getFormTemplate(type) {
         pledge: getPledgeFormTemplate(),
         agent: getAgentFormTemplate(),
         ballot: getBallotFormTemplate(),
-        transportation: getTransportationFormTemplate()
+        transportation: getTransportationFormTemplate(),
+        'island-user': getIslandUserFormTemplate()
     };
     return templates[type] || '<p>Unknown form type</p>';
 }
 
+// Safe Island Select Populator (DOM-based, no template literal parsing)
+function populateIslandSelect(selectId, constituency) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    const islands =
+        window.maldivesData &&
+        window.maldivesData.constituencyIslands &&
+        Array.isArray(window.maldivesData.constituencyIslands[constituency]) ?
+        window.maldivesData.constituencyIslands[constituency] : [];
+
+    select.innerHTML = '<option value="">Select island</option>';
+
+    islands.forEach(island => {
+        const opt = document.createElement('option');
+        opt.value = island;
+        opt.textContent = island;
+        select.appendChild(opt);
+    });
+}
+
 // Candidate Form Template
 function getCandidateFormTemplate() {
-    const constituencies = window.maldivesData.constituencies || [];
-    const constituencyOptions = constituencies.map(c => `<option value="${c}">${c}</option>`).join('');
+    const currentConstituency = window.campaignData && window.campaignData.constituency ? window.campaignData.constituency : '';
 
     return `
         <form id="modal-form" class="modal-form">
@@ -97,18 +118,24 @@ function getCandidateFormTemplate() {
                     <select id="candidate-position" name="candidate-position" required>
                         <option value="">Select position</option>
                         <option value="WDC Member">WDC Member</option>
+                        <option value="WDC President">WDC President</option>
                         <option value="Local Council Member">Local Council Member</option>
+                        <option value="Local Council President">Local Council President</option>
                         <option value="Parliament Member">Parliament Member</option>
                         <option value="President">President</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="candidate-constituency">Constituency *</label>
-                    <select id="candidate-constituency" name="candidate-constituency" required>
-                        <option value="">Select constituency</option>
-                        ${constituencyOptions}
-                    </select>
+                    <input type="text" id="candidate-constituency" name="candidate-constituency" readonly style="background: var(--light-color); cursor: not-allowed;" value="${currentConstituency}" required>
+                    <small style="color: var(--text-light); font-size: 12px;">Fetched from Campaign Setup</small>
                 </div>
+            </div>
+            <div class="form-group">
+                <label for="candidate-island">Island</label>
+                <select id="candidate-island" name="candidate-island">
+                    <option value="">Select island</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="candidate-status">Status</label>
@@ -129,10 +156,10 @@ function getCandidateFormTemplate() {
 
 // Voter Form Template
 function getVoterFormTemplate() {
-    const atolls = window.maldivesData.atolls || [];
-    const atollOptions = atolls.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
-    const islands = window.maldivesData.islands || {};
-    const currentIslands = window.campaignData.island ? [window.campaignData.island] : [];
+    const constituencies = window.maldivesData.constituencies || [];
+    const constituencyIslands = window.maldivesData.constituencyIslands || {};
+    const currentConstituency = window.campaignData && window.campaignData.constituency ? window.campaignData.constituency : '';
+    const currentIslands = currentConstituency && constituencyIslands[currentConstituency] ? constituencyIslands[currentConstituency] : [];
 
     return `
         <div class="import-mode-tabs" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color);">
@@ -278,6 +305,10 @@ function getVoterFormTemplate() {
 
 // Event Form Template
 function getEventFormTemplate() {
+    const currentConstituency = window.campaignData && window.campaignData.constituency ? window.campaignData.constituency : '';
+    const constituencyIslands = window.maldivesData && window.maldivesData.constituencyIslands ? window.maldivesData.constituencyIslands : {};
+    const currentIslands = currentConstituency && constituencyIslands[currentConstituency] ? constituencyIslands[currentConstituency] : [];
+    
     return `
         <form id="modal-form" class="modal-form">
             <div class="form-group">
@@ -290,8 +321,20 @@ function getEventFormTemplate() {
                     <input type="date" id="event-date" name="event-date" required>
                 </div>
                 <div class="form-group">
-                    <label for="event-location">Location *</label>
-                    <input type="text" id="event-location" name="event-location" placeholder="Enter location" required>
+                    <label for="event-type">Event Type *</label>
+                    <select id="event-type" name="event-type" required>
+                        <option value="">Select type</option>
+                        <option value="rally">Rally</option>
+                        <option value="meeting">Meeting</option>
+                        <option value="canvassing">Canvassing</option>
+                        <option value="door-to-door">Door to Door</option>
+                        <option value="kanmathi-jalsaa">Kanmathi Jalsaa</option>
+                        <option value="jagaha-jalsaa">Jagaha Jalsaa</option>
+                        <option value="fundraiser">Fundraiser</option>
+                        <option value="debate">Debate</option>
+                        <option value="press">Press Conference</option>
+                        <option value="other">Other</option>
+                    </select>
                 </div>
             </div>
             <div class="form-row">
@@ -303,6 +346,28 @@ function getEventFormTemplate() {
                     <label for="event-end-time">End Time *</label>
                     <input type="time" id="event-end-time" name="event-end-time" required>
                 </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="event-constituency">Constituency *</label>
+                    <input type="text" id="event-constituency" name="event-constituency" readonly style="background: var(--light-color); cursor: not-allowed;" value="${currentConstituency}" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-island">Island *</label>
+                    <select id="event-island" name="event-island" required>
+                        <option value="">Select island</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="event-venue">Venue *</label>
+                    <input type="text" id="event-venue" name="event-venue" placeholder="Enter venue name" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="event-location">Location / Address</label>
+                <input type="text" id="event-location" name="event-location" placeholder="Enter full address (optional)">
             </div>
             <div class="form-group">
                 <label for="event-attendees">Expected Attendees</label>
@@ -348,13 +413,17 @@ function getCallFormTemplate() {
             </div>
             <div class="form-row">
                 <div class="form-group">
+                    <label for="call-constituency">Constituency</label>
+                    <input type="text" id="call-constituency" name="call-constituency" readonly style="background: var(--light-color); cursor: not-allowed;" value="${(window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : ''}">
+                </div>
+                <div class="form-group">
                     <label for="call-voter-island">Island</label>
                     <input type="text" id="call-voter-island" name="call-voter-island" placeholder="Auto-filled when voter selected" readonly style="background: var(--light-color);">
                 </div>
-                <div class="form-group">
-                    <label for="call-voter-address">Permanent Address</label>
-                    <input type="text" id="call-voter-address" name="call-voter-address" placeholder="Auto-filled when voter selected" readonly style="background: var(--light-color);">
-                </div>
+            </div>
+            <div class="form-group">
+                <label for="call-voter-address">Permanent Address</label>
+                <input type="text" id="call-voter-address" name="call-voter-address" placeholder="Auto-filled when voter selected" readonly style="background: var(--light-color);">
             </div>
             <div class="form-row">
                 <div class="form-group">
@@ -414,9 +483,19 @@ function getPledgeFormTemplate() {
                     <input type="text" id="pledge-voter-id" name="pledge-voter-id" placeholder="Auto-filled when voter selected" readonly style="background: var(--light-color);">
                 </div>
                 <div class="form-group">
+                    <label for="pledge-constituency">Constituency</label>
+                    <input type="text" id="pledge-constituency" name="pledge-constituency" readonly style="background: var(--light-color); cursor: not-allowed;" value="${(window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : ''}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
                     <label for="pledge-island">Island</label>
                     <input type="text" id="pledge-island" name="pledge-island" placeholder="Auto-filled when voter selected" readonly style="background: var(--light-color);" value="${window.campaignData?.island || ''}">
                 </div>
+            </div>
+            <div class="form-group">
+                <label for="pledge-permanent-address">Permanent Address</label>
+                <textarea id="pledge-permanent-address" name="pledge-permanent-address" rows="2" placeholder="Auto-filled when voter selected" readonly style="background: var(--light-color);"></textarea>
             </div>
             <div class="form-group">
                 <label for="pledge-current-location">Current Location</label>
@@ -467,220 +546,657 @@ function getAgentFormTemplate() {
                 <input type="text" id="agent-id" name="agent-id" placeholder="Auto-generated if left empty">
                 <small>Leave empty to auto-generate</small>
             </div>
-            <div class="form-group">
-                <label for="agent-area">Assigned Area *</label>
-                <input type="text" id="agent-area" name="agent-area" placeholder="Enter assigned area/island" required>
-            </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="agent-phone">Phone Number</label>
-                    <input type="tel" id="agent-phone" name="agent-phone" placeholder="Enter phone number">
+                    <label for="agent-constituency">Constituency *</label>
+                    <input type="text" id="agent-constituency" name="agent-constituency" readonly style="background: var(--light-color); cursor: not-allowed;" value="${(window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : ''}" required>
                 </div>
                 <div class="form-group">
-                    <label for="agent-email">Email</label>
-                    <input type="email" id="agent-email" name="agent-email" placeholder="Enter email address">
+                    <label for="agent-island">Island *</label>
+                    <select id="agent-island" name="agent-island" required>
+                        <option value="">Select island</option>
+                    </select>
                 </div>
-            </div>
-            <div id="modal-error" class="error-message" style="display: none;"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary btn-compact" onclick="closeModal()">Cancel</button>
-                <button type="submit" class="btn-primary btn-compact" id="agent-submit-btn">Add Agent</button>
-            </div>
-        </form>
+    /div>
+div > <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "agent-area" > Assigned Area < /label> <
+input type = "text"
+id = "agent-area"
+name = "agent-area"
+placeholder = "Enter assigned area (optional)" >
+    <
+    /div> <
+div class = "form-row" >
+    <
+    div class = "form-group" >
+    <
+    label
+for = "agent-phone" > Phone Number < /label> <
+input type = "tel"
+id = "agent-phone"
+name = "agent-phone"
+placeholder = "Enter phone number" >
+    <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "agent-email" > Email < /label> <
+input type = "email"
+id = "agent-email"
+name = "agent-email"
+placeholder = "Enter email address" >
+    <
+    /div> < /
+div > <
+    div id = "modal-error"
+class = "error-message"
+style = "display: none;" > < /div> <
+div class = "modal-footer" >
+    <
+    button type = "button"
+class = "btn-secondary btn-compact"
+onclick = "closeModal()" > Cancel < /button> <
+button type = "submit"
+class = "btn-primary btn-compact"
+id = "agent-submit-btn" > Add Agent < /button> < /
+div > <
+    /form>
     `;
 }
 
 // Ballot Form Template
 function getBallotFormTemplate() {
-    return `
-        <form id="modal-form" class="modal-form">
-            <div class="form-group">
-                <label for="ballot-number">Ballot Number *</label>
-                <input type="text" id="ballot-number" name="ballot-number" placeholder="Enter ballot number" required>
-            </div>
-            <div class="form-group">
-                <label for="ballot-location">Location *</label>
-                <input type="text" id="ballot-location" name="ballot-location" placeholder="Enter ballot location" required>
-            </div>
-            <div class="form-group">
-                <label for="ballot-expected-voters">Expected Voters *</label>
-                <input type="number" id="ballot-expected-voters" name="ballot-expected-voters" placeholder="Enter expected number of voters" min="0" required>
-            </div>
-            <div class="form-group">
-                <label for="ballot-status">Status</label>
-                <select id="ballot-status" name="ballot-status">
-                    <option value="open">Open</option>
-                    <option value="close">Close</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="ballot-notes">Notes</label>
-                <textarea id="ballot-notes" name="ballot-notes" rows="3" placeholder="Additional notes (optional)"></textarea>
-            </div>
-            <div id="modal-error" class="error-message" style="display: none;"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary btn-compact" onclick="closeModal()">Cancel</button>
-                <button type="submit" class="btn-primary btn-compact">Add Ballot</button>
-            </div>
-        </form>
+    const constituencies = window.maldivesData.constituencies || [];
+    const defaultConstituency = (window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : '';
+
+    return ` <
+form id = "modal-form"
+class = "modal-form" >
+    <
+    div class = "form-group" >
+    <
+    label
+for = "ballot-number" > Ballot Number * < /label> <
+input type = "text"
+id = "ballot-number"
+name = "ballot-number"
+placeholder = "Enter ballot number"
+required >
+    <
+    /div> <
+div class = "form-row" >
+    <
+    div class = "form-group" >
+    <
+    label
+for = "ballot-constituency" > Constituency < /label> <
+input type = "text"
+id = "ballot-constituency"
+name = "ballot-constituency"
+readonly style = "background: var(--light-color); cursor: not-allowed;"
+value = "${defaultConstituency}" >
+    <
+    small style = "color: var(--text-light); font-size: 12px;" > Fetched from Campaign Setup < /small> < /
+div > <
+    div class = "form-group" >
+    <
+    label
+for = "ballot-island" > Island < /label> <
+select id = "ballot-island"
+name = "ballot-island" >
+    <
+    option value = "" > Select island < /option> < /
+select > <
+    /div> < /
+div > <
+    div class = "form-group" >
+    <
+    label
+for = "ballot-location" > Location * < /label> <
+input type = "text"
+id = "ballot-location"
+name = "ballot-location"
+placeholder = "Enter ballot location"
+required >
+    <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "ballot-expected-voters" > Expected Voters * < /label> <
+input type = "number"
+id = "ballot-expected-voters"
+name = "ballot-expected-voters"
+placeholder = "Enter expected number of voters"
+min = "0"
+required >
+    <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "ballot-status" > Status < /label> <
+select id = "ballot-status"
+name = "ballot-status" >
+    <
+    option value = "open" > Open < /option> <
+option value = "close" > Close < /option> < /
+select > <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "ballot-notes" > Notes < /label> <
+textarea id = "ballot-notes"
+name = "ballot-notes"
+rows = "3"
+placeholder = "Additional notes (optional)" > < /textarea> < /
+div > <
+    div id = "modal-error"
+class = "error-message"
+style = "display: none;" > < /div> <
+div class = "modal-footer" >
+    <
+    button type = "button"
+class = "btn-secondary btn-compact"
+onclick = "closeModal()" > Cancel < /button> <
+button type = "submit"
+class = "btn-primary btn-compact" > Add Ballot < /button> < /
+div > <
+    /form>
     `;
 }
 
 // Transportation Form Template
 function getTransportationFormTemplate() {
+    return ` <
+div class = "transportation-form-tabs"
+style = "display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color);" >
+    <
+    button type = "button"
+class = "transport-form-tab-btn active"
+data - transport - type = "flights"
+style = "padding: 10px 20px; background: none; border: none; border-bottom: 3px solid var(--primary-color); color: var(--primary-color); font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif;" >
+    <
+    svg xmlns = "http://www.w3.org/2000/svg"
+width = "18"
+height = "18"
+viewBox = "0 0 24 24"
+fill = "none"
+stroke = "currentColor"
+stroke - width = "2"
+stroke - linecap = "round"
+stroke - linejoin = "round"
+style = "margin-right: 6px; vertical-align: middle;" >
+    <
+    path d = "M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" > < /path> < /
+svg >
+    Flight <
+    /button> <
+button type = "button"
+class = "transport-form-tab-btn"
+data - transport - type = "speedboats"
+style = "padding: 10px 20px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-family: 'Poppins', sans-serif;" >
+    <
+    svg xmlns = "http://www.w3.org/2000/svg"
+width = "18"
+height = "18"
+viewBox = "0 0 24 24"
+fill = "none"
+stroke = "currentColor"
+stroke - width = "2"
+stroke - linecap = "round"
+stroke - linejoin = "round"
+style = "margin-right: 6px; vertical-align: middle;" >
+    <
+    path d = "M3 18h18" > < /path> <
+path d = "M3 12h18" > < /path> <
+path d = "M3 6h18" > < /path> < /
+svg >
+    Speed Boat <
+    /button> <
+button type = "button"
+class = "transport-form-tab-btn"
+data - transport - type = "taxis"
+style = "padding: 10px 20px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-family: 'Poppins', sans-serif;" >
+    <
+    svg xmlns = "http://www.w3.org/2000/svg"
+width = "18"
+height = "18"
+viewBox = "0 0 24 24"
+fill = "none"
+stroke = "currentColor"
+stroke - width = "2"
+stroke - linecap = "round"
+stroke - linejoin = "round"
+style = "margin-right: 6px; vertical-align: middle;" >
+    <
+    rect x = "1"
+y = "3"
+width = "22"
+height = "18"
+rx = "2"
+ry = "2" > < /rect> <
+line x1 = "7"
+y1 = "3"
+x2 = "7"
+y2 = "21" > < /line> <
+line x1 = "17"
+y1 = "3"
+x2 = "17"
+y2 = "21" > < /line> < /
+svg >
+    Taxi <
+    /button> < /
+div >
+
+    <
+    !--Flight Form-- >
+    <
+    form id = "modal-form"
+class = "modal-form transport-form"
+data - transport - type = "flights"
+style = "display: block;" >
+    <
+    div class = "form-group" >
+    <
+    label
+for = "transport-flight-number" > Flight Number * < /label> <
+input type = "text"
+id = "transport-flight-number"
+name = "transport-flight-number"
+placeholder = "Enter flight number"
+required >
+    <
+    /div> <
+div class = "form-row" >
+    <
+    div class = "form-group" >
+    <
+    label
+for = "transport-constituency" > Constituency * < /label> <
+input type = "text"
+id = "transport-constituency"
+name = "transport-constituency"
+readonly style = "background: var(--light-color); cursor: not-allowed;"
+value = "${(window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : ''}"
+required >
+    <
+    <
+    /div> <
+div class = "form-group" >
+    <
+                    <label for="transport-island">Island *</label>
+                    <select id="transport-island" name="transport-island" required>
+                        <option value="">Select island</option>
+</select> <
+/div> <
+/div> <
+div class = "form-group" >
+    <
+    label
+for = "transport-route" > Route * < /label> <
+input type = "text"
+id = "transport-route"
+name = "transport-route"
+placeholder = "e.g., Male to Addu"
+required >
+    <
+    /div> <
+div class = "form-row" >
+    <
+    div class = "form-group" >
+    <
+    label
+for = "transport-departure-time" > Departure Time * < /label> <
+input type = "time"
+id = "transport-departure-time"
+name = "transport-departure-time"
+required >
+    <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "transport-arrival-time" > Arrival Time * < /label> <
+input type = "time"
+id = "transport-arrival-time"
+name = "transport-arrival-time"
+required >
+    <
+    /div> < /
+div > <
+    div class = "form-group" >
+    <
+    label
+for = "transport-capacity" > Capacity * < /label> <
+input type = "number"
+id = "transport-capacity"
+name = "transport-capacity"
+placeholder = "Number of passengers"
+min = "1"
+required >
+    <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "transport-status" > Status < /label> <
+select id = "transport-status"
+name = "transport-status" >
+    <
+    option value = "pending" > Pending < /option> <
+option value = "confirmed" > Confirmed < /option> <
+option value = "completed" > Completed < /option> <
+option value = "cancelled" > Cancelled < /option> < /
+select > <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "transport-notes" > Notes < /label> <
+textarea id = "transport-notes"
+name = "transport-notes"
+rows = "3"
+placeholder = "Additional notes (optional)" > < /textarea> < /
+div > <
+    div id = "modal-error"
+class = "error-message"
+style = "display: none;" > < /div> <
+div class = "modal-footer" >
+    <
+    button type = "button"
+class = "btn-secondary btn-compact"
+onclick = "closeModal()" > Cancel < /button> <
+button type = "submit"
+class = "btn-primary btn-compact" > Add Flight < /button> < /
+div > <
+    /form>
+
+    <
+    !--Speed Boat Form-- >
+    <
+    form id = "modal-form-speedboat"
+class = "modal-form transport-form"
+data - transport - type = "speedboats"
+style = "display: none;" >
+    <
+    div class = "form-group" >
+    <
+    label
+for = "transport-boat-name" > Boat Name / Number * < /label> <
+input type = "text"
+id = "transport-boat-name"
+name = "transport-boat-name"
+placeholder = "Enter boat name or number"
+required >
+    <
+    /div> <
+div class = "form-row" >
+    <
+    div class = "form-group" >
+    <
+    label
+for = "transport-constituency-sb" > Constituency * < /label> <
+input type = "text"
+id = "transport-constituency-sb"
+name = "transport-constituency-sb"
+readonly style = "background: var(--light-color); cursor: not-allowed;"
+value = "${(window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : ''}"
+required >
+    <
+    /div> <
+div class = "form-group" >
+                    <label for="transport-island-sb">Island *</label>
+                    <select id="transport-island-sb" name="transport-island-sb" required>
+                        <option value="">Select island</option>
+</select> <
+/div> <
+/div> <
+div class = "form-group" >
+    <
+    label
+for = "transport-route-sb" > Route * < /label> <
+input type = "text"
+id = "transport-route-sb"
+name = "transport-route-sb"
+placeholder = "e.g., Male to Maafushi"
+required >
+    <
+    /div> <
+div class = "form-row" >
+    <
+    div class = "form-group" >
+    <
+    label
+for = "transport-departure-time-sb" > Departure Time * < /label> <
+input type = "time"
+id = "transport-departure-time-sb"
+name = "transport-departure-time-sb"
+required >
+    <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "transport-arrival-time-sb" > Arrival Time * < /label> <
+input type = "time"
+id = "transport-arrival-time-sb"
+name = "transport-arrival-time-sb"
+required >
+    <
+    /div> < /
+div > <
+    div class = "form-group" >
+    <
+    label
+for = "transport-capacity-sb" > Capacity * < /label> <
+input type = "number"
+id = "transport-capacity-sb"
+name = "transport-capacity-sb"
+placeholder = "Number of passengers"
+min = "1"
+required >
+    <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "transport-status-sb" > Status < /label> <
+select id = "transport-status-sb"
+name = "transport-status-sb" >
+    <
+    option value = "pending" > Pending < /option> <
+option value = "confirmed" > Confirmed < /option> <
+option value = "completed" > Completed < /option> <
+option value = "cancelled" > Cancelled < /option> < /
+select > <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "transport-notes-sb" > Notes < /label> <
+textarea id = "transport-notes-sb"
+name = "transport-notes-sb"
+rows = "3"
+placeholder = "Additional notes (optional)" > < /textarea> < /
+div > <
+    div id = "modal-error-sb"
+class = "error-message"
+style = "display: none;" > < /div> <
+div class = "modal-footer" >
+    <
+    button type = "button"
+class = "btn-secondary btn-compact"
+onclick = "closeModal()" > Cancel < /button> <
+button type = "submit"
+class = "btn-primary btn-compact" > Add Speed Boat < /button> < /
+div > <
+    /form>
+
+    <
+    !--Taxi Form-- >
+    <
+    form id = "modal-form-taxi"
+class = "modal-form transport-form"
+data - transport - type = "taxis"
+style = "display: none;" >
+    <
+    div class = "form-group" >
+    <
+    label
+for = "transport-taxi-number" > Taxi Number * < /label> <
+input type = "text"
+id = "transport-taxi-number"
+name = "transport-taxi-number"
+placeholder = "Enter taxi number"
+required >
+    <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "transport-driver-name" > Driver Name * < /label> <
+input type = "text"
+id = "transport-driver-name"
+name = "transport-driver-name"
+placeholder = "Enter driver name"
+required >
+    <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "transport-contact" > Contact Number * < /label> <
+input type = "tel"
+id = "transport-contact"
+name = "transport-contact"
+placeholder = "Enter contact number"
+required >
+    <
+    /div> <
+div class = "form-row" >
+    <
+    div class = "form-group" >
+    <
+    label
+for = "transport-constituency-taxi" > Constituency * < /label> <
+input type = "text"
+id = "transport-constituency-taxi"
+name = "transport-constituency-taxi"
+readonly style = "background: var(--light-color); cursor: not-allowed;"
+value = "${(window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : ''}"
+required >
+    <
+    /div> <
+div class = "form-group" >
+    <
+    <label for="transport-island-taxi">Island *</label>
+    <select id="transport-island-taxi" name="transport-island-taxi" required>
+    <option value="">Select island</option>
+</select> <
+/div> <
+/div> <
+div class = "form-group" >
+    <
+    label
+for = "transport-route-taxi" > Route / Area * < /label> <
+input type = "text"
+id = "transport-route-taxi"
+name = "transport-route-taxi"
+placeholder = "e.g., Male City Center"
+required >
+    <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "transport-capacity-taxi" > Capacity * < /label> <
+input type = "number"
+id = "transport-capacity-taxi"
+name = "transport-capacity-taxi"
+placeholder = "Number of passengers"
+min = "1"
+required >
+    <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "transport-status-taxi" > Status < /label> <
+select id = "transport-status-taxi"
+name = "transport-status-taxi" >
+    <
+    option value = "pending" > Pending < /option> <
+option value = "assigned" > Assigned < /option> <
+option value = "completed" > Completed < /option> <
+option value = "cancelled" > Cancelled < /option> < /
+select > <
+    /div> <
+div class = "form-group" >
+    <
+    label
+for = "transport-notes-taxi" > Notes < /label> <
+textarea id = "transport-notes-taxi"
+name = "transport-notes-taxi"
+rows = "3"
+placeholder = "Additional notes (optional)" > < /textarea> < /
+div > <
+    div id = "modal-error-taxi"
+class = "error-message"
+style = "display: none;" > < /div> <
+div class = "modal-footer" >
+    <
+    button type = "button"
+class = "btn-secondary btn-compact"
+onclick = "closeModal()" > Cancel < /button> <
+button type = "submit"
+class = "btn-primary btn-compact" > Add Taxi < /button> < /
+div > <
+    /form>
+`;
+}
+
+// Island User Form Template
+function getIslandUserFormTemplate() {
+    const defaultConstituency = (window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : '';
+
     return `
-        <div class="transportation-form-tabs" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color);">
-            <button type="button" class="transport-form-tab-btn active" data-transport-type="flights" style="padding: 10px 20px; background: none; border: none; border-bottom: 3px solid var(--primary-color); color: var(--primary-color); font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; vertical-align: middle;">
-                    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"></path>
-                </svg>
-                Flight
-            </button>
-            <button type="button" class="transport-form-tab-btn" data-transport-type="speedboats" style="padding: 10px 20px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-family: 'Poppins', sans-serif;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; vertical-align: middle;">
-                    <path d="M3 18h18"></path>
-                    <path d="M3 12h18"></path>
-                    <path d="M3 6h18"></path>
-                </svg>
-                Speed Boat
-            </button>
-            <button type="button" class="transport-form-tab-btn" data-transport-type="taxis" style="padding: 10px 20px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-family: 'Poppins', sans-serif;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; vertical-align: middle;">
-                    <rect x="1" y="3" width="22" height="18" rx="2" ry="2"></rect>
-                    <line x1="7" y1="3" x2="7" y2="21"></line>
-                    <line x1="17" y1="3" x2="17" y2="21"></line>
-                </svg>
-                Taxi
-            </button>
-        </div>
-        
-        <!-- Flight Form -->
-        <form id="modal-form" class="modal-form transport-form" data-transport-type="flights" style="display: block;">
+        <form id="modal-form" class="modal-form">
             <div class="form-group">
-                <label for="transport-flight-number">Flight Number *</label>
-                <input type="text" id="transport-flight-number" name="transport-flight-number" placeholder="Enter flight number" required>
+                <label for="island-user-name">Full Name *</label>
+                <input type="text" id="island-user-name" name="island-user-name" placeholder="Enter full name" required>
             </div>
             <div class="form-group">
-                <label for="transport-route">Route *</label>
-                <input type="text" id="transport-route" name="transport-route" placeholder="e.g., Male to Addu" required>
+                <label for="island-user-email">Email *</label>
+                <input type="email" id="island-user-email" name="island-user-email" placeholder="Enter email address" required>
+            </div>
+            <div class="form-group">
+                <label for="island-user-phone">Phone *</label>
+                <input type="tel" id="island-user-phone" name="island-user-phone" placeholder="Enter phone number" required>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="transport-departure-time">Departure Time *</label>
-                    <input type="time" id="transport-departure-time" name="transport-departure-time" required>
+                    <label for="island-user-constituency">Constituency *</label>
+                    <input type="text" id="island-user-constituency" name="island-user-constituency" readonly style="background: var(--light-color); cursor: not-allowed;" value="${defaultConstituency}" required>
+                    <small style="color: var(--text-light); font-size: 12px;">Fetched from Campaign Setup</small>
                 </div>
                 <div class="form-group">
-                    <label for="transport-arrival-time">Arrival Time *</label>
-                    <input type="time" id="transport-arrival-time" name="transport-arrival-time" required>
+                    <label for="island-user-island">Island *</label>
+                    <select id="island-user-island" name="island-user-island" required>
+                        <option value="">Select island</option>
+                    </select>
                 </div>
-            </div>
-            <div class="form-group">
-                <label for="transport-capacity">Capacity *</label>
-                <input type="number" id="transport-capacity" name="transport-capacity" placeholder="Number of passengers" min="1" required>
-            </div>
-            <div class="form-group">
-                <label for="transport-status">Status</label>
-                <select id="transport-status" name="transport-status">
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="transport-notes">Notes</label>
-                <textarea id="transport-notes" name="transport-notes" rows="3" placeholder="Additional notes (optional)"></textarea>
             </div>
             <div id="modal-error" class="error-message" style="display: none;"></div>
             <div class="modal-footer">
                 <button type="button" class="btn-secondary btn-compact" onclick="closeModal()">Cancel</button>
-                <button type="submit" class="btn-primary btn-compact">Add Flight</button>
-            </div>
-        </form>
-        
-        <!-- Speed Boat Form -->
-        <form id="modal-form-speedboat" class="modal-form transport-form" data-transport-type="speedboats" style="display: none;">
-            <div class="form-group">
-                <label for="transport-boat-name">Boat Name/Number *</label>
-                <input type="text" id="transport-boat-name" name="transport-boat-name" placeholder="Enter boat name or number" required>
-            </div>
-            <div class="form-group">
-                <label for="transport-route-sb">Route *</label>
-                <input type="text" id="transport-route-sb" name="transport-route-sb" placeholder="e.g., Male to Maafushi" required>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="transport-departure-time-sb">Departure Time *</label>
-                    <input type="time" id="transport-departure-time-sb" name="transport-departure-time-sb" required>
-                </div>
-                <div class="form-group">
-                    <label for="transport-arrival-time-sb">Arrival Time *</label>
-                    <input type="time" id="transport-arrival-time-sb" name="transport-arrival-time-sb" required>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="transport-capacity-sb">Capacity *</label>
-                <input type="number" id="transport-capacity-sb" name="transport-capacity-sb" placeholder="Number of passengers" min="1" required>
-            </div>
-            <div class="form-group">
-                <label for="transport-status-sb">Status</label>
-                <select id="transport-status-sb" name="transport-status-sb">
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="transport-notes-sb">Notes</label>
-                <textarea id="transport-notes-sb" name="transport-notes-sb" rows="3" placeholder="Additional notes (optional)"></textarea>
-            </div>
-            <div id="modal-error-sb" class="error-message" style="display: none;"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary btn-compact" onclick="closeModal()">Cancel</button>
-                <button type="submit" class="btn-primary btn-compact">Add Speed Boat</button>
-            </div>
-        </form>
-        
-        <!-- Taxi Form -->
-        <form id="modal-form-taxi" class="modal-form transport-form" data-transport-type="taxis" style="display: none;">
-            <div class="form-group">
-                <label for="transport-taxi-number">Taxi Number *</label>
-                <input type="text" id="transport-taxi-number" name="transport-taxi-number" placeholder="Enter taxi number" required>
-            </div>
-            <div class="form-group">
-                <label for="transport-driver-name">Driver Name *</label>
-                <input type="text" id="transport-driver-name" name="transport-driver-name" placeholder="Enter driver name" required>
-            </div>
-            <div class="form-group">
-                <label for="transport-contact">Contact Number *</label>
-                <input type="tel" id="transport-contact" name="transport-contact" placeholder="Enter contact number" required>
-            </div>
-            <div class="form-group">
-                <label for="transport-route-taxi">Route/Area *</label>
-                <input type="text" id="transport-route-taxi" name="transport-route-taxi" placeholder="e.g., Male City Center" required>
-            </div>
-            <div class="form-group">
-                <label for="transport-capacity-taxi">Capacity *</label>
-                <input type="number" id="transport-capacity-taxi" name="transport-capacity-taxi" placeholder="Number of passengers" min="1" required>
-            </div>
-            <div class="form-group">
-                <label for="transport-status-taxi">Status</label>
-                <select id="transport-status-taxi" name="transport-status-taxi">
-                    <option value="pending">Pending</option>
-                    <option value="assigned">Assigned</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="transport-notes-taxi">Notes</label>
-                <textarea id="transport-notes-taxi" name="transport-notes-taxi" rows="3" placeholder="Additional notes (optional)"></textarea>
-            </div>
-            <div id="modal-error-taxi" class="error-message" style="display: none;"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary btn-compact" onclick="closeModal()">Cancel</button>
-                <button type="submit" class="btn-primary btn-compact">Add Taxi</button>
+                <button type="submit" class="btn-primary btn-compact">Save User</button>
             </div>
         </form>
     `;
@@ -727,6 +1243,7 @@ async function handleFormSubmit(type, formData) {
                 const candidateId = formData.get('candidate-id');
                 const candidatePosition = formData.get('candidate-position');
                 const candidateConstituency = formData.get('candidate-constituency');
+                const candidateIsland = formData.get('candidate-island');
                 const candidateStatus = formData.get('candidate-status');
 
                 if (!candidateName || !candidateName.trim()) {
@@ -749,7 +1266,11 @@ async function handleFormSubmit(type, formData) {
                     // Will be preserved during update, but we need to ensure it's not null
                     finalCandidateId = null; // Will be loaded and preserved during update
                 } else if (!finalCandidateId) {
-                    finalCandidateId = `CAND-${Date.now()}`;
+                    finalCandidateId = `
+CAND - $ {
+    Date.now()
+}
+`;
                 }
 
                 dataToSave = {
@@ -757,6 +1278,7 @@ async function handleFormSubmit(type, formData) {
                     candidateId: finalCandidateId,
                     position: candidatePosition.trim(),
                     constituency: candidateConstituency.trim(),
+                    island: cleanFormValue(candidateIsland),
                     status: candidateStatus && candidateStatus.trim() ? candidateStatus.trim() : 'active',
                     [emailField]: window.userEmail
                 };
@@ -786,7 +1308,11 @@ async function handleFormSubmit(type, formData) {
                             getDownloadURL
                         } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js');
                         const storage = getStorage();
-                        const imageRef = ref(storage, `voters/${window.userEmail}/${Date.now()}_${imageFile.name}`);
+                        const imageRef = ref(storage, `
+voters / $ {
+    window.userEmail
+}
+/${Date.now()}_${imageFile.name}`);
                         await uploadBytes(imageRef, imageFile);
                         imageUrl = await getDownloadURL(imageRef);
                     } catch (uploadError) {
@@ -871,7 +1397,6 @@ async function handleFormSubmit(type, formData) {
                     age: age || null,
                     gender: cleanFormValue(formData.get('voter-gender')),
                     constituency: cleanFormValue(formData.get('voter-constituency')) || (window.campaignData && window.campaignData.constituency ? window.campaignData.constituency : ''),
-                    atoll: null, // Keep for backward compatibility, but use constituency instead
                     island: cleanFormValue(formData.get('voter-island')),
                     ballot: cleanFormValue(formData.get('voter-ballot')),
                     permanentAddress: getPermanentAddress(),
@@ -901,6 +1426,10 @@ async function handleFormSubmit(type, formData) {
             case 'event':
                 const eventName = formData.get('event-name');
                 const eventDate = formData.get('event-date');
+                const eventType = formData.get('event-type');
+                const eventConstituency = formData.get('event-constituency');
+                const eventIsland = formData.get('event-island');
+                const eventVenue = formData.get('event-venue');
                 const eventLocation = formData.get('event-location');
                 const eventStartTime = formData.get('event-start-time');
                 const eventEndTime = formData.get('event-end-time');
@@ -915,8 +1444,16 @@ async function handleFormSubmit(type, formData) {
                     showModalError('Event date is required.');
                     return;
                 }
-                if (!eventLocation || !eventLocation.trim()) {
-                    showModalError('Location is required.');
+                if (!eventType || !eventType.trim()) {
+                    showModalError('Event type is required.');
+                    return;
+                }
+                if (!eventIsland || !eventIsland.trim()) {
+                    showModalError('Island is required.');
+                    return;
+                }
+                if (!eventVenue || !eventVenue.trim()) {
+                    showModalError('Venue is required.');
                     return;
                 }
                 if (!eventStartTime || !eventStartTime.trim()) {
@@ -936,7 +1473,11 @@ async function handleFormSubmit(type, formData) {
                 dataToSave = {
                     eventName: eventName.trim(),
                     eventDate: eventDateValue || serverTimestamp(),
-                    location: eventLocation.trim(),
+                    eventType: eventType.trim(),
+                    constituency: cleanFormValue(eventConstituency),
+                    island: eventIsland.trim(),
+                    venue: eventVenue.trim(),
+                    location: cleanFormValue(eventLocation),
                     startTime: eventStartTime.trim(),
                     endTime: cleanFormValue(eventEndTime),
                     expectedAttendees: eventAttendees && eventAttendees.trim() ? parseInt(eventAttendees) : null,
@@ -972,6 +1513,9 @@ async function handleFormSubmit(type, formData) {
                     return;
                 }
 
+                const callConstituency = formData.get('call-constituency');
+                const callIsland = formData.get('call-voter-island');
+                
                 dataToSave = {
                     voterName: callVoterName.trim(),
                     voterId: cleanFormValue(callVoterId),
@@ -981,6 +1525,8 @@ async function handleFormSubmit(type, formData) {
                     callDate: callDateValue ? new Date(callDateValue) : serverTimestamp(),
                     status: callStatus.trim(),
                     notes: cleanFormValue(callNotes),
+                    constituency: cleanFormValue(callConstituency),
+                    island: cleanFormValue(callIsland),
                     [emailField]: window.userEmail,
                     createdAt: serverTimestamp()
                 };
@@ -991,7 +1537,9 @@ async function handleFormSubmit(type, formData) {
                 const pledgeVoterName = formData.get('pledge-voter-name');
                 const voterDocumentId = formData.get('pledge-voter-id-hidden');
                 const pledgeVoterId = formData.get('pledge-voter-id');
+                const pledgeConstituency = formData.get('pledge-constituency');
                 const pledgeIsland = formData.get('pledge-island');
+                const pledgePermanentAddress = formData.get('pledge-permanent-address');
                 const pledgeCurrentLocation = formData.get('pledge-current-location');
                 const pledgeStatus = formData.get('pledge-status');
                 const pledgeNotes = formData.get('pledge-notes');
@@ -1067,7 +1615,9 @@ async function handleFormSubmit(type, formData) {
                     voterName: pledgeVoterName.trim(),
                     voterId: cleanFormValue(pledgeVoterId), // Keep for backward compatibility
                     voterDocumentId: finalVoterDocumentId.trim(), // Link to voter document in voters collection
+                    constituency: cleanFormValue(pledgeConstituency),
                     island: cleanFormValue(pledgeIsland),
+                    permanentAddress: cleanFormValue(pledgePermanentAddress),
                     currentLocation: cleanFormValue(pledgeCurrentLocation),
                     candidateId: primaryCandidate, // Primary candidate ID for backward compatibility
                     candidate: primaryCandidate, // Also store as candidate for backward compatibility
@@ -1118,6 +1668,8 @@ async function handleFormSubmit(type, formData) {
 
                 const agentName = formData.get('agent-name');
                 const agentId = formData.get('agent-id');
+                const agentConstituency = formData.get('agent-constituency');
+                const agentIsland = formData.get('agent-island');
                 const agentArea = formData.get('agent-area');
                 const agentPhone = formData.get('agent-phone');
                 const agentEmail = formData.get('agent-email');
@@ -1126,8 +1678,8 @@ async function handleFormSubmit(type, formData) {
                     showModalError('Agent name is required.');
                     return;
                 }
-                if (!agentArea || !agentArea.trim()) {
-                    showModalError('Assigned area is required.');
+                if (!agentIsland || !agentIsland.trim()) {
+                    showModalError('Island is required.');
                     return;
                 }
 
@@ -1135,7 +1687,9 @@ async function handleFormSubmit(type, formData) {
                     name: agentName.trim(),
                     agentId: agentId && agentId.trim() ? agentId.trim() : `AGT-${Date.now()}`,
                     agentAccessCode: agentAccessCode, // Unique access code for agent portal
-                    assignedArea: agentArea.trim(),
+                    constituency: cleanFormValue(agentConstituency),
+                    island: cleanFormValue(agentIsland),
+                    assignedArea: cleanFormValue(agentArea),
                     phone: cleanFormValue(agentPhone),
                     email: cleanFormValue(agentEmail),
                     callsMade: callsMade,
@@ -1147,6 +1701,8 @@ async function handleFormSubmit(type, formData) {
 
             case 'ballot':
                 const ballotNumber = formData.get('ballot-number');
+                const ballotConstituency = formData.get('ballot-constituency');
+                const ballotIsland = formData.get('ballot-island');
                 const ballotLocation = formData.get('ballot-location');
                 const ballotExpectedVoters = formData.get('ballot-expected-voters');
                 const ballotStatus = formData.get('ballot-status');
@@ -1167,6 +1723,8 @@ async function handleFormSubmit(type, formData) {
 
                 dataToSave = {
                     ballotNumber: ballotNumber.trim(),
+                    constituency: cleanFormValue(ballotConstituency),
+                    island: cleanFormValue(ballotIsland),
                     location: ballotLocation.trim(),
                     expectedVoters: parseInt(ballotExpectedVoters),
                     status: ballotStatus && ballotStatus.trim() ? ballotStatus.trim() : 'open',
@@ -1193,6 +1751,8 @@ async function handleFormSubmit(type, formData) {
 
                 if (transportType === 'flights') {
                     const flightNumber = formData.get('transport-flight-number');
+                    const transportConstituency = formData.get('transport-constituency');
+                    const transportIsland = formData.get('transport-island');
                     const route = formData.get('transport-route');
                     const departureTime = formData.get('transport-departure-time');
                     const arrivalTime = formData.get('transport-arrival-time');
@@ -1221,6 +1781,8 @@ async function handleFormSubmit(type, formData) {
                         type: 'flights',
                         flightNumber: flightNumber.trim(),
                         number: flightNumber.trim(), // Alias for consistency
+                        constituency: cleanFormValue(transportConstituency),
+                        island: cleanFormValue(transportIsland),
                         route: route.trim(),
                         departureTime: departureTime,
                         arrivalTime: arrivalTime,
@@ -1237,6 +1799,8 @@ async function handleFormSubmit(type, formData) {
                     }
                 } else if (transportType === 'speedboats') {
                     const boatName = formData.get('transport-boat-name');
+                    const transportConstituencySb = formData.get('transport-constituency-sb');
+                    const transportIslandSb = formData.get('transport-island-sb');
                     const route = formData.get('transport-route-sb');
                     const departureTime = formData.get('transport-departure-time-sb');
                     const arrivalTime = formData.get('transport-arrival-time-sb');
@@ -1265,6 +1829,8 @@ async function handleFormSubmit(type, formData) {
                         type: 'speedboats',
                         boatName: boatName.trim(),
                         number: boatName.trim(), // Alias for consistency
+                        constituency: cleanFormValue(transportConstituencySb),
+                        island: cleanFormValue(transportIslandSb),
                         route: route.trim(),
                         departureTime: departureTime,
                         arrivalTime: arrivalTime,
@@ -1283,6 +1849,8 @@ async function handleFormSubmit(type, formData) {
                     const taxiNumber = formData.get('transport-taxi-number');
                     const driverName = formData.get('transport-driver-name');
                     const contact = formData.get('transport-contact');
+                    const transportConstituencyTaxi = formData.get('transport-constituency-taxi');
+                    const transportIslandTaxi = formData.get('transport-island-taxi');
                     const route = formData.get('transport-route-taxi');
                     const capacity = formData.get('transport-capacity-taxi');
                     const status = formData.get('transport-status-taxi');
@@ -1315,6 +1883,8 @@ async function handleFormSubmit(type, formData) {
                         number: taxiNumber.trim(), // Alias for consistency
                         driverName: driverName.trim(),
                         contact: contact.trim(),
+                        constituency: cleanFormValue(transportConstituencyTaxi),
+                        island: cleanFormValue(transportIslandTaxi),
                         route: route.trim(),
                         area: route.trim(), // Alias for consistency
                         capacity: parseInt(capacity),
@@ -1333,6 +1903,40 @@ async function handleFormSubmit(type, formData) {
                     return;
                 }
                 break;
+
+            case 'island-user':
+                const islandUserName = formData.get('island-user-name');
+                const islandUserEmail = formData.get('island-user-email');
+                const islandUserPhone = formData.get('island-user-phone');
+                const islandUserConstituency = formData.get('island-user-constituency');
+                const islandUserIsland = formData.get('island-user-island');
+
+                if (!islandUserName || !islandUserName.trim()) {
+                    showModalError('Full name is required.');
+                    return;
+                }
+                if (!islandUserEmail || !islandUserEmail.trim()) {
+                    showModalError('Email is required.');
+                    return;
+                }
+                if (!islandUserPhone || !islandUserPhone.trim()) {
+                    showModalError('Phone number is required.');
+                    return;
+                }
+                if (!islandUserIsland || !islandUserIsland.trim()) {
+                    showModalError('Island is required.');
+                    return;
+                }
+
+                dataToSave = {
+                    name: islandUserName.trim(),
+                    email: islandUserEmail.trim().toLowerCase(),
+                    phone: islandUserPhone.trim(),
+                    constituency: islandUserConstituency || (window.campaignData && window.campaignData.constituency ? window.campaignData.constituency : ''),
+                    island: islandUserIsland.trim(),
+                    campaignEmail: window.userEmail // Store the campaign manager's email
+                };
+                break;
         }
 
         let collectionName;
@@ -1342,6 +1946,8 @@ async function handleFormSubmit(type, formData) {
             collectionName = 'ballots';
         } else if (type === 'transportation') {
             collectionName = 'transportation';
+        } else if (type === 'island-user') {
+            collectionName = 'islandUsers';
         } else {
             collectionName = `${type}s`;
         }
@@ -1355,6 +1961,7 @@ async function handleFormSubmit(type, formData) {
         const editBallotId = form && form.dataset.editBallotId ? form.dataset.editBallotId : null;
         const editTransportationId = form && form.dataset.editTransportationId ? form.dataset.editTransportationId : null;
         const editCallId = form && form.dataset.editCallId ? form.dataset.editCallId : null;
+        const editIslandUserId = form && form.dataset.editIslandUserId ? form.dataset.editIslandUserId : null;
 
         if (editVoterId && type === 'voter') {
             // Update existing voter
@@ -1562,6 +2169,148 @@ async function handleFormSubmit(type, formData) {
             if (window.loadTransportationByType) {
                 window.loadTransportationByType(transportType, true);
             }
+        } else if (editIslandUserId && type === 'island-user') {
+            // Update existing island user (preserve createdAt)
+            const {
+                doc,
+                updateDoc
+            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+            // Remove createdAt from update data (preserve original timestamp)
+            const {
+                createdAt,
+                ...updateData
+            } = dataToSave;
+
+            const islandUserRef = doc(window.db, 'islandUsers', editIslandUserId);
+            await updateDoc(islandUserRef, updateData);
+
+            // Show success message
+            if (window.showSuccess) {
+                window.showSuccess('Island user updated successfully!', 'Success');
+            }
+
+            // Close modal
+            closeModal();
+
+            // Reload island users table
+            if (window.loadIslandUsers) {
+                window.loadIslandUsers();
+            }
+        } else if (type === 'island-user') {
+            // Create new island user with Firebase Auth
+            const {
+                collection,
+                addDoc,
+                serverTimestamp
+            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+            const {
+                createUserWithEmailAndPassword
+            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+
+            // Generate temporary password
+            const tempPassword = generateIslandUserPassword();
+            const islandUserEmail = dataToSave.email.toLowerCase().trim();
+
+            // Log password for debugging (remove in production if needed)
+            console.log('Creating island user:', {
+                email: islandUserEmail,
+                passwordLength: tempPassword.length,
+                passwordPreview: tempPassword.substring(0, 3) + '...'
+            });
+
+            // IMPORTANT: Save to Firestore FIRST while still authenticated as campaign manager
+            // This ensures the Firestore rules can verify campaignEmail matches the authenticated user
+            // Store password as string (ensure no type conversion issues)
+            dataToSave.tempPassword = String(tempPassword);
+            dataToSave.passwordGeneratedAt = serverTimestamp();
+            // createdAt is already set in dataToSave from the case statement, but update it here to ensure it's set
+            if (!dataToSave.createdAt) {
+                dataToSave.createdAt = serverTimestamp();
+            }
+
+            let docRef;
+            try {
+                docRef = await addDoc(collection(window.db, 'islandUsers'), dataToSave);
+                console.log('Island user saved to Firestore:', docRef.id);
+            } catch (firestoreError) {
+                console.error('Error saving island user to Firestore:', firestoreError);
+                showModalError('Failed to save island user. Please try again.');
+                return;
+            }
+
+            // Now create the Firebase Auth user (this will sign them in, but we'll sign them out immediately)
+            try {
+                // Get Firebase Auth instance (use window.auth if available, otherwise get from app)
+                let firebaseAuth;
+                if (window.auth) {
+                    firebaseAuth = window.auth;
+                } else {
+                    const {
+                        getAuth
+                    } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+                    firebaseAuth = getAuth();
+                }
+
+                // Set flag to prevent auth state handler from processing during user creation
+                // This must be set BEFORE creating the user to prevent the handler from running
+                window.isCreatingIslandUser = true;
+
+                // Create the island user (this will automatically sign them in, replacing the current session)
+                // Ensure password is a string and email is lowercase
+                await createUserWithEmailAndPassword(firebaseAuth, islandUserEmail, String(tempPassword));
+                console.log('Firebase Auth user created successfully');
+
+                // Immediately sign out the newly created island user
+                const {
+                    signOut
+                } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+                await signOut(firebaseAuth);
+
+                // Wait a brief moment for sign out to complete and auth state to update
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                // Clear the flag - the auth state will be null (signed out)
+                // The campaign manager's session was lost when we created the new user
+                // They will need to sign in again manually
+                // This is a limitation of Firebase Auth client SDK - we can't switch users without password
+                window.isCreatingIslandUser = false;
+                
+                // Note: The campaign manager will be signed out after creating the island user
+                // This is expected behavior due to Firebase Auth limitations
+                // The user will see the login screen and can sign back in
+            } catch (authError) {
+                window.isCreatingIslandUser = false;
+                
+                // If Auth creation fails, we should delete the Firestore document we just created
+                try {
+                    const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                    if (docRef) {
+                        await deleteDoc(doc(window.db, 'islandUsers', docRef.id));
+                    }
+                } catch (deleteError) {
+                    console.error('Error cleaning up Firestore document after Auth failure:', deleteError);
+                }
+                
+                if (authError.code === 'auth/email-already-in-use') {
+                    showModalError('This email is already registered. Please use a different email.');
+                    return;
+                }
+                console.error('Error creating Firebase Auth user:', authError);
+                showModalError('Failed to create user account. Please try again.');
+                return;
+            }
+
+            // Close modal
+            closeModal();
+
+            // Show prompt with email and password
+            showIslandUserCredentialsPrompt(islandUserEmail, tempPassword);
+
+            // Reload island users table
+            if (window.loadIslandUsers) {
+                window.loadIslandUsers();
+            }
         } else {
             // Create new record
             // For ballots, save to local storage first, then Firebase
@@ -1721,6 +2470,52 @@ async function handleFormSubmit(type, formData) {
                 }
             } else {
                 // For other types, use the original flow
+
+                // Special handling for pledges: check for duplicates
+                if (type === 'pledge') {
+                    const {
+                        collection: collectionFn,
+                        query,
+                        where,
+                        getDocs
+                    } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+                    // Check if a pledge already exists for this voter-candidate combination
+                    const voterDocumentId = dataToSave.voterDocumentId;
+                    const candidateIds = dataToSave.candidateIds || dataToSave.candidates || (dataToSave.candidateId ? [dataToSave.candidateId] : []);
+
+                    if (voterDocumentId && candidateIds.length > 0) {
+                        // Query for existing pledges for this voter
+                        const existingPledgesQuery = query(
+                            collectionFn(window.db, 'pledges'),
+                            where('voterDocumentId', '==', voterDocumentId),
+                            where('email', '==', window.userEmail)
+                        );
+                        const existingSnapshot = await getDocs(existingPledgesQuery);
+
+                        // Check if any existing pledge has the same candidate(s)
+                        let duplicateFound = false;
+                        existingSnapshot.forEach(doc => {
+                            const existingPledge = doc.data();
+                            const existingCandidateIds = existingPledge.candidateIds || existingPledge.candidates || (existingPledge.candidateId ? [existingPledge.candidateId] : []);
+
+                            // Check if there's any overlap between existing and new candidate IDs
+                            const hasOverlap = candidateIds.some(candidateId =>
+                                existingCandidateIds.includes(candidateId)
+                            );
+
+                            if (hasOverlap) {
+                                duplicateFound = true;
+                            }
+                        });
+
+                        if (duplicateFound) {
+                            showModalError('A pledge already exists for this voter and candidate combination. Please update the existing pledge instead.');
+                            return;
+                        }
+                    }
+                }
+
                 console.log(`[handleFormSubmit] Saving ${type} to collection "${collectionName}":`, JSON.stringify(dataToSave, null, 2));
                 const docRef = await addDoc(collection(window.db, collectionName), dataToSave);
                 console.log(`[handleFormSubmit] Successfully saved ${type} with ID:`, docRef.id);
@@ -1815,6 +2610,92 @@ async function handleFormSubmit(type, formData) {
     }
 }
 
+// Generate random password for island users
+function generateIslandUserPassword(length = 12) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+// Show island user credentials prompt
+function showIslandUserCredentialsPrompt(email, password) {
+    if (window.showDialog) {
+        window.showDialog({
+            type: 'info',
+            title: 'Island User Created',
+            allowHTML: true,
+            message: `
+                <div style="padding: 20px 0;">
+                    <p style="margin-bottom: 16px; font-size: 14px; color: var(--text-color);">Island user has been created successfully. Please share these credentials with the user:</p>
+                    <div style="background: var(--light-color); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase;">Email</label>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="text" id="island-user-email-display" value="${email}" readonly style="flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background: white; font-family: monospace; font-size: 13px; cursor: text;">
+                                <button onclick="copyIslandUserEmail()" class="icon-btn-sm" title="Copy Email" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: white; cursor: pointer;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase;">Temporary Password</label>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="text" id="island-user-password-display" value="${password}" readonly style="flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background: white; font-family: monospace; font-size: 13px; cursor: text;">
+                                <button onclick="copyIslandUserPassword()" class="icon-btn-sm" title="Copy Password" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: white; cursor: pointer;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="font-size: 12px; color: var(--text-light); margin: 0;">⚠️ Please save these credentials. The password will not be shown again.</p>
+                </div>
+            `,
+            buttons: [{
+                text: 'Close',
+                class: 'btn-primary',
+                onclick: () => {
+                    if (window.closeDialog) window.closeDialog();
+                }
+            }]
+        });
+    } else if (window.showSuccessMessage) {
+        window.showSuccessMessage(`Island user created! Email: ${email}, Password: ${password}`, 'Island User Created');
+    }
+}
+
+// Copy island user email
+window.copyIslandUserEmail = function() {
+    const emailInput = document.getElementById('island-user-email-display');
+    if (emailInput) {
+        emailInput.select();
+        document.execCommand('copy');
+        if (window.showSuccess) {
+            window.showSuccess('Email copied to clipboard!', 'Copied');
+        }
+    }
+};
+
+// Copy island user password
+window.copyIslandUserPassword = function() {
+    const passwordInput = document.getElementById('island-user-password-display');
+    if (passwordInput) {
+        passwordInput.select();
+        document.execCommand('copy');
+        if (window.showSuccess) {
+            window.showSuccess('Password copied to clipboard!', 'Copied');
+        }
+    }
+};
+
 // Show error in modal
 function showModalError(message) {
     const errorEl = document.getElementById('modal-error');
@@ -1827,25 +2708,18 @@ function showModalError(message) {
     }
 }
 
-// Setup island dropdown based on atoll selection (for backward compatibility)
-// Note: Constituency is now auto-filled from campaign setup, but island selection remains
+// Setup island dropdown based on constituency selection
+// Note: Constituency is auto-filled from campaign setup, island selection is based on constituency
 function setupIslandDropdown() {
     const islandSelect = document.getElementById('voter-island');
 
-    // If campaign data has an island, set it as default
-    if (islandSelect && window.campaignData && window.campaignData.island) {
-        // Populate island dropdown with all islands from maldivesData
-        if (window.maldivesData && window.maldivesData.islands) {
-            const allIslands = [];
-            Object.values(window.maldivesData.islands).forEach(islandList => {
-                islandList.forEach(island => {
-                    if (!allIslands.includes(island)) {
-                        allIslands.push(island);
-                    }
-                });
-            });
-
-            allIslands.sort().forEach(island => {
+    // Populate island dropdown based on constituency from campaign data
+    if (islandSelect && window.campaignData && window.campaignData.constituency) {
+        const constituency = window.campaignData.constituency;
+        if (window.maldivesData && window.maldivesData.constituencyIslands && window.maldivesData.constituencyIslands[constituency]) {
+            const islands = window.maldivesData.constituencyIslands[constituency];
+            islandSelect.innerHTML = '<option value="">Select island</option>';
+            islands.sort().forEach(island => {
                 const option = document.createElement('option');
                 option.value = island;
                 option.textContent = island;
@@ -1855,6 +2729,33 @@ function setupIslandDropdown() {
                 islandSelect.appendChild(option);
             });
         }
+    } else {
+        islandSelect.innerHTML = '<option value="">Select island</option>';
+    }
+}
+
+// Setup island dropdown for ballot form
+function setupBallotIslandDropdown() {
+    const islandSelect = document.getElementById('ballot-island');
+
+    // Populate island dropdown based on constituency from campaign data
+    if (islandSelect && window.campaignData && window.campaignData.constituency) {
+        const constituency = window.campaignData.constituency;
+        if (window.maldivesData && window.maldivesData.constituencyIslands && window.maldivesData.constituencyIslands[constituency]) {
+            const islands = window.maldivesData.constituencyIslands[constituency];
+            islandSelect.innerHTML = '<option value="">Select island</option>';
+            islands.sort().forEach(island => {
+                const option = document.createElement('option');
+                option.value = island;
+                option.textContent = island;
+                if (island === window.campaignData.island) {
+                    option.selected = true;
+                }
+                islandSelect.appendChild(option);
+            });
+        }
+    } else {
+        islandSelect.innerHTML = '<option value="">Select island</option>';
     }
 }
 
@@ -1894,7 +2795,8 @@ function openModal(type, itemId = null) {
             'pledge': 'Add Pledge',
             'agent': 'Add Agent',
             'ballot': 'Add Ballot',
-            'transportation': 'Add Transportation'
+            'transportation': 'Add Transportation',
+            'island-user': 'Add Island User'
         };
 
         modalTitle.textContent = titles[type] || 'Modal';
@@ -1920,7 +2822,10 @@ function openModal(type, itemId = null) {
                 } else if (type === 'candidate') {
                     freshForm.dataset.editCandidateId = itemId;
                 } else if (type === 'pledge') {
-                    freshForm.dataset.editPledgeId = itemId;
+                    // Check if itemId is a voter ID (for pre-filling) or a pledge ID (for editing)
+                    // If it's a voter ID, store it separately
+                    freshForm.dataset.voterIdForPledge = itemId;
+                    // Don't set editPledgeId here - it will be set by populatePledgeEditForm if editing
                 } else if (type === 'agent') {
                     freshForm.dataset.editAgentId = itemId;
                 } else if (type === 'ballot') {
@@ -1929,6 +2834,8 @@ function openModal(type, itemId = null) {
                     freshForm.dataset.editTransportationId = itemId;
                 } else if (type === 'call') {
                     freshForm.dataset.editCallId = itemId;
+                } else if (type === 'island-user') {
+                    freshForm.dataset.editIslandUserId = itemId;
                 }
             }
 
@@ -1937,6 +2844,9 @@ function openModal(type, itemId = null) {
                 setTimeout(() => setupCallFormForLink(), 100);
             }
 
+            // Only add submit listener if it's not a transportation form
+            // Transportation forms have their own submit handlers set up in setupTransportationFormTabs()
+            if (type !== 'transportation' || !freshForm.classList.contains('transport-form')) {
             freshForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 console.log('[Modal] Form submit triggered for type:', type);
@@ -1956,16 +2866,6 @@ function openModal(type, itemId = null) {
                     } else {
                         console.log('[Modal] Voter form not in single import mode, skipping submit');
                     }
-                } else if (type === 'transportation') {
-                    // For transportation, find the active form based on visible tab
-                    const activeTransportForm = document.querySelector('.transport-form[style*="block"]');
-                    if (activeTransportForm) {
-                        console.log('[Modal] Transportation form submitting:', activeTransportForm.dataset.transportType);
-                        const formData = new FormData(activeTransportForm);
-                        await handleFormSubmit(type, formData);
-                    } else {
-                        console.log('[Modal] No active transportation form found');
-                    }
                 } else {
                     // For all other forms (pledge, candidate, event, call, agent, ballot), submit normally
                     console.log('[Modal] Non-voter form submitting:', type);
@@ -1973,6 +2873,7 @@ function openModal(type, itemId = null) {
                     await handleFormSubmit(type, formData);
                 }
             });
+            }
         }
 
         // Setup transportation form tabs if type is transportation
@@ -1982,14 +2883,37 @@ function openModal(type, itemId = null) {
             }, 100);
         }
 
-        // Setup island dropdown for voter form
-        if (type === 'voter') {
+        // Populate island selects for all forms that need them (DOM-based, safe)
+        const constituency = window.campaignData?.constituency || '';
             setTimeout(() => {
+            if (type === 'candidate') {
+                populateIslandSelect('candidate-island', constituency);
+            } else if (type === 'event') {
+                populateIslandSelect('event-island', constituency);
+                // Note: pledge-island is an input field, not a select, so no population needed
+            } else if (type === 'agent') {
+                populateIslandSelect('agent-island', constituency);
+            } else if (type === 'transportation') {
+                populateIslandSelect('transport-island', constituency);
+                populateIslandSelect('transport-island-sb', constituency);
+                populateIslandSelect('transport-island-taxi', constituency);
+            } else if (type === 'island-user') {
+                populateIslandSelect('island-user-island', constituency);
+            }
+        }, 50);
+
+        // Setup island dropdown for voter and ballot forms
+        if (type === 'voter' || type === 'ballot') {
+            setTimeout(() => {
+                if (type === 'voter') {
                 setupIslandDropdown();
+                } else if (type === 'ballot') {
+                    setupBallotIslandDropdown();
+                }
                 // Set default constituency if available (auto-filled from campaign setup)
-                const constituencyInput = document.getElementById('voter-constituency');
+                const constituencyInput = document.getElementById(type === 'voter' ? 'voter-constituency' : 'ballot-constituency');
                 if (constituencyInput) {
-                    // If editing, constituency will be set by populateVoterEditForm
+                    // If editing, constituency will be set by populate functions
                     // Otherwise, use campaign data
                     if (!itemId && window.campaignData && window.campaignData.constituency) {
                         constituencyInput.value = window.campaignData.constituency;
@@ -2229,7 +3153,7 @@ async function setupBallotDropdown() {
                 const snapshot = await getDocs(ballotsQuery);
 
                 // Add Firebase ballots (avoid duplicates)
-                const existingNumbers = new Set(allBallots.map(b => b.ballotNumber));
+                const existingNumbers = new Set(Array.isArray(allBallots) ? allBallots.map(b => b.ballotNumber) : []);
                 snapshot.docs.forEach(doc => {
                     const data = doc.data();
                     if (data.ballotNumber && !existingNumbers.has(data.ballotNumber)) {
@@ -2362,12 +3286,12 @@ function setupCallVoterDropdown() {
         }
 
         const term = searchTerm.toLowerCase().trim();
-        filteredVoters = allVoters.filter(voter =>
-            voter.name.toLowerCase().includes(term) ||
-            voter.idNumber.toLowerCase().includes(term)
-        ).slice(0, 20); // Limit to 20 results for performance
+        filteredVoters = Array.isArray(allVoters) ? allVoters.filter(voter =>
+            voter && ((voter.name && voter.name.toLowerCase().includes(term)) ||
+                (voter.idNumber && voter.idNumber.toLowerCase().includes(term)))
+        ).slice(0, 20) : []; // Limit to 20 results for performance
 
-        if (filteredVoters.length === 0) {
+        if (!Array.isArray(filteredVoters) || filteredVoters.length === 0) {
             voterDropdown.innerHTML = '<div style="padding: 15px; text-align: center; color: var(--text-light);">No voters found</div>';
             voterDropdown.style.display = 'block';
             return;
@@ -2528,6 +3452,7 @@ function setupPledgeVoterDropdown() {
     const voterIdInput = document.getElementById('pledge-voter-id');
     const voterIdHidden = document.getElementById('pledge-voter-id-hidden');
     const islandInput = document.getElementById('pledge-island');
+    const permanentAddressTextarea = document.getElementById('pledge-permanent-address');
     const currentLocationTextarea = document.getElementById('pledge-current-location');
 
     if (!voterInput || !voterDropdown) return;
@@ -2548,6 +3473,7 @@ function setupPledgeVoterDropdown() {
                 name: data.name || 'N/A',
                 idNumber: data.idNumber || data.voterId || id,
                 island: data.island || '',
+                permanentAddress: data.permanentAddress || data.address || '',
                 currentLocation: data.currentLocation || ''
             }));
             return;
@@ -2577,6 +3503,7 @@ function setupPledgeVoterDropdown() {
                         name: data.name || 'N/A',
                         idNumber: data.idNumber || data.voterId || doc.id,
                         island: data.island || '',
+                        permanentAddress: data.permanentAddress || data.address || '',
                         currentLocation: data.currentLocation || ''
                     };
                 });
@@ -2594,12 +3521,12 @@ function setupPledgeVoterDropdown() {
         }
 
         const term = searchTerm.toLowerCase().trim();
-        filteredVoters = allVoters.filter(voter =>
-            voter.name.toLowerCase().includes(term) ||
-            voter.idNumber.toLowerCase().includes(term)
-        ).slice(0, 20); // Limit to 20 results for performance
+        filteredVoters = Array.isArray(allVoters) ? allVoters.filter(voter =>
+            voter && ((voter.name && voter.name.toLowerCase().includes(term)) ||
+                (voter.idNumber && voter.idNumber.toLowerCase().includes(term)))
+        ).slice(0, 20) : []; // Limit to 20 results for performance
 
-        if (filteredVoters.length === 0) {
+        if (!Array.isArray(filteredVoters) || filteredVoters.length === 0) {
             voterDropdown.innerHTML = '<div style="padding: 15px; text-align: center; color: var(--text-light);">No voters found</div>';
             voterDropdown.style.display = 'block';
             return;
@@ -2607,7 +3534,7 @@ function setupPledgeVoterDropdown() {
 
         // Render dropdown options
         voterDropdown.innerHTML = filteredVoters.map(voter => `
-            <div class="dropdown-option" data-voter-id="${voter.id}" data-voter-name="${voter.name}" data-voter-idnumber="${voter.idNumber}" data-voter-island="${voter.island || ''}" data-voter-currentlocation="${(voter.currentLocation || '').replace(/"/g, '&quot;')}" style="padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border-light); transition: background 0.2s;">
+            <div class="dropdown-option" data-voter-id="${voter.id}" data-voter-name="${voter.name}" data-voter-idnumber="${voter.idNumber}" data-voter-island="${voter.island || ''}" data-voter-permanentaddress="${(voter.permanentAddress || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" data-voter-currentlocation="${(voter.currentLocation || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" style="padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border-light); transition: background 0.2s;">
                 <div style="font-weight: 600; color: var(--text-color); margin-bottom: 4px;">${voter.name}</div>
                 <div style="font-size: 12px; color: var(--text-light);">ID: ${voter.idNumber}${voter.island ? ` • ${voter.island}` : ''}</div>
             </div>
@@ -2620,6 +3547,7 @@ function setupPledgeVoterDropdown() {
                 const voterName = option.dataset.voterName;
                 const voterIdNumber = option.dataset.voterIdnumber;
                 const voterIsland = option.dataset.voterIsland;
+                const voterPermanentAddress = option.dataset.voterPermanentaddress || '';
                 const voterCurrentLocation = option.dataset.voterCurrentlocation || '';
 
                 // Set selected voter
@@ -2633,6 +3561,7 @@ function setupPledgeVoterDropdown() {
                     }));
                 }
                 if (islandInput) islandInput.value = voterIsland || window.campaignData.island || '';
+                if (permanentAddressTextarea) permanentAddressTextarea.value = voterPermanentAddress;
                 if (currentLocationTextarea) currentLocationTextarea.value = voterCurrentLocation;
 
                 // Debug: Log the selected voter ID
@@ -2648,6 +3577,7 @@ function setupPledgeVoterDropdown() {
                     name: voterName,
                     idNumber: voterIdNumber,
                     island: voterIsland,
+                    permanentAddress: voterPermanentAddress,
                     currentLocation: voterCurrentLocation
                 };
 
@@ -2667,6 +3597,42 @@ function setupPledgeVoterDropdown() {
 
     // Load voters and setup event listeners
     loadVoters().then(() => {
+        // Check if there's a voter ID to auto-populate (only if not editing a pledge)
+        const form = document.getElementById('modal-form');
+        if (form && form.dataset.voterIdForPledge && !form.dataset.editPledgeId) {
+            const voterIdToPopulate = form.dataset.voterIdForPledge;
+            // Find the voter in allVoters
+            const voterToPopulate = allVoters.find(v => v.id === voterIdToPopulate);
+            if (voterToPopulate) {
+                // Auto-populate the form fields
+                voterInput.value = voterToPopulate.name;
+                if (voterIdInput) voterIdInput.value = voterToPopulate.idNumber;
+                if (voterIdHidden) {
+                    voterIdHidden.value = voterToPopulate.id;
+                    voterIdHidden.dispatchEvent(new Event('change', {
+                        bubbles: true
+                    }));
+                }
+                if (islandInput) islandInput.value = voterToPopulate.island || window.campaignData.island || '';
+                if (permanentAddressTextarea) permanentAddressTextarea.value = voterToPopulate.permanentAddress || '';
+                if (currentLocationTextarea) currentLocationTextarea.value = voterToPopulate.currentLocation || '';
+                
+                selectedVoter = {
+                    id: voterToPopulate.id,
+                    name: voterToPopulate.name,
+                    idNumber: voterToPopulate.idNumber,
+                    island: voterToPopulate.island,
+                    permanentAddress: voterToPopulate.permanentAddress,
+                    currentLocation: voterToPopulate.currentLocation
+                };
+                
+                console.log('[Pledge Form] Auto-populated voter information:', voterToPopulate.name);
+            } else {
+                // If voter not found in cache, try to fetch from Firebase
+                fetchVoterByIdForPledge(voterIdToPopulate);
+            }
+        }
+        
         // Search input handler
         voterInput.addEventListener('input', (e) => {
             filterVoters(e.target.value);
@@ -2686,6 +3652,46 @@ function setupPledgeVoterDropdown() {
             }
         });
     });
+}
+
+// Fetch voter by ID for pledge form auto-population
+async function fetchVoterByIdForPledge(voterId) {
+    if (!window.db || !voterId) return;
+    
+    try {
+        const {
+            doc,
+            getDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const voterRef = doc(window.db, 'voters', voterId);
+        const voterSnap = await getDoc(voterRef);
+        
+        if (voterSnap.exists()) {
+            const voterData = voterSnap.data();
+            const voterInput = document.getElementById('pledge-voter-name');
+            const voterIdInput = document.getElementById('pledge-voter-id');
+            const voterIdHidden = document.getElementById('pledge-voter-id-hidden');
+            const islandInput = document.getElementById('pledge-island');
+            const permanentAddressTextarea = document.getElementById('pledge-permanent-address');
+            const currentLocationTextarea = document.getElementById('pledge-current-location');
+            
+            if (voterInput) voterInput.value = voterData.name || 'N/A';
+            if (voterIdInput) voterIdInput.value = voterData.idNumber || voterData.voterId || voterId;
+            if (voterIdHidden) {
+                voterIdHidden.value = voterId;
+                voterIdHidden.dispatchEvent(new Event('change', {
+                    bubbles: true
+                }));
+            }
+            if (islandInput) islandInput.value = voterData.island || window.campaignData.island || '';
+            if (permanentAddressTextarea) permanentAddressTextarea.value = voterData.permanentAddress || voterData.address || '';
+            if (currentLocationTextarea) currentLocationTextarea.value = voterData.currentLocation || '';
+            
+            console.log('[Pledge Form] Auto-populated voter information from Firebase:', voterData.name);
+        }
+    } catch (error) {
+        console.error('[fetchVoterByIdForPledge] Error fetching voter:', error);
+    }
 }
 
 // Setup candidate dropdown for pledge form
@@ -2930,6 +3936,9 @@ function parseCSV(text) {
         // Gender column
         'gender': 'gender',
         'sex': 'gender',
+        // Constituency column
+        'constituency': 'constituency',
+        'const': 'constituency',
         // Island column
         'island': 'island',
         // Ballot Box column
@@ -2992,6 +4001,8 @@ function parseCSV(text) {
         if (lower === 'age') return 'age';
         // Gender
         if (lower.includes('gender') || lower === 'sex') return 'gender';
+        // Constituency
+        if (lower.includes('constituency') || lower === 'const') return 'constituency';
         // Island
         if (lower === 'island') return 'island';
         // Ballot Box
@@ -3126,10 +4137,11 @@ function displayCSVPreview(data, headerEl, bodyEl, countEl, originalHeaders = nu
 
 // Download CSV template
 function downloadCSVTemplate() {
-    const headers = ['No.', 'Image', 'ID Number', 'Name', 'Date of Birth', 'Age', 'Gender', 'Island', 'Ballot Box', 'Permanent Address', 'Current Location', 'Number'];
+    const constituency = (window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : 'M01 - Meedhoo Dhaaira';
+    const headers = ['#', 'Image', 'ID Number', 'Name', 'Date of Birth', ' Age', 'Gender', 'Constituency', 'Island', 'Ballot Box', ' Permanent Address', 'Current Location', 'Number'];
     const sampleRows = [
-        ['1', '', 'A123456', 'Ahmed Ali', '1990-01-15', '34', 'Male', 'Malé', 'DHU-98', 'Malé, Maldives', 'Malé, Maldives', '+960 1234567'],
-        ['2', '', 'B789012', 'Aisha Mohamed', '1985-05-20', '39', 'Female', 'Hulhumalé', 'DHU-99', 'Hulhumalé, Maldives', 'Hulhumalé, Maldives', '+960 7654321']
+        ['1', '', 'A123456', 'Ahmed Ali', '1990-01-15', '34', 'Male', constituency, 'Meedhoo', 'DHU-98', 'Meedhoo, Maldives', 'Meedhoo, Maldives', '+960 1234567'],
+        ['2', '', 'B789012', 'Aisha Mohamed', '1985-05-20', '39', 'Female', constituency, 'Bandidhoo', 'DHU-99', 'Bandidhoo, Maldives', 'Bandidhoo, Maldives', '+960 7654321']
     ];
 
     let csv = headers.join(',') + '\n';
@@ -3173,7 +4185,8 @@ async function handleBatchVoterImport(csvDataArray) {
     try {
         const {
             collection,
-            addDoc,
+            doc,
+            writeBatch,
             serverTimestamp
         } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
         const {
@@ -3189,87 +4202,127 @@ async function handleBatchVoterImport(csvDataArray) {
         const errors = [];
 
         const total = csvData.length;
+        const BATCH_SIZE = 500; // Firestore batch write limit
 
-        for (let i = 0; i < total; i++) {
-            const row = csvData[i];
+        // Helper function to convert empty strings to null
+        const cleanValue = (val) => {
+            if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '')) {
+                return null;
+            }
+            return typeof val === 'string' ? val.trim() : val;
+        };
 
-            try {
-                // Prepare voter data - map from new column structure
-                // Parse ballot box if it's in format "X-Y" or just "X"
-                let ballot = null;
-                if (row.ballotbox) {
-                    const parts = row.ballotbox.split('-');
-                    if (parts.length > 1) {
-                        ballot = row.ballotbox; // Keep as "X-Y" format
-                    } else {
-                        ballot = row.ballotbox.trim();
+        // Process in batches for better performance
+        for (let batchStart = 0; batchStart < total; batchStart += BATCH_SIZE) {
+            const batchEnd = Math.min(batchStart + BATCH_SIZE, total);
+            const batch = writeBatch(window.db);
+            let batchSuccessCount = 0;
+            let batchHasErrors = false;
+
+            // Prepare all documents for this batch
+            for (let i = batchStart; i < batchEnd; i++) {
+                const row = csvData[i];
+
+                try {
+                    // Parse ballot box if it's in format "X-Y" or just "X"
+                    let ballot = null;
+                    if (row.ballotbox) {
+                        const parts = row.ballotbox.split('-');
+                        if (parts.length > 1) {
+                            ballot = row.ballotbox; // Keep as "X-Y" format
+                        } else {
+                            ballot = row.ballotbox.trim();
+                        }
                     }
-                }
 
-                // Helper function to convert empty strings to null
-                const cleanValue = (val) => {
-                    if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '')) {
-                        return null;
+                    // Extract and clean values from CSV row - handle both old and new formats
+                    const idNumber = cleanValue(row.idnumber || row['id number'] || row.nid || row.id || row.voterid);
+                    const name = cleanValue(row.name || row.fullname || row.votername);
+                    const permanentAddress = cleanValue(row.permanentaddress || row[' permanent address'] || row.address || row.permanent);
+                    const currentLocation = cleanValue(row.currentlocation || row['current location'] || row.location || row.current);
+                    const constituency = cleanValue(row.constituency || window.campaignData.constituency);
+
+                    // Parse age - handle " Age" with leading space
+                    let ageValue = null;
+                    if (row.age !== undefined && row.age !== null && row.age !== '') {
+                        ageValue = parseInt(row.age.toString().trim()) || null;
+                    } else if (row[' age'] !== undefined && row[' age'] !== null && row[' age'] !== '') {
+                        ageValue = parseInt(row[' age'].toString().trim()) || null;
+                    } else if (row.dateofbirth || row['date of birth'] || row.dob) {
+                        const dobValue = row.dateofbirth || row['date of birth'] || row.dob;
+                        ageValue = calculateAge(dobValue);
                     }
-                    return typeof val === 'string' ? val.trim() : val;
-                };
 
-                // Extract and clean values from CSV row
-                const idNumber = cleanValue(row.idnumber || row.nid || row.id || row.voterid);
-                const name = cleanValue(row.name || row.fullname || row.votername);
-                const permanentAddress = cleanValue(row.permanentaddress || row.address || row.permanent);
-                const currentLocation = cleanValue(row.currentlocation || row.location || row.current);
+                    // Parse ballot box - handle "Ballot Box" header
+                    const ballotBoxValue = cleanValue(row.ballotbox || row['ballot box'] || row.ballot);
 
-                const voterData = {
-                    idNumber: idNumber,
-                    name: name,
-                    voterId: idNumber || `VOT-${Date.now()}-${i}`,
-                    dateOfBirth: cleanValue(row.dateofbirth || row.dob || row.birthdate),
-                    age: row.age ? (parseInt(row.age) || null) : (row.dateofbirth || row.dob ? calculateAge(row.dateofbirth || row.dob) : null),
-                    gender: cleanValue((row.gender || row.sex || '').toLowerCase()),
-                    atoll: null, // Can be extracted from island if needed
-                    island: cleanValue(row.island),
-                    ballot: cleanValue(ballot || row.ballot),
-                    permanentAddress: permanentAddress,
-                    currentLocation: currentLocation,
-                    number: cleanValue(row.number || row.phone || row.phonenumber || row.mobile),
-                    imageUrl: cleanValue(row.image), // Image URL or path from CSV
-                    image: cleanValue(row.image),
-                    verified: false,
-                    email: window.userEmail,
-                    registeredAt: serverTimestamp()
-                };
+                    const voterData = {
+                        idNumber: idNumber,
+                        name: name,
+                        voterId: idNumber || `VOT-${Date.now()}-${i}`,
+                        dateOfBirth: cleanValue(row.dateofbirth || row['date of birth'] || row.dob || row.birthdate),
+                        age: ageValue,
+                        gender: cleanValue((row.gender || row.sex || '').toLowerCase()),
+                        constituency: constituency || window.campaignData.constituency || null,
+                        island: cleanValue(row.island),
+                        ballot: cleanValue(ballotBoxValue || ballot),
+                        permanentAddress: permanentAddress,
+                        currentLocation: currentLocation,
+                        number: cleanValue(row.number || row.phone || row.phonenumber || row.mobile),
+                        imageUrl: cleanValue(row.image), // Image URL or path from CSV
+                        image: cleanValue(row.image),
+                        verified: false,
+                        email: window.userEmail,
+                        registeredAt: serverTimestamp()
+                    };
 
-                // Debug logging for first few rows
-                if (i < 3) {
-                    console.log(`[handleBatchVoterImport] Row ${i + 1} data:`, {
-                        originalRow: row,
-                        cleanedVoterData: voterData
-                    });
+                    // Debug logging for first few rows
+                    if (i < 3) {
+                        console.log(`[handleBatchVoterImport] Row ${i + 1} data:`, {
+                            originalRow: row,
+                            cleanedVoterData: voterData
+                        });
+                    }
+
+                    // Validate required fields (only ID Number and Name are truly required)
+                    const missingFields = [];
+                    if (!voterData.idNumber) missingFields.push('ID Number');
+                    if (!voterData.name) missingFields.push('Name');
+
+                    if (missingFields.length > 0) {
+                        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+                    }
+
+                    // Add to batch
+                    const docRef = doc(collection(window.db, 'voters'));
+                    batch.set(docRef, voterData);
+                    batchSuccessCount++;
+
+                } catch (rowError) {
+                    batchHasErrors = true;
+                    errorCount++;
+                    errors.push(`Row ${i + 1}: ${rowError.message || 'Unknown error'}`);
+                    console.error(`Error preparing row ${i + 1}:`, rowError);
                 }
-
-                // Validate required fields (only ID Number and Name are truly required)
-                const missingFields = [];
-                if (!voterData.idNumber) missingFields.push('ID Number');
-                if (!voterData.name) missingFields.push('Name');
-
-                if (missingFields.length > 0) {
-                    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
-                }
-
-                await addDoc(collection(window.db, 'voters'), voterData);
-                successCount++;
-
-            } catch (rowError) {
-                errorCount++;
-                errors.push(`Row ${i + 1}: ${rowError.message || 'Unknown error'}`);
-                console.error(`Error importing row ${i + 1}:`, rowError);
             }
 
-            // Update progress
-            const progress = Math.round(((i + 1) / total) * 100);
+            // Commit the batch if it has any valid documents
+            if (batchSuccessCount > 0) {
+                try {
+                    await batch.commit();
+                    successCount += batchSuccessCount;
+                    console.log(`[handleBatchVoterImport] Batch ${Math.floor(batchStart / BATCH_SIZE) + 1} committed: ${batchSuccessCount} voters`);
+                } catch (batchError) {
+                    console.error(`[handleBatchVoterImport] Batch commit failed:`, batchError);
+                    errorCount += batchSuccessCount;
+                    errors.push(`Batch ${Math.floor(batchStart / BATCH_SIZE) + 1}: ${batchError.message || 'Batch commit failed'}`);
+                }
+            }
+
+            // Update progress after each batch
+            const progress = Math.round((batchEnd / total) * 100);
             if (progressBar) progressBar.style.width = `${progress}%`;
-            if (progressText) progressText.textContent = `${i + 1} / ${total} (${progress}%)`;
+            if (progressText) progressText.textContent = `${batchEnd} / ${total} (${progress}%)`;
         }
 
         // Show results
@@ -3337,12 +4390,54 @@ function setupTransportationFormTabs() {
     const tabButtons = document.querySelectorAll('.transport-form-tab-btn');
     const transportForms = document.querySelectorAll('.transport-form');
 
-    tabButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const transportType = btn.dataset.transportType;
+    // First, ensure all forms are hidden except the active one
+    transportForms.forEach(form => {
+        const isActive = form.classList.contains('active') || form.style.display === 'block';
+        if (!isActive) {
+            form.style.display = 'none';
+            form.classList.remove('active');
+        }
+    });
+
+    // Function to switch tabs
+    const switchTab = (transportType) => {
+        // Get fresh references to all forms
+        const allForms = document.querySelectorAll('.transport-form');
+
+        // Hide all forms first
+        allForms.forEach(form => {
+                form.style.display = 'none';
+            form.classList.remove('active');
+            });
+
+            // Show selected form
+            const activeForm = document.querySelector(`.transport-form[data-transport-type="${transportType}"]`);
+            if (activeForm) {
+                activeForm.style.display = 'block';
+            activeForm.classList.add('active');
+        }
+    };
+
+    // Store button data before cloning
+    const buttonData = Array.from(tabButtons).map(btn => ({
+        element: btn,
+        transportType: btn.dataset.transportType
+    }));
+
+    // Clone and set up buttons
+    buttonData.forEach(({
+        element,
+        transportType
+    }) => {
+        const newBtn = element.cloneNode(true);
+        element.parentNode.replaceChild(newBtn, element);
+
+        newBtn.addEventListener('click', () => {
+            // Get fresh references to all tab buttons
+            const allTabButtons = document.querySelectorAll('.transport-form-tab-btn');
 
             // Remove active class from all tabs
-            tabButtons.forEach(b => {
+            allTabButtons.forEach(b => {
                 b.classList.remove('active');
                 b.style.borderBottomColor = 'transparent';
                 b.style.color = 'var(--text-light)';
@@ -3350,23 +4445,17 @@ function setupTransportationFormTabs() {
             });
 
             // Add active class to clicked tab
-            btn.classList.add('active');
-            btn.style.borderBottomColor = 'var(--primary-color)';
-            btn.style.color = 'var(--primary-color)';
-            btn.style.fontWeight = '600';
+            newBtn.classList.add('active');
+            newBtn.style.borderBottomColor = 'var(--primary-color)';
+            newBtn.style.color = 'var(--primary-color)';
+            newBtn.style.fontWeight = '600';
 
-            // Hide all forms
-            transportForms.forEach(form => {
-                form.style.display = 'none';
-            });
-
-            // Show selected form
-            const activeForm = document.querySelector(`.transport-form[data-transport-type="${transportType}"]`);
-            if (activeForm) {
-                activeForm.style.display = 'block';
-            }
+            // Switch to the selected form
+            switchTab(transportType);
 
             // Update submit button text based on type
+            const activeForm = document.querySelector(`.transport-form[data-transport-type="${transportType}"]`);
+            if (activeForm) {
             const submitBtn = activeForm.querySelector('button[type="submit"]');
             if (submitBtn) {
                 const btnTexts = {
@@ -3375,12 +4464,14 @@ function setupTransportationFormTabs() {
                     'taxis': 'Add Taxi'
                 };
                 submitBtn.textContent = btnTexts[transportType] || 'Add Transportation';
+                }
             }
         });
     });
 
     // Setup submit handlers for all transportation forms
     transportForms.forEach(form => {
+        // Remove any existing listeners by cloning the form
         const formClone = form.cloneNode(true);
         form.parentNode.replaceChild(formClone, form);
         const freshForm = document.querySelector(`.transport-form[data-transport-type="${form.dataset.transportType}"]`);
@@ -3388,12 +4479,52 @@ function setupTransportationFormTabs() {
         if (freshForm) {
             freshForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                e.stopPropagation(); // Prevent event bubbling
                 console.log('[Modal] Transportation form submitting:', freshForm.dataset.transportType);
                 const formData = new FormData(freshForm);
                 await handleFormSubmit('transportation', formData);
             });
         }
     });
+
+    // Ensure a single active form on init (default to flights or first tab)
+    // Get fresh references after cloning
+    const allTabButtons = document.querySelectorAll('.transport-form-tab-btn');
+    const allForms = document.querySelectorAll('.transport-form');
+
+    const defaultBtn = Array.from(allTabButtons).find(btn => btn.classList.contains('active')) || allTabButtons[0];
+    if (defaultBtn) {
+        // Get the transport type from the active button
+        const defaultTransportType = defaultBtn.dataset.transportType || 'flights';
+
+        // Hide all forms first
+        allForms.forEach(form => {
+            form.style.display = 'none';
+            form.classList.remove('active');
+        });
+
+        // Show only the default form
+        const defaultForm = document.querySelector(`.transport-form[data-transport-type="${defaultTransportType}"]`);
+        if (defaultForm) {
+            defaultForm.style.display = 'block';
+            defaultForm.classList.add('active');
+        }
+
+        // Update tab button styles
+        allTabButtons.forEach(b => {
+            if (b === defaultBtn || b.dataset.transportType === defaultTransportType) {
+                b.classList.add('active');
+                b.style.borderBottomColor = 'var(--primary-color)';
+                b.style.color = 'var(--primary-color)';
+                b.style.fontWeight = '600';
+            } else {
+                b.classList.remove('active');
+                b.style.borderBottomColor = 'transparent';
+                b.style.color = 'var(--text-light)';
+                b.style.fontWeight = '500';
+            }
+        });
+    }
 }
 
 // Setup call form for link access

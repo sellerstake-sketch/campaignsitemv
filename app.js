@@ -1,12 +1,13 @@
 // Firebase Configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "AIzaSyApT0uj8sz3mC8bDtLQeHHodAtZlqfJDns",
-    authDomain: "rajjecampaign.firebaseapp.com",
-    projectId: "rajjecampaign",
-    storageBucket: "rajjecampaign.firebasestorage.app",
-    messagingSenderId: "480799282234",
-    appId: "1:480799282234:web:a35c084610bcdfc2ed9103",
-    measurementId: "G-2K7J967N1V"
+    apiKey: "AIzaSyBd2G37d-hkM_AkFaEtHofE8ISNOvnNXiY",
+    authDomain: "version6-7c39b.firebaseapp.com",
+    projectId: "version6-7c39b",
+    storageBucket: "version6-7c39b.firebasestorage.app",
+    messagingSenderId: "284487082378",
+    appId: "1:284487082378:web:bdf11ca6c99f3758a6a873",
+    measurementId: "G-H1VWHNF8Z7"
 };
 
 // Firebase Imports
@@ -16,6 +17,7 @@ import {
 import {
     getAuth,
     signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
     updatePassword,
     onAuthStateChanged,
     signOut,
@@ -191,7 +193,7 @@ async function ensureDbInitialized() {
     }
 }
 
-// Export for messenger
+// Export for other modules
 export {
     db,
     auth
@@ -199,229 +201,210 @@ export {
 
 // Maldives Data
 const maldivesData = {
-    atolls: [{
-            name: "Haa Alifu",
-            code: "HA"
-        },
-        {
-            name: "Haa Dhaalu",
-            code: "HDh"
-        },
-        {
-            name: "Shaviyani",
-            code: "Sh"
-        },
-        {
-            name: "Noonu",
-            code: "N"
-        },
-        {
-            name: "Raa",
-            code: "R"
-        },
-        {
-            name: "Baa",
-            code: "B"
-        },
-        {
-            name: "Lhaviyani",
-            code: "Lh"
-        },
-        {
-            name: "Kaafu",
-            code: "K"
-        },
-        {
-            name: "Alifu Alifu",
-            code: "AA"
-        },
-        {
-            name: "Alifu Dhaalu",
-            code: "ADh"
-        },
-        {
-            name: "Vaavu",
-            code: "V"
-        },
-        {
-            name: "Meemu",
-            code: "M"
-        },
-        {
-            name: "Faafu",
-            code: "F"
-        },
-        {
-            name: "Dhaalu",
-            code: "Dh"
-        },
-        {
-            name: "Thaa",
-            code: "Th"
-        },
-        {
-            name: "Laamu",
-            code: "L"
-        },
-        {
-            name: "Gaafu Alifu",
-            code: "GA"
-        },
-        {
-            name: "Gaafu Dhaalu",
-            code: "GDh"
-        },
-        {
-            name: "Gnaviyani",
-            code: "Gn"
-        },
-        {
-            name: "Seenu",
-            code: "S"
-        },
-        {
-            name: "Malé",
-            code: "MLE"
-        }
-    ],
     constituencies: [
         // A Atoll
-        "A01 Hoarafushi Dhaaira",
-        "A02 Ihavandhoo Dhaaira",
-        "A03 Baarashu Dhaairaa",
-        "A04 Dhidhoo Dhaaira",
-        "A05 Kelaa Dhaaira",
+        "A01 - Hoarafushi Dhaaira",
+        "A02 - Ihavandhoo Dhaaira",
+        "A03 - Baarashu Dhaairaa",
+        "A04 - Dhidhoo Dhaaira",
+        "A05 - Kelaa Dhaaira",
         // B Atoll
-        "B01 Hanimaadhoo Dhaaira",
-        "B02 Nolhivaram Dhaaira",
-        "B03 Vaikaradhoo Dhaaira",
-        "B04 Kulhudhuffushi Uthuru Dhaaira",
-        "B05 Kulhudhuffushi Dhekunu Dhaaira",
-        "B06 Makunudhoo Dhaaira",
+        "B01 - Hanimaadhoo Dhaaira",
+        "B02 - Nolhivaram Dhaaira",
+        "B03 - Vaikaradhoo Dhaaira",
+        "B04 - Kulhudhuffushi Uthuru Dhaaira",
+        "B05 - Kulhudhuffushi Dhekunu Dhaaira",
+        "B06 - Makunudhoo Dhaaira",
         // C Atoll
-        "C01 Kanditheemu Dhaaira",
-        "C02 Milandhoo Dhaaira",
-        "C03 Komandoo Dhaaira",
-        "C04 Funadhoo Dhaaira",
+        "C01 - Kanditheemu Dhaaira",
+        "C02 - Milandhoo Dhaaira",
+        "C03 - Komandoo Dhaaira",
+        "C04 - Funadhoo Dhaaira",
         // D Atoll
-        "D01 Kendhikulhudhoo Dhaaira",
-        "D02 Manadhoo Dhaaira",
-        "D03 Velidhoo Dhaaira",
-        "D04 Holhudhoo Dhaaira",
+        "D01 - Kendhikulhudhoo Dhaaira",
+        "D02 - Manadhoo Dhaaira",
+        "D03 - Velidhoo Dhaaira",
+        "D04 - Holhudhoo Dhaaira",
         // E Atoll
-        "E01 Alifushi Dhaaira",
-        "E02 Ungoofaaru Dhaaira",
-        "E03 Dhuvaafaru Dhaairaa",
-        "E04 Inguraidhoo Dhaaira",
-        "E05 Maduvvari Dhaaira",
+        "E01 - Alifushi Dhaaira",
+        "E02 - Ungoofaaru Dhaaira",
+        "E03 - Dhuvaafaru Dhaairaa",
+        "E04 - Inguraidhoo Dhaaira",
+        "E05 - Maduvvari Dhaaira",
         // F Atoll
-        "F01 Thulhaadhoo Dhaaira",
-        "F02 Eydhafushi Dhaaira",
-        "F03 Kendhoo Dhaaira",
-        "F04 Hithaadhoo Dhaaira",
+        "F01 - Thulhaadhoo Dhaaira",
+        "F02 - Eydhafushi Dhaaira",
+        "F03 - Kendhoo Dhaaira",
         // G Atoll
-        "G01 Hinnavaru Dhaaira",
-        "G02 Naifaru Dhaairaa",
-        "G03 Kurendhoo Dhaaira",
+        "G01 - Hinnavaru Dhaaira",
+        "G02 - Naifaru Dhaairaa",
+        "G03 - Kurendhoo Dhaaira",
         // H Atoll
-        "H01 Kaashidhoo Dhaaira",
-        "H02 Thulusdhoo Dhaaira",
-        "H03 Maafushi Dhaaira",
-        "H04 Huraa Dhaaira",
+        "H01 - Kaashidhoo Dhaaira",
+        "H02 - Thulusdhoo Dhaaira",
+        "H03 - Maafushi Dhaaira",
         // I Atoll
-        "I01 Maamigili Dhaaira",
-        "I02 Mahibadhoo Dhaaira",
-        "I03 Dhangethi Dhaaira",
+        "I01 - Maamigili Dhaaira",
+        "I02 - Mahibadhoo Dhaaira",
+        "I03 - Dhangethi Dhaaira",
         // J Atoll
-        "J01 Felidhoo Dhaaira",
-        "J02 Keyodhoo Dhaaira",
+        "J01 - Felidhoo Dhaaira",
+        "J02 - Keyodhoo Dhaaira",
         // K Atoll
-        "K01 Dhiggaru Dhaaira",
-        "K02 Mulaku Dhaaira",
+        "K01 - Dhiggaru Dhaaira",
+        "K02 - Mulaku Dhaaira",
         // L Atoll
-        "L01 Bileydhoo Dhaaira",
-        "L02 Nilandhoo Dhaaira",
+        "L01 - Bileydhoo Dhaaira",
+        "L02 - Nilandhoo Dhaaira",
         // M Atoll
-        "M01 Meedhoo Dhaaira",
-        "M02 Kudahuvadhoo Dhaaira",
+        "M01 - Meedhoo Dhaaira",
+        "M02 - Kudahuvadhoo Dhaaira",
         // N Atoll
-        "N01 Vilufushi Dhaaira",
-        "N02 Thimarafushi Dhaaira",
-        "N03 Kinbidhoo Dhaaira",
-        "N04 Guraidhoo Dhaairaa",
+        "N01 - Vilufushi Dhaaira",
+        "N02 - Thimarafushi Dhaaira",
+        "N03 - Kinbidhoo Dhaaira",
+        "N04 - Guraidhoo Dhaairaa",
         // O Atoll
-        "O01 Isdhoo Dhaaira",
-        "O02 Gamu Dhaaira",
-        "O03 Fonadhoo Dhaaira",
-        "O04 Maavashu Dhaaira",
+        "O01 - Isdhoo Dhaaira",
+        "O02 - Gamu Dhaaira",
+        "O03 - Fonadhoo Dhaaira",
+        "O04 - Maavashu Dhaaira",
         // P Atoll
-        "P01 Vilingili Dhaaira",
-        "P02 Dhandhoo Dhaaira",
-        "P03 Gemanafushi Dhaaira",
-        "P04 Kolamaafushi Dhaaira",
+        "P01 - Vilingili Dhaaira",
+        "P02 - Dhandhoo Dhaaira",
+        "P03 - Gemanafushi Dhaaira",
         // Q Atoll
-        "Q01 Thinadhoo Uthuru Dhaairaa",
-        "Q02 Thinadhoo Dhekunu Dhaairaa",
-        "Q03 Madaveli Dhaaira",
-        "Q04 Faresmaathodaa Dhaaira",
-        "Q05 Gadhdhoo Dhaaira",
+        "Q01 - Thinadhoo Uthuru Dhaairaa",
+        "Q02 - Thinadhoo Dhekunu Dhaairaa",
+        "Q03 - Madaveli Dhaaira",
+        "Q04 - Faresmaathodaa Dhaaira",
+        "Q05 - Gadhdhoo Dhaaira",
         // R Atoll
-        "R01 Fuvahmulaku Uthuru Dhaairaa",
-        "R02 Fuvahmulaku Medhu Dhaaira",
-        "R03 Fuvahmulaku Dhekunu Dhaairaa",
+        "R01 - Fuvahmulaku Uthuru Dhaairaa",
+        "R02 - Fuvahmulaku Medhu Dhaaira",
+        "R03 - Fuvahmulaku Dhekunu Dhaairaa",
         // S Atoll (Addu City)
-        "S01 Hulhudhoo Dhaairaa",
-        "S02 Feydhoo Dhekunu Dhaairaa",
-        "S03 Maradhoo Dhaaira",
-        "S04 Hithadhoo Uthuru Dhaairaa",
-        "S05 Hithadhoo Medhu Dhaaira",
-        "S06 Hithadhoo Dhekunu Dhaaira",
-        "S07 Addu Meedhoo Dhaaira",
-        "S08 Feydhoo Uthuru Dhaairaa",
+        "S01 - Hulhudhoo Dhaairaa",
+        "S02 - Feydhoo Dhekunu Dhaairaa",
+        "S03 - Maradhoo Dhaaira",
+        "S04 - Hithadhoo Uthuru Dhaairaa",
+        "S05 - Hithadhoo Medhu Dhaaira",
+        "S06 - Hithadhoo Dhekunu Dhaaira",
+        "S07 - Addu Meedhoo Dhaaira",
+        "S08 - Feydhoo Uthuru Dhaairaa",
         // T Atoll (Malé City / Hulhumalé / Villimalé)
-        "T01 Hulhumale Dhekunu Dhaaira",
-        "T02 Medhu Henveyru Dhaaira",
-        "T03 Henveyru Dhekunu Dhaaira",
-        "T04 Henveyru Uthuru Dhaaira",
-        "T05 Galolhu Uthuru Dhaaira",
-        "T06 Galolhu Dhekunu Dhaaira",
-        "T07 Mahchangoalhee Uthuru Dhaaira",
-        "T08 Mahchangoalhee Dhekunu Dhaaira",
-        "T09 Maafannu Uthuru Dhaaira",
-        "T10 Maafannu Hulhangu Dhaaira",
-        "T11 Maafannu Medhu Dhaaira",
-        "T12 Maafannu Dhekunu Dhaaira",
-        "T13 Villimale Dhaaira",
-        "T14 Henveyru Hulhangu Dhaaira",
-        "T15 Mahchangoalhee Medhu Dhaaira",
-        "T16 Hulhumaale Medhu Dhaaira",
-        "T17 Hulhumaale Uthuru Dhaaira",
+        "T01 - Hulhumale Dhekunu Dhaaira",
+        "T02 - Medhu Henveyru Dhaaira",
+        "T03 - Henveyru Dhekunu Dhaaira",
+        "T04 - Henveyru Uthuru Dhaaira",
+        "T05 - Galolhu Uthuru Dhaaira",
+        "T06 - Galolhu Dhekunu Dhaaira",
+        "T07 - Mahchangoalhee Uthuru Dhaaira",
+        "T08 - Mahchangoalhee Dhekunu Dhaaira",
+        "T09 - Maafannu Uthuru Dhaaira",
+        "T10 - Maafannu Hulhangu Dhaaira",
+        "T11 - Maafannu Medhu Dhaaira",
+        "T12 - Maafannu Dhekunu Dhaaira",
+        "T13 - Villimale Dhaaira",
+        "T14 - Henveyru Hulhangu Dhaaira",
+        "T15 - Mahchangoalhee Medhu Dhaaira",
+        "T16 - Hulhumaale Medhu Dhaaira",
+        "T17 - Hulhumaale Uthuru Dhaaira",
         // U Atoll
-        "U01 Mathiveri Dhaaira",
-        "U02 Thoddoo Dhaaira"
+        "U01 - Mathiveri Dhaaira",
+        "U02 - Thoddoo Dhaaira"
     ],
-    islands: {
-        "Haa Alifu": ["Dhiddhoo", "Hoarafushi", "Ihavandhoo", "Kelaa", "Muraidhoo", "Thuraakunu"],
-        "Haa Dhaalu": ["Kulhudhuffushi", "Kumundhoo", "Kunburudhoo", "Makunudhoo", "Naivaadhoo", "Neykurendhoo", "Nolhivaram", "Nolhivaranfaru"],
-        "Shaviyani": ["Kanditheemu", "Komandoo", "Lhaimagu", "Maaungoodhoo", "Milandhoo", "Noomaraa"],
-        "Noonu": ["Holhudhoo", "Kendhikolhudhoo", "Kudafaree", "Landhoo", "Lhohi", "Maafaru", "Maalhendhoo", "Magoodhoo", "Manadhoo", "Miladhoo", "Velidhoo"],
-        "Raa": ["Alifushi", "Angolhitheemu", "Dhuvaafaru", "Fainu", "Hulhudhuffaaru", "Inguraidhoo", "Innamaadhoo", "Kandholhudhoo", "Kinolhas", "Maakurathu", "Maduvvari", "Meedhoo", "Rasgetheemu", "Rasmaadhoo", "Ungoofaaru", "Vaadhoo"],
-        "Baa": ["Dharavandhoo", "Eydhafushi", "Fehendhoo", "Fulhadhoo", "Goidhoo", "Hithaadhoo", "Kamadhoo", "Kendhoo", "Kihaadhoo", "Kudarikilu", "Maalhos", "Thulhaadhoo"],
-        "Lhaviyani": ["Hinnavaru", "Kurendhoo", "Maafilaafushi", "Naifaru", "Olhuvelifushi"],
-        "Kaafu": ["Dhiffushi", "Gaafaru", "Gulhi", "Guraidhoo", "Himmafushi", "Huraa", "Kaashidhoo", "Maafushi", "Thulusdhoo"],
-        "Alifu Alifu": ["Bodufolhudhoo", "Dhigurah", "Dhigufinolhu", "Dhigurah", "Fehendhoo", "Himandhoo", "Huraa", "Maalhos", "Mathiveri", "Rasdhoo", "Thoddoo", "Thulhaadhoo"],
-        "Alifu Dhaalu": ["Dhigurah", "Dhigufinolhu", "Fenfushi", "Himandhoo", "Huraa", "Kunburudhoo", "Maafushi", "Nilandhoo", "Thoddoo"],
-        "Vaavu": ["Felidhoo", "Fulidhoo", "Thinadhoo"],
-        "Meemu": ["Dhiggaru", "Kolhufushi", "Mulah", "Muli", "Naalaafushi", "Raimmandhoo", "Veyvah"],
-        "Faafu": ["Bilehdhoo", "Dheburi", "Dhiggaru", "Feeali", "Himandhoo", "Hulhudhoo", "Magoodhoo", "Nilandhoo"],
-        "Dhaalu": ["Bandidhoo", "Gemendhoo", "Hulhudheli", "Kudahuvadhoo", "Rinbudhoo", "Vaanee", "Veymandoo"],
-        "Thaa": ["Dhiyamigili", "Dhiggaru", "Dhiyamigili", "Guraidhoo", "Hirilandhoo", "Kandoodhoo", "Kinbidhoo", "Madifushi", "Omadhoo", "Thimarafushi", "Vandhoo", "Veymandoo"],
-        "Laamu": ["Dhanbidhoo", "Fonadhoo", "Gan", "Hithadhoo", "Isdhoo", "Kalaidhoo", "Kunahandhoo", "Maamendhoo", "Maavah", "Mundoo"],
-        "Gaafu Alifu": ["Dhevvadhoo", "Dhiyamigili", "Dhiggaru", "Fares-Maathodaa", "Fiyoari", "Gadhdhoo", "Hoandeddhoo", "Kandoodhoo", "Maamendhoo", "Nilandhoo", "Vilingili"],
-        "Gaafu Dhaalu": ["Fares-Maathodaa", "Fiyoari", "Gadhdhoo", "Hoadedhdhoo", "Hoandeddhoo", "Kandoodhoo", "Maamendhoo", "Nilandhoo", "Rathafandhoo", "Thinadhoo"],
-        "Gnaviyani": ["Fuvahmulah"],
-        "Seenu": ["Hithadhoo", "Hulhudhoo", "Maradhoo", "Maradhoo-Feydhoo", "Meedhoo", "Hulhudhoo-Feydhoo"],
-        "Malé": ["Malé", "Vilimalé", "Hulhumalé"]
+    constituencyIslands: {
+        "A01 - Hoarafushi Dhaaira": ["Hoarafushi", "Thuraakunu", "Uligan"],
+        "A02 - Ihavandhoo Dhaaira": ["Ihavandhoo", "Maarandhoo", "Molhadhoo"],
+        "A03 - Baarashu Dhaairaa": ["Baarah", "Muraidhoo", "Thakandhoo", "Utheemu"],
+        "A04 - Dhidhoo Dhaaira": ["Dhidhdhoo"],
+        "A05 - Kelaa Dhaaira": ["Filladhoo", "Kelaa", "Vashafaru"],
+        "B01 - Hanimaadhoo Dhaaira": ["Finey", "Hanimaadhoo", "Hirimaradhoo", "Naivaadhoo"],
+        "B02 - Nolhivaram Dhaaira": ["Kunburudhoo", "Maavaidhoo", "Nolhivaran", "Nolhivaranfaru"],
+        "B03 - Vaikaradhoo Dhaaira": ["Kurinbi", "Nellaidhoo", "Vaikaradhoo"],
+        "B04 - Kulhudhuffushi Uthuru Dhaaira": ["Kulhudhuffushi"],
+        "B05 - Kulhudhuffushi Dhekunu Dhaaira": ["Kulhudhuffushi"],
+        "B06 - Makunudhoo Dhaaira": ["Kumundhoo", "Makunudhoo", "Neykurendhoo"],
+        "C01 - Kanditheemu Dhaaira": ["Bilehfahi", "Feydhoo", "Goidhoo", "Kanditheemu", "Noomaraa"],
+        "C02 - Milandhoo Dhaaira": ["Feevah", "Milandhoo", "Narudhoo"],
+        "C03 - Komandoo Dhaaira": ["Foakaidhoo", "Komandoo", "Maroshi"],
+        "C04 - Funadhoo Dhaaira": ["Funadhoo", "Lhaimagu", "Maaungoodhoo"],
+        "D01 - Kendhikulhudhoo Dhaaira": ["Henbadhoo", "Kendhikulhudhoo", "Kudafari", "Maalhendhoo"],
+        "D02 - Manadhoo Dhaaira": ["Landhoo", "Maafaru", "Manadhoo"],
+        "D03 - Velidhoo Dhaaira": ["Fodhdhoo", "Lhohi", "Velidhoo"],
+        "D04 - Holhudhoo Dhaaira": ["Holhudhoo", "Magoodhoo", "Miladhoo"],
+        "E01 - Alifushi Dhaaira": ["Alifushi", "Angolhitheemu", "Rasgetheemu", "Vaadhoo"],
+        "E02 - Ungoofaaru Dhaaira": ["Hulhudhuffaaru", "Maakurathu", "Ungoofaaru"],
+        "E03 - Dhuvaafaru Dhaairaa": ["Dhuvaafaru"],
+        "E04 - Inguraidhoo Dhaaira": ["Fainu", "Inguraidhoo", "Innamaadhoo", "Kinolhas", "Rasmaadhoo"],
+        "E05 - Maduvvari Dhaaira": ["Maduvvari", "Meedhoo"],
+        "F01 - Thulhaadhoo Dhaaira": ["Fehendhoo", "Fulhadhoo", "Thulhaadhoo"],
+        "F02 - Eydhafushi Dhaaira": ["Eydhafushi", "Hithaadhoo", "Maalhos"],
+        "F03 - Kendhoo Dhaaira": ["Dharavandhoo", "Dhonfan", "Kamadhoo", "Kendhoo", "Kihaadhoo", "Kudarikilu"],
+        "G01 - Hinnavaru Dhaaira": ["Hinnavaru"],
+        "G02 - Naifaru Dhaairaa": ["Naifaru"],
+        "G03 - Kurendhoo Dhaaira": ["Kurendhoo", "Olhuvelifushi"],
+        "H01 - Kaashidhoo Dhaaira": ["Gaafaru", "Kaashidhoo"],
+        "H02 - Thulusdhoo Dhaaira": ["Dhiffushi", "Hinmafushi", "Huraa", "Thulusdhoo"],
+        "H03 - Maafushi Dhaaira": ["Gulhi", "Guraidhoo", "Maafushi"],
+        "I01 - Maamigili Dhaaira": ["Fenfushi", "Maamigili"],
+        "I02 - Mahibadhoo Dhaaira": ["Hangnaameedhoo", "Mahibadhoo"],
+        "I03 - Dhangethi Dhaaira": ["Dhangethi", "Dhigurah", "Mandhoo", "Omadhoo"],
+        "J01 - Felidhoo Dhaaira": ["Felidhoo", "Fulidhoo", "Thinadhoo"],
+        "J02 - Keyodhoo Dhaaira": ["Keyodhoo", "Rakeedhoo"],
+        "K01 - Dhiggaru Dhaaira": ["Dhiggaru", "Muli", "Raiymandhoo", "Veyvah"],
+        "K02 - Mulaku Dhaaira": ["Kolhufushi", "Mulah", "Naalaafushi"],
+        "L01 - Bileydhoo Dhaaira": ["Bilehdhoo", "Feeali"],
+        "L02 - Nilandhoo Dhaaira": ["Dharanboodhoo", "Nilandhoo"],
+        "M01 - Meedhoo Dhaaira": ["Meedhoo", "Bandidhoo", "Hulhudheli", "Rinbudhoo"],
+        "M02 - Kudahuvadhoo Dhaaira": ["Kudahuvadhoo", "Maaenboodhoo", "Vaani"],
+        "N01 - Vilufushi Dhaaira": ["Buruni", "Madifushi", "Vilufushi"],
+        "N02 - Thimarafushi Dhaaira": ["Thimarafushi", "Veymandoo"],
+        "N03 - Kinbidhoo Dhaaira": ["Hirilandhoo", "Kandoodhoo", "Kinbidhoo", "Vandhoo"],
+        "N04 - Guraidhoo Dhaairaa": ["Guraidhoo"],
+        "O01 - Isdhoo Dhaaira": ["Dhanbidhoo", "Isdhoo", "Kalaidhoo", "Maabaidhoo"],
+        "O02 - Gamu Dhaaira": ["Gan", "Mundoo"],
+        "O03 - Fonadhoo Dhaaira": ["Fonadhoo", "Gaadhoo", "Maamendhoo"],
+        "O04 - Maavashu Dhaaira": ["Hithadhoo", "Kunahandhoo", "Maavah"],
+        "P01 - Vilingili Dhaaira": ["Kolamaafushi", "Vilingili"],
+        "P02 - Dhandhoo Dhaaira": ["Dhaandhoo"],
+        "P03 - Gemanafushi Dhaaira": ["Dhevvadhoo", "Dhiyadhoo", "Gemanafushi", "Kanduhulhudhoo", "Kondey"],
+        "Q01 - Thinadhoo Uthuru Dhaairaa": ["Thinadhoo"],
+        "Q02 - Thinadhoo Dhekunu Dhaairaa": ["Thinadhoo"],
+        "Q03 - Madaveli Dhaaira": ["Hoandedhdhoo", "Madaveli", "Nadellaa"],
+        "Q04 - Faresmaathodaa Dhaaira": ["Faresmaathodaa", "Fiyoaree", "Rathafandhoo"],
+        "Q05 - Gadhdhoo Dhaaira": ["Gadhdhoo"],
+        "R01 - Fuvahmulaku Uthuru Dhaairaa": ["Fuvahmulah"],
+        "R02 - Fuvahmulaku Medhu Dhaaira": ["Fuvahmulah"],
+        "R03 - Fuvahmulaku Dhekunu Dhaairaa": ["Fuvahmulah"],
+        "S01 - Hulhudhoo Dhaairaa": ["Hulhudhoo"],
+        "S02 - Feydhoo Dhekunu Dhaairaa": ["Feydhoo"],
+        "S03 - Maradhoo Dhaaira": ["Maradhoo"],
+        "S04 - Hithadhoo Uthuru Dhaairaa": ["Hithadhoo"],
+        "S05 - Hithadhoo Medhu Dhaaira": ["Hithadhoo"],
+        "S06 - Hithadhoo Dhekunu Dhaaira": ["Hithadhoo"],
+        "S07 - Addu Meedhoo Dhaaira": ["Addu Meedhoo"],
+        "S08 - Feydhoo Uthuru Dhaairaa": ["Feydhoo"],
+        "T01 - Hulhumale Dhekunu Dhaaira": ["Hulhumale"],
+        "T02 - Medhu Henveyru Dhaaira": ["Malé"],
+        "T03 - Henveyru Dhekunu Dhaaira": ["Malé"],
+        "T04 - Henveyru Uthuru Dhaaira": ["Malé"],
+        "T05 - Galolhu Uthuru Dhaaira": ["Malé"],
+        "T06 - Galolhu Dhekunu Dhaaira": ["Malé"],
+        "T07 - Mahchangoalhee Uthuru Dhaaira": ["Malé"],
+        "T08 - Mahchangoalhee Dhekunu Dhaaira": ["Malé"],
+        "T09 - Maafannu Uthuru Dhaaira": ["Malé"],
+        "T10 - Maafannu Hulhangu Dhaaira": ["Malé"],
+        "T11 - Maafannu Medhu Dhaaira": ["Malé"],
+        "T12 - Maafannu Dhekunu Dhaaira": ["Malé"],
+        "T13 - Villimale Dhaaira": ["Villimale"],
+        "T14 - Henveyru Hulhangu Dhaaira": ["Malé"],
+        "T15 - Mahchangoalhee Medhu Dhaaira": ["Malé"],
+        "T16 - Hulhumaale Medhu Dhaaira": ["Hulhumale"],
+        "T17 - Hulhumaale Uthuru Dhaaira": ["Hulhumale"],
+        "U01 - Mathiveri Dhaaira": ["Bodufolhudhoo", "Feridhoo", "Himandhoo", "Mathiveri"],
+        "U02 - Thoddoo Dhaaira": ["Rasdhoo", "Thoddoo", "Ukulhas"]
     }
 };
 
@@ -431,7 +414,7 @@ let userEmail = null;
 let campaignData = null;
 let userSerialNumber = null;
 
-// Make variables globally accessible for pages.js and messenger.js
+// Make variables globally accessible for pages.js
 window.userEmail = userEmail;
 window.campaignData = campaignData;
 window.db = db;
@@ -717,7 +700,7 @@ const maldivianPoliticsFacts = [
     'Political participation in the Maldives has increased significantly since 2008.',
     'The Maldives uses a two-round voting system for presidential elections.',
     'Voter engagement strategies must account for the archipelago\'s geographic challenges.',
-    'Campaign logistics require coordination across multiple atolls and islands.',
+    'Campaign logistics require coordination across constituencies and islands.',
     'Local council elections focus on community development and service delivery.',
     'The Maldives has made significant progress in democratic institutions since 2008.',
     'Political campaigns often use island-to-island outreach strategies.',
@@ -1349,24 +1332,6 @@ function startSessionActivityTracking(email) {
 }
 
 // Populate Maldives Data
-function populateAtolls() {
-    const atollSelect = document.getElementById('atoll');
-    if (!atollSelect) {
-        console.warn('Atoll select element not found, skipping population');
-        return;
-    }
-    if (!maldivesData || !maldivesData.atolls || !Array.isArray(maldivesData.atolls)) {
-        console.warn('Maldives data or atolls array not available, skipping population');
-        return;
-    }
-    maldivesData.atolls.forEach(atoll => {
-        const option = document.createElement('option');
-        option.value = atoll.name;
-        option.textContent = atoll.name;
-        atollSelect.appendChild(option);
-    });
-}
-
 function populateConstituencies() {
     const constituencySelect = document.getElementById('constituency');
     if (!constituencySelect) {
@@ -1385,7 +1350,7 @@ function populateConstituencies() {
     });
 }
 
-function populateIslands(atollName) {
+function populateIslands(constituencyName) {
     const islandSelect = document.getElementById('island');
     if (!islandSelect) {
         console.warn('Island select element not found, skipping population');
@@ -1393,8 +1358,8 @@ function populateIslands(atollName) {
     }
     islandSelect.innerHTML = '<option value="">Select Island</option>';
 
-    if (atollName && maldivesData && maldivesData.islands && maldivesData.islands[atollName]) {
-        maldivesData.islands[atollName].forEach(island => {
+    if (constituencyName && maldivesData && maldivesData.constituencyIslands && maldivesData.constituencyIslands[constituencyName]) {
+        maldivesData.constituencyIslands[constituencyName].forEach(island => {
             const option = document.createElement('option');
             option.value = island;
             option.textContent = island;
@@ -1406,13 +1371,12 @@ function populateIslands(atollName) {
 // Initialize when DOM is ready
 function initializeApplicationData() {
     // Initialize Data
-    populateAtolls();
     populateConstituencies();
 
     // Event Listeners for Island Selection
-    const atollSelect = document.getElementById('atoll');
-    if (atollSelect) {
-        atollSelect.addEventListener('change', function() {
+    const constituencySelect = document.getElementById('constituency');
+    if (constituencySelect) {
+        constituencySelect.addEventListener('change', function() {
             populateIslands(this.value);
         });
     }
@@ -1587,7 +1551,38 @@ function initializeEventListeners() {
                 window.userEmail = email;
                 currentUser = auth.currentUser;
 
-                // Check client status
+                // Check if user is an island user first (skip onboarding)
+                const islandUserQuery = query(
+                    collection(db, 'islandUsers'),
+                    where('email', '==', email)
+                );
+                const islandUserSnap = await getDocs(islandUserQuery);
+
+                if (!islandUserSnap.empty) {
+                    // User is an island user - skip onboarding and load workspace directly
+                    const islandUserData = islandUserSnap.docs[0].data();
+                    
+                    // Create a user document structure for island users (minimal)
+                    const islandUserWorkspaceData = {
+                        campaignName: window.campaignData?.campaignName || 'Campaign',
+                        constituency: islandUserData.constituency || window.campaignData?.constituency || '',
+                        island: islandUserData.island || '',
+                        campaignSet: true, // Island users skip campaign setup
+                        passwordChanged: true, // Island users skip password change
+                        serialNumber: 'ISLAND_USER', // Special identifier
+                        email: email
+                    };
+
+                    // Track session (non-blocking)
+                    startSessionActivityTracking(email);
+
+                    // Load workspace directly (skip onboarding)
+                    await loadWorkspace(islandUserWorkspaceData);
+                    showLoading(false);
+                    return;
+                }
+
+                // User is a regular client - check client status
                 const clientDoc = await getDoc(doc(db, 'clients', email));
                 if (clientDoc.exists()) {
                     const clientData = clientDoc.data();
@@ -1957,15 +1952,19 @@ function initializeEventListeners() {
 
             const campaignType = document.getElementById('campaign-type').value;
             const campaignName = document.getElementById('campaign-name').value;
-            const atoll = document.getElementById('atoll').value;
             const constituency = document.getElementById('constituency').value;
             const island = document.getElementById('island').value;
+            const electionDate = document.getElementById('election-date').value;
+            const electionTime = document.getElementById('election-time').value || '08:30';
 
             // Validate required fields first (before showing loading)
-            if (!campaignType || !campaignName || !atoll || !constituency || !island) {
+            if (!campaignType || !campaignName || !constituency || !island || !electionDate) {
                 showError('campaign-error', 'Please fill in all required fields', false);
                 return;
             }
+
+            // Combine election date and time into a single Date object
+            const electionDateTime = new Date(electionDate + 'T' + electionTime);
 
             try {
                 // Verify userEmail is set
@@ -1988,9 +1987,11 @@ function initializeEventListeners() {
                 console.log('[campaign-setup-form] Campaign data:', {
                     type: campaignType,
                     name: campaignName,
-                    atoll,
                     constituency,
-                    island
+                    island,
+                    electionDate: electionDate,
+                    electionTime: electionTime,
+                    electionDateTime: electionDateTime
                 });
 
                 // Show custom loading with campaign-specific text and initial progress
@@ -2017,9 +2018,11 @@ function initializeEventListeners() {
                     campaignType,
                     campaignName,
                     campaignLogo: logoURL,
-                    atoll,
                     constituency,
                     island,
+                    electionDate: electionDate,
+                    electionTime: electionTime,
+                    electionDateTime: electionDateTime,
                     email: userEmail,
                     serialNumber: userSerialNumber,
                     setupCompletedAt: serverTimestamp()
@@ -2051,9 +2054,11 @@ function initializeEventListeners() {
                         campaignType,
                         campaignName,
                         campaignLogo: logoURL,
-                        atoll,
                         constituency,
                         island,
+                        electionDate: electionDate,
+                        electionTime: electionTime,
+                        electionDateTime: electionDateTime,
                         campaignSet: true,
                         campaignSetupAt: serverTimestamp()
                     }, {
@@ -2136,9 +2141,12 @@ async function loadWorkspace(data) {
             }, 500);
         }
 
-        // Update global references for pages.js and messenger.js
+        // Update global references for pages.js
         window.campaignData = campaignData;
         window.userEmail = userEmail;
+
+        // Load show voter images setting (default to true)
+        window.showVoterImages = data.showVoterImages !== false;
 
         // Update Zero Day menu visibility
         if (typeof updateZeroDayMenuVisibility === 'function' && data.zeroDayEnabled !== undefined) {
@@ -2157,6 +2165,13 @@ async function loadWorkspace(data) {
                     setTimeout(() => initializeProfileDropdown(), 300);
                 }
             }
+            // Check if user is an island user and set global filter accordingly
+            checkAndSetIslandUserFilter().then(() => {
+                // Initialize global filter
+                initializeGlobalFilter();
+            });
+            // Initialize refresh button
+            initializeRefreshButton();
         }, 100);
 
         // Setup notification handlers when workspace is shown (elements should exist now)
@@ -2338,24 +2353,11 @@ async function loadWorkspace(data) {
     }
 }
 
-// Update breadcrumb function - Only show Home button
+// Update breadcrumb function - No breadcrumb items
 function updateBreadcrumb(currentSection) {
     const breadcrumb = document.getElementById('breadcrumb');
     if (breadcrumb) {
-        breadcrumb.innerHTML = `
-            <a href="#" class="breadcrumb-item" id="breadcrumb-home">Home</a>
-        `;
-
-        // Add click handler to navigate to dashboard
-        const homeLink = document.getElementById('breadcrumb-home');
-        if (homeLink) {
-            homeLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (typeof loadPageContent === 'function') {
-                    loadPageContent('dashboard');
-                }
-            });
-        }
+        breadcrumb.innerHTML = ``;
     }
 }
 
@@ -2363,17 +2365,64 @@ function updateBreadcrumb(currentSection) {
 window.updateBreadcrumb = updateBreadcrumb;
 
 // Initialize workspace functionality
-function initializeWorkspace() {
-    // Initialize Home breadcrumb link
-    const breadcrumbHome = document.getElementById('breadcrumb-home');
-    if (breadcrumbHome) {
-        breadcrumbHome.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (typeof loadPageContent === 'function') {
-                loadPageContent('dashboard');
-            }
-        });
+// Toggle sidebar collapse/expand - Define immediately in global scope
+window.toggleSidebar = function toggleSidebar() {
+    const sidebar = document.getElementById('main-sidebar');
+    if (!sidebar) return;
+    
+    sidebar.classList.toggle('collapsed');
+    
+    // Update body class for CSS targeting
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    if (isCollapsed) {
+        document.body.classList.add('sidebar-collapsed');
+    } else {
+        document.body.classList.remove('sidebar-collapsed');
     }
+    
+    // Save state to localStorage
+    localStorage.setItem('sidebarCollapsed', isCollapsed ? 'true' : 'false');
+};
+
+// Attach event listener to toggle button when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleButton = document.getElementById('sidebar-toggle');
+        if (toggleButton) {
+            toggleButton.addEventListener('click', window.toggleSidebar);
+        }
+    });
+} else {
+    // DOM is already loaded
+    const toggleButton = document.getElementById('sidebar-toggle');
+    if (toggleButton) {
+        toggleButton.addEventListener('click', window.toggleSidebar);
+    }
+}
+
+// Initialize sidebar state from localStorage
+function initializeSidebarState() {
+    const sidebar = document.getElementById('main-sidebar');
+    if (!sidebar) return;
+    
+    const savedState = localStorage.getItem('sidebarCollapsed');
+    if (savedState === 'true') {
+        sidebar.classList.add('collapsed');
+        document.body.classList.add('sidebar-collapsed');
+    }
+    
+    // Attach event listener to toggle button
+    const toggleButton = document.getElementById('sidebar-toggle');
+    if (toggleButton) {
+        toggleButton.addEventListener('click', toggleSidebar);
+    }
+}
+
+function initializeWorkspace() {
+    // Home breadcrumb link removed - no longer needed
+    
+    // Initialize sidebar state
+    initializeSidebarState();
 
     // Workspace Navigation - Use event delegation to handle dynamically added nav items
     // Remove existing listener if any (to prevent duplicates)
@@ -2861,7 +2910,14 @@ onAuthStateChanged(auth, async (user) => {
         }
     }
 
+    // Skip auth state changes during island user creation (both when user exists and when null)
+    if (window.isCreatingIslandUser) {
+        console.log('[onAuthStateChanged] Skipping auth state change during island user creation');
+        return;
+    }
+
     if (user) {
+
         // Check if admin
         if (user.email === 'rixaski@gmail.com') {
             // Admin - redirect to admin panel
@@ -2953,6 +3009,40 @@ onAuthStateChanged(auth, async (user) => {
                 }
             }
 
+            // Check if user is an island user first (skip onboarding)
+            const islandUserQuery = query(
+                collection(db, 'islandUsers'),
+                where('email', '==', user.email)
+            );
+            const islandUserSnap = await getDocs(islandUserQuery);
+
+            if (!islandUserSnap.empty) {
+                // User is an island user - skip onboarding and load workspace directly
+                const islandUserData = islandUserSnap.docs[0].data();
+                
+                // Create a user document structure for island users (minimal)
+                const islandUserWorkspaceData = {
+                    campaignName: window.campaignData?.campaignName || 'Campaign',
+                    constituency: islandUserData.constituency || window.campaignData?.constituency || '',
+                    island: islandUserData.island || '',
+                    campaignSet: true, // Island users skip campaign setup
+                    passwordChanged: true, // Island users skip password change
+                    serialNumber: 'ISLAND_USER', // Special identifier
+                    email: user.email
+                };
+
+                // Track session (non-blocking)
+                startSessionActivityTracking(user.email);
+
+                // Ensure loading class is removed before showing any screen
+                removeAuthLoadingClass();
+
+                // Load workspace directly (skip onboarding)
+                await loadWorkspace(islandUserWorkspaceData);
+                return;
+            }
+
+            // User is a regular client - check user document
             const userDoc = await getDoc(doc(db, 'users', user.email));
             if (userDoc.exists()) {
                 const userData = userDoc.data();
@@ -3760,6 +3850,20 @@ function initializeProfileDropdown() {
         });
     }
 
+    // Add Change Password handler
+    const changePasswordMenuItem = document.getElementById('profile-menu-change-password');
+    if (changePasswordMenuItem) {
+        changePasswordMenuItem.addEventListener('click', (e) => {
+            e.preventDefault();
+            profileMenu.classList.remove('show');
+            profileDropdown.classList.remove('active');
+            // Show password change screen
+            if (typeof showScreen === 'function') {
+                showScreen('password-change-screen');
+            }
+        });
+    }
+
     // Update profile display with current user data
     if (userEmail && typeof db !== 'undefined') {
         getDoc(doc(db, 'clients', userEmail)).then(docSnap => {
@@ -3784,6 +3888,499 @@ function initializeProfileDropdown() {
     window.profileDropdownInitialized = true;
     console.log('[Profile Dropdown] Initialized successfully');
     return true;
+}
+
+// Global Filter State Management
+window.globalFilterState = {
+    constituency: null,  // null = "Show All"
+    island: null,        // null = "All Islands"
+    initialized: false
+};
+
+// Get current global filter state from UI
+function getGlobalFilterState() {
+    const constituencySelect = document.getElementById('global-filter-constituency');
+    const islandSelect = document.getElementById('global-filter-island');
+    
+    return {
+        constituency: constituencySelect?.value || null,
+        island: islandSelect?.value || null
+    };
+}
+
+// Apply global filter and refresh current page
+function applyGlobalFilter() {
+    const newState = getGlobalFilterState();
+    const oldState = { ...window.globalFilterState };
+    
+    window.globalFilterState = { ...newState, initialized: true };
+    
+    // Log filter change
+    if (oldState.constituency !== newState.constituency || oldState.island !== newState.island) {
+        console.log('[Global Filter] Filter changed:', {
+            constituency: newState.constituency || 'Show All',
+            island: newState.island || 'All Islands'
+        });
+        
+        // Clear caches when filter changes to ensure fresh data
+        if (typeof clearCache === 'function') {
+            clearCache('voters');
+            clearCache('candidates');
+            clearCache('pledges');
+            clearCache('calls');
+            clearCache('agents');
+            clearCache('activities');
+        }
+        if (typeof clearVoterCache === 'function') {
+            clearVoterCache();
+        }
+    }
+    
+    // Refresh current page data
+    refreshCurrentPageData();
+}
+
+// Refresh current page data based on active page
+function refreshCurrentPageData() {
+    // Determine current page from window.currentPage or active navigation
+    const currentPage = window.currentPage || getCurrentActivePage();
+    
+    if (!currentPage) {
+        console.warn('[Global Filter] Could not determine current page');
+        return;
+    }
+    
+    console.log('[Global Filter] Refreshing page:', currentPage);
+    
+    // Map page names to their data loading functions
+    const pageLoaders = {
+        'dashboard': () => {
+            if (typeof window.loadDashboardData === 'function') {
+                window.loadDashboardData(true);
+            }
+        },
+        'voters': () => {
+            if (typeof window.loadVotersData === 'function') {
+                window.loadVotersData(true);
+            }
+        },
+        'candidates': () => {
+            if (typeof window.loadCandidatesData === 'function') {
+                window.loadCandidatesData(true);
+            }
+        },
+        'pledges': () => {
+            if (typeof window.loadPledgesData === 'function') {
+                window.loadPledgesData(true);
+            }
+        },
+        'agents': () => {
+            if (typeof window.loadAgentsData === 'function') {
+                window.loadAgentsData(true);
+            }
+        },
+        'events': () => {
+            if (typeof window.loadEventsData === 'function') {
+                window.loadEventsData(true);
+            }
+        },
+        'calls': () => {
+            if (typeof window.loadCallsData === 'function') {
+                window.loadCallsData(true);
+            }
+        },
+        'analytics': () => {
+            if (typeof window.loadAnalyticsData === 'function') {
+                window.loadAnalyticsData(true);
+            }
+        },
+        'ballot': () => {
+            if (typeof window.loadBallotsData === 'function') {
+                window.loadBallotsData(true);
+            }
+        },
+        'ballots': () => {
+            if (typeof window.loadBallotsData === 'function') {
+                window.loadBallotsData(true);
+            }
+        },
+        'zero-day': () => {
+            if (typeof window.loadZeroDayData === 'function') {
+                window.loadZeroDayData();
+            }
+        },
+        'settings': () => {
+            // Settings page doesn't need data refresh, but we can reinitialize it
+            if (typeof window.initializeSettingsPage === 'function') {
+                window.initializeSettingsPage();
+            }
+        }
+    };
+    
+    const loader = pageLoaders[currentPage];
+    if (loader) {
+        loader();
+    } else {
+        console.warn('[Global Filter] No loader found for page:', currentPage);
+    }
+}
+
+// Get current active page from navigation or content area
+function getCurrentActivePage() {
+    // Check active navigation item
+    const activeNavItem = document.querySelector('.nav-item.active, .sidebar-nav .nav-item.active');
+    if (activeNavItem) {
+        const dataSection = activeNavItem.getAttribute('data-section');
+        if (dataSection) return dataSection;
+    }
+    
+    // Check content area for page indicators
+    const contentArea = document.querySelector('.content-area');
+    if (contentArea) {
+        // Check for specific page IDs or classes
+        const pageId = contentArea.querySelector('[id*="voter"], [id*="candidate"], [id*="pledge"], [id*="agent"], [id*="event"], [id*="call"], [id*="dashboard"], [id*="analytics"]');
+        if (pageId) {
+            const id = pageId.id.toLowerCase();
+            if (id.includes('voter')) return 'voters';
+            if (id.includes('candidate')) return 'candidates';
+            if (id.includes('pledge')) return 'pledges';
+            if (id.includes('agent')) return 'agents';
+            if (id.includes('event')) return 'events';
+            if (id.includes('call')) return 'calls';
+            if (id.includes('dashboard')) return 'dashboard';
+            if (id.includes('analytics')) return 'analytics';
+        }
+    }
+    
+    // Fallback: check window.currentPage
+    return window.currentPage || 'dashboard';
+}
+
+// Restore global filter UI state from saved state
+function restoreGlobalFilterState() {
+    const constituencySelect = document.getElementById('global-filter-constituency');
+    const islandSelect = document.getElementById('global-filter-island');
+    
+    if (!constituencySelect || !islandSelect) {
+        return;
+    }
+    
+    // Restore constituency selection
+    if (window.globalFilterState && window.globalFilterState.constituency) {
+        constituencySelect.value = window.globalFilterState.constituency;
+        
+        // Update island dropdown based on selected constituency
+        if (window.maldivesData && window.maldivesData.constituencyIslands) {
+            const islands = window.maldivesData.constituencyIslands[window.globalFilterState.constituency] || [];
+            islandSelect.innerHTML = '<option value="">All Islands</option>';
+            islands.forEach(island => {
+                const islandOption = document.createElement('option');
+                islandOption.value = island;
+                islandOption.textContent = island;
+                islandSelect.appendChild(islandOption);
+            });
+        }
+    } else {
+        constituencySelect.value = '';
+        
+        // If "Show All" is selected, show all islands from all constituencies
+        if (window.maldivesData && window.maldivesData.constituencyIslands) {
+            const allIslandsSet = new Set();
+            Object.values(window.maldivesData.constituencyIslands).forEach(islands => {
+                islands.forEach(island => allIslandsSet.add(island));
+            });
+            const allIslands = Array.from(allIslandsSet).sort();
+            islandSelect.innerHTML = '<option value="">All Islands</option>';
+            allIslands.forEach(island => {
+                const islandOption = document.createElement('option');
+                islandOption.value = island;
+                islandOption.textContent = island;
+                islandSelect.appendChild(islandOption);
+            });
+        }
+    }
+    
+    // Restore island selection
+    if (window.globalFilterState && window.globalFilterState.island) {
+        islandSelect.value = window.globalFilterState.island;
+    } else {
+        islandSelect.value = '';
+    }
+}
+
+// Apply global filter when navigating to a new page
+function applyGlobalFilterOnPageLoad(section) {
+    // Restore filter UI state
+    restoreGlobalFilterState();
+    
+    // Apply filter to the newly loaded page
+    if (window.globalFilterState && window.globalFilterState.initialized) {
+        // Small delay to ensure page content is loaded
+        setTimeout(() => {
+            refreshCurrentPageData();
+        }, 100);
+    }
+}
+
+// Make functions globally available
+window.applyGlobalFilter = applyGlobalFilter;
+window.refreshCurrentPageData = refreshCurrentPageData;
+window.getGlobalFilterState = getGlobalFilterState;
+window.restoreGlobalFilterState = restoreGlobalFilterState;
+window.applyGlobalFilterOnPageLoad = applyGlobalFilterOnPageLoad;
+
+// Check if user is an island user and set global filter automatically
+async function checkAndSetIslandUserFilter() {
+    if (!window.db || !window.userEmail) return;
+
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Check if current email is an island user
+        const islandUserQuery = query(
+            collection(window.db, 'islandUsers'),
+            where('email', '==', window.userEmail)
+        );
+        const islandUserSnap = await getDocs(islandUserQuery);
+
+        if (!islandUserSnap.empty) {
+            // User is an island user
+            const islandUserData = islandUserSnap.docs[0].data();
+            window.isIslandUser = true;
+            window.islandUserData = islandUserData;
+
+            // Set global filter to their constituency and island (locked)
+            window.globalFilterState.constituency = islandUserData.constituency || null;
+            window.globalFilterState.island = islandUserData.island || null;
+            window.globalFilterState.locked = true; // Lock the filter for island users
+
+            // Hide global filter UI
+            const globalFilterContainer = document.getElementById('global-filter-container');
+            if (globalFilterContainer) {
+                globalFilterContainer.style.display = 'none';
+            }
+
+            console.log('[Island User] Global filter locked to:', {
+                constituency: islandUserData.constituency,
+                island: islandUserData.island
+            });
+        } else {
+            // User is a campaign manager
+            window.isIslandUser = false;
+            window.islandUserData = null;
+            window.globalFilterState.locked = false;
+
+            // Show global filter UI
+            const globalFilterContainer = document.getElementById('global-filter-container');
+            if (globalFilterContainer) {
+                globalFilterContainer.style.display = 'flex';
+            }
+        }
+    } catch (error) {
+        console.error('Error checking island user status:', error);
+        // On error, assume user is campaign manager
+        window.isIslandUser = false;
+        window.globalFilterState.locked = false;
+    }
+}
+
+// Initialize Global Filter
+function initializeGlobalFilter() {
+    const constituencySelect = document.getElementById('global-filter-constituency');
+    const islandSelect = document.getElementById('global-filter-island');
+
+    if (!constituencySelect || !islandSelect) {
+        console.warn('[Global Filter] Filter elements not found');
+        return;
+    }
+
+    // If user is an island user, set filter values and disable controls
+    if (window.isIslandUser && window.islandUserData) {
+        const islandUserData = window.islandUserData;
+        
+        // Set values
+        if (islandUserData.constituency) {
+            constituencySelect.value = islandUserData.constituency;
+        }
+        if (islandUserData.island) {
+            islandSelect.value = islandUserData.island;
+        }
+
+        // Disable controls
+        constituencySelect.disabled = true;
+        islandSelect.disabled = true;
+        constituencySelect.style.opacity = '0.6';
+        islandSelect.style.opacity = '0.6';
+        constituencySelect.style.cursor = 'not-allowed';
+        islandSelect.style.cursor = 'not-allowed';
+
+        // Populate island dropdown
+        if (islandUserData.constituency && window.maldivesData && window.maldivesData.constituencyIslands) {
+            const islands = window.maldivesData.constituencyIslands[islandUserData.constituency] || [];
+            islandSelect.innerHTML = '<option value="">All Islands</option>';
+            islands.forEach(island => {
+                const islandOption = document.createElement('option');
+                islandOption.value = island;
+                islandOption.textContent = island;
+                if (island === islandUserData.island) {
+                    islandOption.selected = true;
+                }
+                islandSelect.appendChild(islandOption);
+            });
+        }
+
+        window.globalFilterState.initialized = true;
+        console.log('[Global Filter] Initialized for island user');
+        return;
+    }
+
+    // Only show the constituency selected during campaign setup
+    if (window.campaignData && window.campaignData.constituency) {
+        const campaignConstituency = window.campaignData.constituency;
+
+        // Populate constituency dropdown with "Show All" and campaign constituency only
+        constituencySelect.innerHTML = '<option value="">Show All</option>';
+        const option = document.createElement('option');
+        option.value = campaignConstituency;
+        option.textContent = campaignConstituency;
+        option.selected = true;
+        constituencySelect.appendChild(option);
+
+        // Initialize global filter state with default (campaign constituency)
+        window.globalFilterState.constituency = campaignConstituency;
+        window.globalFilterState.island = null;
+
+        // Populate islands based on campaign constituency (default selection)
+        // Since constituency is selected by default, show islands for that constituency
+        if (window.maldivesData && window.maldivesData.constituencyIslands) {
+            const islands = window.maldivesData.constituencyIslands[campaignConstituency] || [];
+            islandSelect.innerHTML = '<option value="">All Islands</option>';
+            islands.forEach(island => {
+                const islandOption = document.createElement('option');
+                islandOption.value = island;
+                islandOption.textContent = island;
+                islandSelect.appendChild(islandOption);
+            });
+        }
+    } else {
+        // If no campaign data, show empty dropdowns
+        constituencySelect.innerHTML = '<option value="">Show All</option>';
+        islandSelect.innerHTML = '<option value="">Select Island</option>';
+        window.globalFilterState.constituency = null;
+        window.globalFilterState.island = null;
+    }
+
+    // Add change listeners with debouncing
+    let constituencyDebounceTimer;
+    constituencySelect.addEventListener('change', function() {
+        const selectedConstituency = this.value;
+        if (selectedConstituency && window.maldivesData && window.maldivesData.constituencyIslands) {
+            const islands = window.maldivesData.constituencyIslands[selectedConstituency] || [];
+            islandSelect.innerHTML = '<option value="">All Islands</option>';
+            islands.forEach(island => {
+                const islandOption = document.createElement('option');
+                islandOption.value = island;
+                islandOption.textContent = island;
+                islandSelect.appendChild(islandOption);
+            });
+        } else {
+            // If "Show All" is selected, show only islands from the campaign's constituency
+            if (window.campaignData && window.campaignData.constituency && window.maldivesData && window.maldivesData.constituencyIslands) {
+                const campaignConstituency = window.campaignData.constituency;
+                const islands = window.maldivesData.constituencyIslands[campaignConstituency] || [];
+                islandSelect.innerHTML = '<option value="">All Islands</option>';
+                islands.sort().forEach(island => {
+                    const islandOption = document.createElement('option');
+                    islandOption.value = island;
+                    islandOption.textContent = island;
+                    islandSelect.appendChild(islandOption);
+                });
+            } else {
+                islandSelect.innerHTML = '<option value="">All Islands</option>';
+            }
+        }
+        
+        // Reset island selection when constituency changes (unless it's still valid)
+        const currentIsland = islandSelect.value;
+        const availableIslands = Array.from(islandSelect.options).map(opt => opt.value);
+        if (!availableIslands.includes(currentIsland)) {
+            islandSelect.value = '';
+        }
+        
+        // Update global filter state immediately
+        window.globalFilterState.constituency = selectedConstituency || null;
+        if (!availableIslands.includes(currentIsland)) {
+            window.globalFilterState.island = null;
+        }
+        
+        // Debounce filter application
+        clearTimeout(constituencyDebounceTimer);
+        constituencyDebounceTimer = setTimeout(() => {
+            applyGlobalFilter();
+        }, 300);
+    });
+
+    let islandDebounceTimer;
+    islandSelect.addEventListener('change', function() {
+        // Update global filter state immediately
+        window.globalFilterState.island = this.value || null;
+        
+        // Debounce filter application
+        clearTimeout(islandDebounceTimer);
+        islandDebounceTimer = setTimeout(() => {
+            applyGlobalFilter();
+        }, 300);
+    });
+
+    window.globalFilterState.initialized = true;
+    console.log('[Global Filter] Initialized successfully');
+}
+
+// Initialize Refresh Button
+function initializeRefreshButton() {
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (!refreshBtn) {
+        console.warn('[Refresh Button] Button not found');
+        return;
+    }
+
+    refreshBtn.addEventListener('click', async function() {
+        // Add loading state
+        refreshBtn.disabled = true;
+        refreshBtn.style.opacity = '0.6';
+
+        try {
+            // Reload current page data
+            if (typeof loadPageContent === 'function') {
+                const currentPage = window.currentPage || 'settings';
+                await loadPageContent(currentPage);
+            }
+
+            // Reload dashboard data if available
+            if (typeof loadDashboardData === 'function') {
+                await loadDashboardData(true);
+            }
+
+            // Reload notifications
+            if (typeof loadNotifications === 'function') {
+                await loadNotifications();
+            }
+
+            console.log('[Refresh] Data refreshed successfully');
+        } catch (error) {
+            console.error('[Refresh] Error refreshing data:', error);
+        } finally {
+            refreshBtn.disabled = false;
+            refreshBtn.style.opacity = '1';
+        }
+    });
+
+    console.log('[Refresh Button] Initialized successfully');
 }
 
 // Try to initialize profile dropdown when workspace screen becomes visible

@@ -7,9 +7,7 @@
 }
 
 /* Ensure admin screens inherit global body styles from styles.css */
-#admin-login-screen.screen {
-    /* Inherits body gradient background from styles.css */
-}
+/* #admin-login-screen.screen inherits body gradient background from styles.css */
 
 /* Make sure all text uses Poppins font globally (already in styles.css body) */
 
@@ -1077,5 +1075,98 @@ label span[data-icon] svg {
 
     .section-header h3 {
         font-size: 18px;
+    }
+}
+
+/* Pledge Information Display Styles */
+.voter-pledge-detail-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+}
+
+.voter-pledge-status-display {
+    margin: 0;
+}
+
+.voter-pledge-status-display span {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.voter-pledge-date-display {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.voter-pledge-candidate-display {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 12px;
+    background: var(--light-color);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+/* Style for Unknown Candidate - make it stand out */
+/* Use data-unknown="true" attribute in JavaScript to apply this style */
+.voter-pledge-candidate-display[data-unknown="true"] {
+    background: rgba(217, 119, 6, 0.1);
+    border-color: var(--warning-color);
+    color: var(--warning-color);
+    font-weight: 600;
+    position: relative;
+}
+
+/* Alternative approach using attribute selector */
+.voter-pledge-candidate-display[data-unknown="true"]::before {
+    content: "⚠ ";
+    margin-right: 4px;
+}
+
+/* Pledge Info Section Header */
+.voter-pledge-detail-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-color);
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Pledge Info Divider */
+.voter-pledge-detail-card>div>div[style*="height: 2px"] {
+    height: 2px;
+    background: var(--primary-color);
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+/* Pledge Info Grid Layout */
+.voter-pledge-detail-card>div>div[style*="grid-template-columns"] {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+/* Responsive adjustments for pledge display */
+@media (max-width: 768px) {
+    .voter-pledge-detail-card>div>div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .voter-pledge-detail-card {
+        padding: 16px;
     }
 }

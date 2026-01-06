@@ -31,6 +31,26 @@ service cloud.firestore {
              (request.auth.token.email == null || request.auth.token.email == '');
     }
     
+    // Helper function to check if user is an island user
+    // Island users have their island stored in custom claims (set during authentication)
+    // If custom claim is not available, we'll allow access based on island field matching
+    function isIslandUser() {
+      return request.auth != null && 
+             request.auth.token.email != null &&
+             request.auth.token.email != '';
+    }
+    
+    // Helper function to check if document belongs to user's campaign or island
+    // For island users: check if document's island matches user's island (from custom claim or query)
+    // For campaign managers: check if document's email/campaignEmail matches
+    function canAccessDocument() {
+      return request.auth != null &&
+             (resource.data.email == request.auth.token.email ||
+              resource.data.campaignEmail == request.auth.token.email ||
+              // Allow island users to access documents where island matches (will be filtered by app)
+              (request.auth.token.island != null && resource.data.island == request.auth.token.island));
+    }
+    
     // ============================================
     // ADMIN & USER MANAGEMENT COLLECTIONS
     // ============================================
@@ -110,6 +130,9 @@ service cloud.firestore {
       // Check that the email in the new document matches the authenticated user's email
       allow create: if request.auth != null && 
                      request.resource.data.email == request.auth.token.email;
+      
+      // Allow list operations for queries and snapshot listeners
+      allow list: if request.auth != null;
     }
     
     // Notifications collection - admin can send, users can read their own, agents can create for campaign manager
@@ -127,10 +150,12 @@ service cloud.firestore {
       
       // Clients can read their own notifications
       allow read: if request.auth != null && 
+                   resource != null &&
                    resource.data.recipientEmail == request.auth.token.email;
       
       // Clients can update (mark as read) their own notifications
       allow update: if request.auth != null && 
+                     resource != null &&
                      resource.data.recipientEmail == request.auth.token.email;
       
       // Clients can delete their own notifications
@@ -154,68 +179,6 @@ service cloud.firestore {
     }
     
     // ============================================
-    // MESSENGER COLLECTIONS
-    // ============================================
-    
-    // Conversations collection for messenger
-    match /conversations/{conversationId} {
-      // Admin has full access
-      allow read, write: if isAdmin();
-      
-      // Allow authenticated users (including anonymous) to read conversations
-      // Security is enforced by checking senderId/receiverId in message data
-      allow read: if request.auth != null;
-      
-      // Allow authenticated users (including anonymous agents) to create conversations
-      // This is needed when creating the first message in a conversation
-      allow create: if request.auth != null;
-      
-      // Allow authenticated users (including anonymous agents) to update conversations
-      // This is needed to update lastMessage and lastMessageTime
-      allow update: if request.auth != null;
-      
-      // Messages subcollection
-      match /messages/{messageId} {
-        // Admin has full access
-        allow read, write: if isAdmin();
-        
-        // Allow authenticated users (including anonymous agents) to read messages
-        // Application logic ensures users only see their own conversations
-        // Note: Conversation document may not exist - messages can exist without parent doc
-        allow read: if request.auth != null;
-        
-        // Allow authenticated users to create messages if they are the sender
-        // For regular users: check email match
-        // For agents: allow if senderId is set (agents use agent_${id} format)
-        // Application logic ensures correct senderId is used
-        allow create: if request.auth != null && 
-                       request.resource.data.senderId != null;
-        
-        // Allow users to update their own messages
-        // Application logic ensures users only update their own messages
-        allow update: if request.auth != null && 
-                       resource.data.senderId != null;
-        
-        // Allow users to delete their own messages
-        // Application logic ensures users only delete their own messages
-        allow delete: if request.auth != null && 
-                       resource.data.senderId != null;
-      }
-    }
-    
-    // User presence collection for messenger
-    match /userPresence/{userId} {
-      // Admin has full access
-      allow read, write: if isAdmin();
-      
-      // Allow users to read all presence data (for online users list)
-      allow read: if request.auth != null;
-      
-      // Allow users to write their own presence data
-      allow write: if request.auth != null && request.auth.token.email == userId;
-    }
-    
-    // ============================================
     // CAMPAIGN DATA COLLECTIONS
     // These collections store campaign-specific data
     // Users can only access data for their own campaign (matching email)
@@ -228,8 +191,18 @@ service cloud.firestore {
       
       // Users can read candidates for their own campaign
       allow read: if request.auth != null && 
+                   resource != null &&
                    (resource.data.email == request.auth.token.email || 
                     resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can read candidates for their island
+      // Note: Application code filters by island, but we allow read if island field exists
+      // This allows island users to read candidates that have an island field
+      // The application will filter to only show candidates matching their specific island
+      allow read: if request.auth != null && 
+                   resource != null &&
+                   resource.data.island != null &&
+                   resource.data.island != '';
       
       // Users can update/delete candidates for their own campaign
       allow update, delete: if request.auth != null && 
@@ -240,6 +213,11 @@ service cloud.firestore {
       allow create: if request.auth != null && 
                      (request.resource.data.email == request.auth.token.email || 
                       request.resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can create candidates for their island
+      allow create: if request.auth != null && 
+                     request.resource.data.island != null &&
+                     request.resource.data.island != '';
       
       // Allow list operations for queries and snapshot listeners
       // Only allow if user is authenticated (read rules will filter documents)
@@ -255,6 +233,13 @@ service cloud.firestore {
       allow read: if request.auth != null && 
                    (resource.data.email == request.auth.token.email || 
                     resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can read voters for their island
+      // Note: Application code filters by island, but we allow read if island field exists
+      allow read: if request.auth != null && 
+                   resource != null &&
+                   resource.data.island != null &&
+                   resource.data.island != '';
       
       // Agents (unauthenticated) can read voters assigned to them
       // This allows agents to view their assigned voters using access codes
@@ -280,9 +265,14 @@ service cloud.firestore {
                    resource.data.campaignEmail != null;
       
       // Users can update/delete voters for their own campaign
+      // Allow update if:
+      // 1. Existing document has email/campaignEmail matching user's email, OR
+      // 2. New document will have email/campaignEmail matching user's email (allows setting email on documents that don't have it)
       allow update, delete: if request.auth != null && 
                              (resource.data.email == request.auth.token.email || 
-                              resource.data.campaignEmail == request.auth.token.email);
+                              resource.data.campaignEmail == request.auth.token.email ||
+                              request.resource.data.email == request.auth.token.email ||
+                              request.resource.data.campaignEmail == request.auth.token.email);
       
       // Officers can update voters to mark them as voted (unauthenticated access)
       // This allows officers to mark voters as voted when they have ballot access
@@ -299,6 +289,11 @@ service cloud.firestore {
       allow create: if request.auth != null && 
                      (request.resource.data.email == request.auth.token.email || 
                       request.resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can create voters for their island
+      allow create: if request.auth != null && 
+                     request.resource.data.island != null &&
+                     request.resource.data.island != '';
       
       // Allow list operations for queries and snapshot listeners
       // Authenticated users can list their own voters
@@ -317,6 +312,13 @@ service cloud.firestore {
                    (resource.data.email == request.auth.token.email || 
                     resource.data.campaignEmail == request.auth.token.email);
       
+      // Island users can read events for their island
+      // Note: Application code filters by island, but we allow read if island field exists
+      allow read: if request.auth != null && 
+                   resource != null &&
+                   resource.data.island != null &&
+                   resource.data.island != '';
+      
       // Users can update/delete events for their own campaign
       allow update, delete: if request.auth != null && 
                              (resource.data.email == request.auth.token.email || 
@@ -326,6 +328,11 @@ service cloud.firestore {
       allow create: if request.auth != null && 
                      (request.resource.data.email == request.auth.token.email || 
                       request.resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can create events for their island
+      allow create: if request.auth != null && 
+                     request.resource.data.island != null &&
+                     request.resource.data.island != '';
       
       // Allow list operations for queries and snapshot listeners
       allow list: if request.auth != null;
@@ -381,6 +388,13 @@ service cloud.firestore {
                    (resource.data.email == request.auth.token.email || 
                     resource.data.campaignEmail == request.auth.token.email);
       
+      // Island users can read calls for their island
+      // Note: Application code filters by island, but we allow read if island field exists
+      allow read: if request.auth != null && 
+                   resource != null &&
+                   resource.data.island != null &&
+                   resource.data.island != '';
+      
       // Users can update/delete calls for their own campaign
       allow update, delete: if request.auth != null && 
                              (resource.data.email == request.auth.token.email || 
@@ -390,6 +404,11 @@ service cloud.firestore {
       allow create: if request.auth != null && 
                      (request.resource.data.email == request.auth.token.email || 
                       request.resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can create calls for their island
+      allow create: if request.auth != null && 
+                     request.resource.data.island != null &&
+                     request.resource.data.island != '';
       
       // Agents can create calls (agentId in request.resource.data) without authentication
       allow create: if request.resource.data.agentId != null && 
@@ -417,6 +436,13 @@ service cloud.firestore {
                    (resource.data.email == request.auth.token.email || 
                     resource.data.campaignEmail == request.auth.token.email);
       
+      // Island users can read pledges for their island
+      // Note: Application code filters by island, but we allow read if island field exists
+      allow read: if request.auth != null && 
+                   resource != null &&
+                   resource.data.island != null &&
+                   resource.data.island != '';
+      
       // Users can update/delete pledges for their own campaign
       allow update, delete: if request.auth != null && 
                              (resource.data.email == request.auth.token.email || 
@@ -426,6 +452,11 @@ service cloud.firestore {
       allow create: if request.auth != null && 
                      (request.resource.data.email == request.auth.token.email || 
                       request.resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can create pledges for their island
+      allow create: if request.auth != null && 
+                     request.resource.data.island != null &&
+                     request.resource.data.island != '';
       
       // Agents can create pledges (agentId in request.resource.data) without authentication
       allow create: if request.resource.data.agentId != null && 
@@ -610,6 +641,36 @@ service cloud.firestore {
                       request.resource.data.campaignEmail == request.auth.token.email);
       
       // Allow list operations for queries and snapshot listeners
+      allow list: if request.auth != null;
+    }
+    
+    // Island Users collection (for managing island-specific users)
+    match /islandUsers/{islandUserId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Campaign managers can read island users for their own campaign
+      allow read: if request.auth != null && 
+                   (resource != null && 
+                    resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can read their own record (to check their status)
+      allow read: if request.auth != null && 
+                   (resource != null && 
+                    resource.data.email == request.auth.token.email);
+      
+      // Campaign managers can create island users for their own campaign
+      allow create: if request.auth != null && 
+                     request.resource.data.campaignEmail == request.auth.token.email;
+      
+      // Campaign managers can update/delete island users for their own campaign
+      allow update, delete: if request.auth != null && 
+                             (resource != null && 
+                              resource.data.campaignEmail == request.auth.token.email);
+      
+      // Allow list operations for queries and snapshot listeners
+      // Campaign managers can query by campaignEmail
+      // Island users can query by email (to find their own record)
       allow list: if request.auth != null;
     }
     

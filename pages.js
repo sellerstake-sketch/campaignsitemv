@@ -1,160 +1,552 @@
 // Page Content Templates for all sections - All data loaded dynamically from Firebase
 
 const pageTemplates = {
-    dashboard: `
+    settings: `
         <div class="page-header">
-            <h1>Campaign Dashboard</h1>
-            <p class="page-subtitle">Overview of your election campaign activities</p>
+            <h1>Settings</h1>
+            <p class="page-subtitle">Manage your campaign and account settings</p>
         </div>
         
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 12px 16px; background: linear-gradient(135deg, rgba(111, 193, 218, 0.08) 0%, rgba(141, 212, 232, 0.08) 100%); border-radius: 12px; border: 1px solid rgba(111, 193, 218, 0.2);">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="20" x2="18" y2="10"></line>
-                    <line x1="12" y1="20" x2="12" y2="4"></line>
-                    <line x1="6" y1="20" x2="6" y2="14"></line>
-                </svg>
-                <span style="font-weight: 600; color: var(--text-color); font-size: 14px;">Dashboard Statistics</span>
-            </div>
-            <button id="dashboard-stats-toggle" class="stats-toggle-btn" onclick="toggleStats('dashboard')" aria-label="Toggle statistics">
-                <span class="stats-toggle-slider"></span>
-                <span class="stats-toggle-icon stats-toggle-icon-show">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="18 15 12 9 6 15"></polyline>
-                    </svg>
-                </span>
-                <span class="stats-toggle-icon stats-toggle-icon-hide">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                </span>
+        <!-- Settings Tabs -->
+        <div class="settings-tabs" id="settings-tabs" style="display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 2px solid var(--border-color);">
+            <button class="settings-tab-btn active" data-settings-tab="general" style="padding: 12px 24px; background: none; border: none; border-bottom: 3px solid var(--primary-color); color: var(--primary-color); font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 14px;">
+                General Settings
+            </button>
+            <button class="settings-tab-btn" data-settings-tab="users" id="settings-tab-users" style="padding: 12px 24px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 14px; display: none;">
+                Manage Users
             </button>
         </div>
         
-        <div class="stats-grid" id="dashboard-stats-section" style="transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
-            <div class="stat-card stat-card-primary">
-                <div class="stat-card-header">
-                    <div class="stat-icon-wrapper stat-icon-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <!-- General Settings Tab -->
+        <div class="settings-tab-content active" data-settings-tab-content="general">
+        <div class="settings-container">
+            <div class="settings-section">
+                <h2>Campaign Information</h2>
+                <div class="settings-card">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h3>Campaign Name</h3>
+                            <p>Current campaign name displayed across the platform</p>
+                        </div>
+                        <div class="setting-value">
+                            <span id="setting-campaign-name">Loading...</span>
+                            <button class="icon-btn-sm">Edit</button>
+                        </div>
                     </div>
-                    <p class="stat-label">Total Candidates</p>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h3>Campaign Type</h3>
+                            <p>Type of election campaign</p>
+                        </div>
+                        <div class="setting-value">
+                            <span id="setting-campaign-type">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h3>Location</h3>
+                            <p>Constituency and Island</p>
+                        </div>
+                        <div class="setting-value">
+                            <span id="setting-location">Loading...</span>
+                        </div>
+                    </div>
                 </div>
-                <h3 id="stat-candidates" class="stat-number stat-number-primary">0</h3>
-                <p class="stat-description">Registered candidates</p>
             </div>
             
-            <div class="stat-card stat-card-success">
-                <div class="stat-card-header">
-                    <div class="stat-icon-wrapper stat-icon-success">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--success-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+            <div class="settings-section">
+                <h2>Account Settings</h2>
+                <div class="settings-card">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h3>Email Address</h3>
+                            <p>Your account email address</p>
+                        </div>
+                        <div class="setting-value">
+                            <span id="setting-email">Loading...</span>
+                            <button class="icon-btn-sm">Change</button>
+                        </div>
                     </div>
-                    <p class="stat-label">Registered Voters</p>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h3>Password</h3>
+                            <p>Change your account password</p>
+                        </div>
+                        <div class="setting-value">
+                            <button class="icon-btn-sm">Change Password</button>
+                        </div>
+                    </div>
                 </div>
-                <h3 id="stat-voters" class="stat-number stat-number-success">0</h3>
-                <p class="stat-description">Voters in database</p>
             </div>
             
-            <div class="stat-card stat-card-info">
-                <div class="stat-card-header">
-                    <div class="stat-icon-wrapper stat-icon-info">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--info-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <div class="settings-section">
+                <h2>Notification Preferences</h2>
+                <div class="settings-card">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h3>Email Notifications</h3>
+                            <p>Receive notifications via email</p>
+                        </div>
+                        <div class="setting-value">
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
                     </div>
-                    <p class="stat-label">Upcoming Events</p>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h3>Push Notifications</h3>
+                            <p>Receive push notifications in browser</p>
+                        </div>
+                        <div class="setting-value">
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
-                <h3 id="stat-events" class="stat-number stat-number-info">0</h3>
-                <p class="stat-description">Scheduled events</p>
             </div>
             
-            <div class="stat-card stat-card-warning">
-                <div class="stat-card-header">
-                    <div class="stat-icon-wrapper stat-icon-warning">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--warning-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            <div class="settings-section">
+                <h2>Display Settings</h2>
+                <div class="settings-card">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h3>Enable Bottom Navigation</h3>
+                            <p>Show bottom navigation dock on mobile devices for quick access to all sections</p>
+                        </div>
+                        <div class="setting-value">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="mobile-bottom-nav-toggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
                     </div>
-                    <p class="stat-label">Campaign Calls</p>
                 </div>
-                <h3 id="stat-calls" class="stat-number stat-number-warning">0</h3>
-                <p class="stat-description">Calls made to voters</p>
+            </div>
+            
+            <div class="settings-section">
+            </div>
+            
+            <div class="settings-section">
+                <h2>Display Preferences</h2>
+                <div class="settings-card">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h3>Show Voter Images</h3>
+                            <p>Display voter photos in the voter database table. When disabled, images will not be loaded from the image folder.</p>
+                        </div>
+                        <div class="setting-value">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="show-voter-images-toggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h2>Zero Day Management</h2>
+                <div class="settings-card">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h3>Enable Zero Day</h3>
+                            <p>Show Zero Day management in sidebar menu (under Dashboard)</p>
+                        </div>
+                        <div class="setting-value">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="zero-day-toggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+        
+        <!-- Manage Users Tab -->
+        <div class="settings-tab-content" data-settings-tab-content="users" style="display: none;">
+            <div class="settings-container">
+                <div class="settings-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h2 style="margin: 0;">Island User Management</h2>
+                        <button class="btn-primary btn-compact" onclick="openIslandUserModal()" style="background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add User
+                        </button>
+                    </div>
+                    <div class="settings-card">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Full Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Constituency</th>
+                                        <th>Island</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="island-users-table-body">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-light);">Loading users...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `,
+
+    dashboard: `
+        <!-- Date and Location Display -->
+        <div class="dashboard-header-section" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+            <div class="dashboard-date-location">
+                <p id="dashboard-location" style="margin: 0 0 6px 0; font-size: 20px; color: var(--text-color); font-weight: 700;"></p>
+                <p id="dashboard-date" style="margin: 0; font-size: 14px; color: var(--text-light); font-weight: 500;"></p>
+            </div>
+            <!-- Countdown Timer - Top Corner (Desktop) -->
+            <div id="election-countdown-container" class="dashboard-countdown-wrapper" style="display: none; position: relative;">
+                <div style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%); border-radius: 12px; padding: 16px 20px; box-shadow: 0 2px 12px rgba(111, 193, 218, 0.25); color: white; min-width: 280px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <div style="width: 36px; height: 36px; background: rgba(255, 255, 255, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
+                        <div>
+                            <h3 style="margin: 0; font-size: 14px; font-weight: 700; color: white; letter-spacing: 0.5px;">TIME TO VOTING</h3>
+                        </div>
+                    </div>
+                    <div id="countdown-timer" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                        <!-- Countdown will be populated here -->
+                    </div>
+                </div>
             </div>
         </div>
         
-        <div class="dashboard-sections">
-            <div class="section-card">
-                <h2>Recent Activities</h2>
-                <div class="activity-list" id="recent-activities">
-                    <div class="activity-item" style="text-align: center; padding: 20px; color: var(--text-light);">
-                        <p>No recent activities</p>
+        <!-- Main Dashboard Content Layout -->
+        <div style="display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start;">
+            <!-- Left Column: Main Content -->
+            <div>
+                <!-- Always Visible Stat Containers -->
+                <div id="dashboard-visible-stats" class="dashboard-stats-grid" style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
+                    <!-- Voter Database Statistics Container -->
+                    <div class="dashboard-stat-container" data-section="voters">
+                        <div class="dashboard-stat-header" onclick="toggleStatContainer('voters')">
+                            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                                <div style="width: 48px; height: 48px; border-radius: 10px; background: linear-gradient(135deg, var(--success-color) 0%, rgba(5, 150, 105, 0.8) 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="9" cy="7" r="4"></circle>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                                </div>
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0 0 2px 0; font-size: 20px; font-weight: 700; color: var(--text-color);">
+                                        <span id="stat-voters">0</span> TOTAL
+                                    </h3>
+                                    <p style="margin: 0; font-size: 12px; color: var(--text-light); font-weight: 500;">Voter Database Statistics</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <button class="stat-expand-btn" onclick="event.stopPropagation(); navigateToSection('voters')" style="width: 36px; height: 36px; border-radius: 8px; background: var(--light-color); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </button>
+                                <button class="stat-expand-btn expanded" data-target="voters" style="width: 36px; height: 36px; border-radius: 8px; background: var(--light-color); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+                                    <svg class="expand-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(180deg);">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+            </button>
+        </div>
                     </div>
+                        <div class="dashboard-stat-content" id="stat-content-voters" style="display: block;">
+                            <!-- Detailed voter statistics will be populated here -->
+                </div>
+                    </div>
+            </div>
+            
+                <!-- Show More Section - Hidden by default -->
+                <div id="dashboard-show-more-section" style="display: none;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                        <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text-color);">More Statistics</h2>
+                    </div>
+                    <div id="dashboard-more-stats" style="display: flex; flex-direction: column; gap: 16px;">
+                        <!-- Candidates Statistics Container -->
+                        <div class="dashboard-stat-container" data-section="candidates">
+                            <div class="dashboard-stat-header" onclick="toggleStatContainer('candidates')">
+                                <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                                    <div style="width: 48px; height: 48px; border-radius: 10px; background: linear-gradient(135deg, var(--primary-color) 0%, rgba(111, 193, 218, 0.8) 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="9" cy="7" r="4"></circle>
+                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                        </svg>
+                </div>
+                                    <div style="flex: 1;">
+                                        <h3 style="margin: 0 0 2px 0; font-size: 20px; font-weight: 700; color: var(--text-color);">
+                                            <span id="stat-candidates">0</span> TOTAL
+                                        </h3>
+                                        <p style="margin: 0; font-size: 12px; color: var(--text-light); font-weight: 500;">Candidates Statistics</p>
+            </div>
+                    </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <button class="stat-expand-btn" onclick="event.stopPropagation(); navigateToSection('candidates')" style="width: 36px; height: 36px; border-radius: 8px; background: var(--light-color); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                    <button class="stat-expand-btn" data-target="candidates" style="width: 36px; height: 36px; border-radius: 8px; background: var(--light-color); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+                                        <svg class="expand-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
+                </div>
+                            </div>
+                            <div class="dashboard-stat-content" id="stat-content-candidates" style="display: none;">
+                                <!-- Detailed candidate statistics will be populated here -->
+                            </div>
+            </div>
+            
+                        <!-- Pledge Statistics Container -->
+                        <div class="dashboard-stat-container" data-section="pledges">
+                            <div class="dashboard-stat-header" onclick="toggleStatContainer('pledges')">
+                                <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                                    <div style="width: 48px; height: 48px; border-radius: 10px; background: linear-gradient(135deg, var(--info-color) 0%, rgba(2, 132, 199, 0.8) 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                        </svg>
+                    </div>
+                                    <div style="flex: 1;">
+                                        <h3 style="margin: 0 0 2px 0; font-size: 20px; font-weight: 700; color: var(--text-color);">
+                                            <span id="stat-pledges">0</span> TOTAL
+                                        </h3>
+                                        <p style="margin: 0; font-size: 12px; color: var(--text-light); font-weight: 500;">Pledge Statistics</p>
+                </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <button class="stat-expand-btn" onclick="event.stopPropagation(); navigateToSection('pledges')" style="width: 36px; height: 36px; border-radius: 8px; background: var(--light-color); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                    <button class="stat-expand-btn" data-target="pledges" style="width: 36px; height: 36px; border-radius: 8px; background: var(--light-color); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+                                        <svg class="expand-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="dashboard-stat-content" id="stat-content-pledges" style="display: none;">
+                                <!-- Detailed pledge statistics will be populated here -->
+            </div>
+        </div>
+        
+                        <!-- Agent Assignment Statistics Container -->
+                        <div class="dashboard-stat-container" data-section="agents">
+                            <div class="dashboard-stat-header" onclick="toggleStatContainer('agents')">
+                                <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                                    <div style="width: 48px; height: 48px; border-radius: 10px; background: linear-gradient(135deg, var(--warning-color) 0%, rgba(217, 119, 6, 0.8) 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="9" cy="7" r="4"></circle>
+                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                        </svg>
+                    </div>
+                                    <div style="flex: 1;">
+                                        <h3 style="margin: 0 0 2px 0; font-size: 20px; font-weight: 700; color: var(--text-color);">
+                                            <span id="stat-agents">0</span> TOTAL
+                                        </h3>
+                                        <p style="margin: 0; font-size: 12px; color: var(--text-light); font-weight: 500;">Agent Assignment Statistics</p>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <button class="stat-expand-btn" onclick="event.stopPropagation(); navigateToSection('agents')" style="width: 36px; height: 36px; border-radius: 8px; background: var(--light-color); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                    <button class="stat-expand-btn" data-target="agents" style="width: 36px; height: 36px; border-radius: 8px; background: var(--light-color); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+                                        <svg class="expand-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="dashboard-stat-content" id="stat-content-agents" style="display: none;">
+                                <!-- Detailed agent statistics will be populated here -->
+                            </div>
+                        </div>
+                        <!-- Events, Calls, Analytics, etc. will be added here -->
                 </div>
             </div>
             
+                <!-- Show More Button -->
+                <div style="text-align: center; margin-top: 24px;">
+                    <button id="dashboard-show-more-btn" onclick="toggleShowMore()" style="background: var(--white); border: 2px solid var(--border-color); border-radius: 12px; padding: 12px 24px; font-size: 14px; font-weight: 600; color: var(--primary-color); cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;">
+                        <span>Show More</span>
+                        <svg id="show-more-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s;">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Right Sidebar -->
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+                <!-- Quick Actions -->
             <div class="section-card">
-                <h2>Quick Actions</h2>
-                <div class="quick-actions">
-                    <button class="action-btn" onclick="navigateToSection('candidates')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                        Add Candidate
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <h2 style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-color);">Quick Actions</h2>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <button class="quick-action-btn" onclick="openModal('voter')" style="display: flex; flex-direction: row; align-items: center; gap: 10px; background: var(--white); border: 1.5px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s; padding: 10px 12px; width: 100%;">
+                            <div style="width: 28px; height: 28px; border-radius: 6px; background: var(--success-50); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            </div>
+                            <span style="font-size: 15px; font-weight: 500; color: var(--text-color); text-align: left; flex: 1;">Add Voter</span>
                     </button>
-                    <button class="action-btn" onclick="navigateToSection('events')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        Schedule Event
+                        <button class="quick-action-btn" onclick="navigateToSection('calls')" style="display: flex; flex-direction: row; align-items: center; gap: 10px; background: var(--white); border: 1.5px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s; padding: 10px 12px; width: 100%;">
+                            <div style="width: 28px; height: 28px; border-radius: 6px; background: var(--warning-50); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--warning-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                </svg>
+                            </div>
+                            <span style="font-size: 15px; font-weight: 500; color: var(--text-color); text-align: left; flex: 1;">New Call</span>
                     </button>
-                    <button class="action-btn" onclick="navigateToSection('calls')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                        Make Call
+                        <button class="quick-action-btn" onclick="openModal('event')" style="display: flex; flex-direction: row; align-items: center; gap: 10px; background: var(--white); border: 1.5px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s; padding: 10px 12px; width: 100%;">
+                            <div style="width: 28px; height: 28px; border-radius: 6px; background: var(--info-50); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--info-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                            </div>
+                            <span style="font-size: 15px; font-weight: 500; color: var(--text-color); text-align: left; flex: 1;">Add Event</span>
                     </button>
-                    <button class="action-btn" onclick="navigateToSection('pledges')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                        Pledge Tracker
+                        <button class="quick-action-btn" onclick="openModal('pledge')" style="display: flex; flex-direction: row; align-items: center; gap: 10px; background: var(--white); border: 1.5px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s; padding: 10px 12px; width: 100%;">
+                            <div style="width: 28px; height: 28px; border-radius: 6px; background: var(--primary-50); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                            </div>
+                            <span style="font-size: 15px; font-weight: 500; color: var(--text-color); text-align: left; flex: 1;">Record Pledge</span>
                     </button>
+                    </div>
+                </div>
+                
+                <!-- Recent Activities -->
+                <div class="section-card">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                            </svg>
+                            <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-color);">Recent Activities</h2>
+                        </div>
+                        <a href="#" onclick="navigateToSection('analytics'); return false;" style="font-size: 13px; color: var(--primary-color); text-decoration: none; font-weight: 500;">View All</a>
+                    </div>
+                    <div class="activity-list" id="recent-activities" style="min-height: 100px;">
+                        <div class="activity-item" style="text-align: center; padding: 20px; color: var(--text-light);">
+                            <p style="margin: 0;">No recent activities</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     `,
 
     candidates: `
-        <div class="page-header">
+        <div class="page-header" style="margin-bottom: 20px;">
             <div>
-                <h1>Candidate Management</h1>
-                <p class="page-subtitle">Manage candidate profiles and information</p>
+                <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: var(--text-color);">Candidate Management</h1>
             </div>
-            <button class="btn-primary btn-compact">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; display: inline-block;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                Add Candidate
-            </button>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn-primary btn-compact" onclick="openModal('candidate')" style="background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add Candidate
+                </button>
+            </div>
         </div>
         
-        <div class="table-container">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Position</th>
-                        <th>Constituency</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="candidates-table-body">
-                    <tr>
-                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-light);">No candidates registered yet</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div id="candidates-table-detail-wrapper" class="candidates-table-detail-wrapper">
+            <div class="candidates-table-container" style="display: flex; flex-direction: column; background: white; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); overflow: hidden;">
+                <div style="flex: 1; overflow-y: auto; overflow-x: auto; min-height: 0;">
+                    <table class="data-table" style="margin: 0; width: 100%;">
+                        <thead style="position: sticky; top: 0; z-index: 5; background: var(--light-color);">
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Position</th>
+                                <th>Constituency</th>
+                                <th>Island</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="candidates-table-body">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-light);">No candidates registered yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Candidate Detail Panel -->
+            <div id="candidate-detail-panel" class="candidate-detail-panel" style="display: none;">
+                <div id="candidate-detail-content" style="padding: 20px;">
+                    <!-- Content will be populated here -->
+                </div>
+            </div>
         </div>
+        
+        <div id="candidate-detail-backdrop" class="voter-detail-backdrop" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 99; backdrop-filter: blur(2px);" onclick="closeCandidateDetailPanel()"></div>
         <div id="candidates-pagination" class="table-pagination" style="display: none;"></div>
     `,
 
     voters: `
-        <div class="page-header">
+        <div class="page-header" style="margin-bottom: 20px;">
             <div>
-                <h1>Voter Database</h1>
-                <p class="page-subtitle">Access and manage voter information</p>
+                <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: var(--text-color);">Voter Profile</h1>
             </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="text" placeholder="Search voters..." class="search-input" style="width: 200px;" id="voter-search">
-                <button class="btn-primary btn-compact">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; display: inline-block;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    Import Voters
+            <div style="display: flex; gap: 12px;">
+                <button class="btn-primary btn-compact" onclick="openModal('voter')" style="background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add Voter
                 </button>
             </div>
         </div>
@@ -226,25 +618,180 @@ const pageTemplates = {
             </div>
         </div>
         
-        <div class="table-container">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th style="width: 40px;">No.</th>
-                        <th style="width: 60px;">Image</th>
-                        <th>Name</th>
-                        <th>Permanent Address</th>
-                        <th>Current Location</th>
-                        <th style="width: 100px;">Actions</th>
+        <div id="voters-table-detail-wrapper" class="voters-table-detail-wrapper">
+            <!-- Voters Table -->
+            <div class="voters-table-container" style="display: flex; flex-direction: column; background: white; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); overflow: hidden; height: 100%;">
+                <div style="padding: 16px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; display: flex; flex-direction: column; gap: 12px;">
+                    <input type="text" id="voters-search-input" placeholder="Search voters..." style="width: 100%; padding: 10px 16px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: var(--light-color);" />
+                    <div class="voters-filter-container">
+                        <div class="voters-filter-row">
+                            <select id="voter-filter-ballot" style="flex: 1; min-width: 120px; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 13px; background: var(--white); cursor: pointer;">
+                                <option value="">All Ballot Boxes</option>
+                            </select>
+                            <select id="voter-filter-gender" style="flex: 1; min-width: 100px; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 13px; background: var(--white); cursor: pointer;">
+                                <option value="">All Genders</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        <select id="voter-group-by" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 13px; background: var(--white); cursor: pointer;">
+                            <option value="">No Grouping</option>
+                            <option value="island">Group by Island</option>
+                            <option value="constituency">Group by Constituency</option>
+                            <option value="ballot">Group by Ballot Box</option>
+                            <option value="gender">Group by Gender</option>
+                            <option value="permanentAddress">Group by Permanent Address</option>
+                            <option value="currentLocation">Group by Current Location</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="flex: 1; overflow-y: auto; overflow-x: auto; min-height: 0;">
+                    <div class="voters-mobile-list" id="voters-mobile-list" style="display: none;"></div>
+                    <table class="data-table" style="margin: 0; width: 100%;">
+                        <thead style="position: sticky; top: 0; z-index: 5; background: var(--light-color);">
+                            <tr>
+                                <th style="width: 50px; padding: 12px; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; background: var(--light-color);">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        NO.
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor: pointer; opacity: 0.5;">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th style="width: 70px; padding: 12px; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; background: var(--light-color);">IMAGE</th>
+                                <th style="padding: 12px; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; background: var(--light-color);">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        ID NUMBER
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor: pointer; opacity: 0.5;">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th style="padding: 12px; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; background: var(--light-color);">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        NAME
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor: pointer; opacity: 0.5;">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th style="padding: 12px; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; background: var(--light-color);">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        CONSTITUENCY
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor: pointer; opacity: 0.5;">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th style="padding: 12px; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; background: var(--light-color);">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        ISLAND
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor: pointer; opacity: 0.5;">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th style="padding: 12px; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; background: var(--light-color);">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        DATE OF BIRTH
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor: pointer; opacity: 0.5;">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th style="padding: 12px; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; background: var(--light-color);">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        AGE
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor: pointer; opacity: 0.5;">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th style="padding: 12px; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; background: var(--light-color);">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        GENDER
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor: pointer; opacity: 0.5;">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th style="padding: 12px; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; background: var(--light-color);">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        BALLOT BOX
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor: pointer; opacity: 0.5;">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                </th>
                     </tr>
                 </thead>
                 <tbody id="voters-table-body">
                     <tr>
-                        <td colspan="13" style="text-align: center; padding: 40px; color: var(--text-light);">No voters registered yet</td>
+                                <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-light);">No voters registered yet</td>
                     </tr>
                 </tbody>
             </table>
-        </div>
+                </div>
+            </div>
+            <!-- Voter Detail Panel Backdrop -->
+            <div id="voter-detail-backdrop" class="voter-detail-backdrop" onclick="closeVoterDetailPanel()" style="display: none;"></div>
+            <!-- Voter Detail Panel -->
+            <div id="voter-detail-panel" class="voter-detail-panel" style="display: none; flex-direction: column; background: var(--white); border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); height: 100%; overflow: hidden;">
+                <div style="padding: 20px; border-bottom: 1px solid var(--border-color); background: var(--white); flex-shrink: 0;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                        <h2 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text-color);">Voter Details</h2>
+                        <button onclick="closeVoterDetailPanel()" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-light); transition: all 0.2s;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="voter-detail-navigation" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                        <button id="voter-prev-btn" onclick="navigateVoterDetail('prev')" style="background: var(--light-color); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--text-color); display: flex; align-items: center; gap: 6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                            Previous
+                        </button>
+                        <span id="voter-detail-count" style="font-size: 13px; color: var(--text-light); font-weight: 500;">1 of 2818</span>
+                        <button id="voter-next-btn" onclick="navigateVoterDetail('next')" style="background: var(--light-color); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--text-color); display: flex; align-items: center; gap: 6px;">
+                            Next
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px;">
+                        <button id="voter-enable-edit-btn" onclick="enableVoterEdit()" class="icon-btn icon-btn-edit" title="Enable Edit" style="width: 36px; height: 36px; border-radius: 8px; background: var(--light-color); color: var(--primary-color); border: 1px solid var(--border-color); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                        <button id="voter-delete-btn" onclick="deleteVoterFromDetail()" class="icon-btn icon-btn-danger" title="Delete" style="width: 36px; height: 36px; border-radius: 8px; background: var(--light-color); color: var(--danger-color); border: 1px solid var(--border-color); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                        <button id="voter-save-btn" onclick="saveVoterFromDetail()" style="display: none; background: var(--success-color); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; margin-left: auto;">Save</button>
+                    </div>
+                    <div id="voter-detail-tabs" style="display: flex; gap: 4px; border-bottom: 2px solid var(--border-color); overflow-x: auto;">
+                        <button class="voter-tab-btn active" onclick="switchVoterTab('basic')" data-tab="basic" style="background: none; border: none; padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--primary-color); border-bottom: 2px solid var(--primary-color); margin-bottom: -2px; white-space: nowrap;">Basic Info</button>
+                        <button class="voter-tab-btn" onclick="switchVoterTab('location')" data-tab="location" style="background: none; border: none; padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-light); white-space: nowrap;">Location</button>
+                        <button class="voter-tab-btn" onclick="switchVoterTab('pledges')" data-tab="pledges" style="background: none; border: none; padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-light); white-space: nowrap;">Pledges</button>
+                        <button class="voter-tab-btn" onclick="switchVoterTab('calls')" data-tab="calls" style="background: none; border: none; padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-light); white-space: nowrap;">Calls</button>
+                        <button class="voter-tab-btn" onclick="switchVoterTab('assignments')" data-tab="assignments" style="background: none; border: none; padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-light); white-space: nowrap;">Agent</button>
+                    </div>
+                </div>
+                <div id="voter-detail-content" style="flex: 1; overflow-y: auto; padding: 20px; min-height: 0;">
+                    <div style="text-align: center; padding: 40px; color: var(--text-light);">
+                        <p>Select a voter to view details</p>
+                    </div>
+                </div>
+            </div>
+            </div>
         <div id="voters-pagination" class="table-pagination" style="display: none;"></div>
     `,
 
@@ -254,15 +801,55 @@ const pageTemplates = {
                 <h1>Campaign Events</h1>
                 <p class="page-subtitle">Schedule and manage campaign events</p>
             </div>
-            <button class="btn-primary btn-compact">
+            <button class="btn-primary btn-compact" onclick="window.openModal('event')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; display: inline-block;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 Schedule Event
             </button>
         </div>
         
-        <div class="events-grid" id="events-grid">
-            <div style="text-align: center; padding: 40px; color: var(--text-light); grid-column: 1 / -1;">
-                <p>No events scheduled yet</p>
+        <div id="events-calendar-wrapper" class="events-calendar-wrapper">
+            <!-- Calendar Navigation -->
+            <div class="calendar-header">
+                <button id="calendar-prev-month" class="calendar-nav-btn" onclick="navigateCalendarMonth('prev')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <h2 id="calendar-month-year" class="calendar-month-year">January 2024</h2>
+                <button id="calendar-next-month" class="calendar-nav-btn" onclick="navigateCalendarMonth('next')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+                <button id="calendar-today-btn" class="calendar-today-btn" onclick="navigateCalendarToToday()">Today</button>
+            </div>
+            
+            <!-- Calendar Grid -->
+            <div class="calendar-container">
+                <div class="calendar-grid" id="calendar-grid">
+                    <!-- Calendar will be rendered here -->
+                </div>
+                
+                <!-- Events Detail Panel -->
+                <div id="events-detail-panel" class="events-detail-panel">
+                    <div class="events-detail-header">
+                        <h3 id="events-detail-date">Select a date</h3>
+                        <button id="events-detail-close" class="icon-btn" onclick="closeEventsDetailPanel()" style="display: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="events-detail-content" class="events-detail-content">
+                        <p style="text-align: center; padding: 40px; color: var(--text-light);">Click on a date to view events</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mobile Agenda View -->
+            <div id="events-agenda-view" class="events-agenda-view">
+                <!-- Agenda list will be rendered here -->
             </div>
         </div>
     `,
@@ -352,24 +939,39 @@ const pageTemplates = {
             </div>
         </div>
         
-        <div class="table-container">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Voter Name</th>
-                        <th>Phone</th>
-                        <th>Caller</th>
-                        <th>Date & Time</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="calls-table-body">
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-light);">No calls recorded yet</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div id="calls-table-detail-wrapper" class="calls-table-detail-wrapper">
+            <!-- Calls Table -->
+            <div class="calls-table-container" style="display: flex; flex-direction: column; background: white; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); overflow: hidden; height: 100%;">
+                <div class="table-container" style="flex: 1; overflow-y: auto; overflow-x: auto; min-height: 0;">
+                    <table class="data-table" style="margin: 0; width: 100%;">
+                        <thead style="position: sticky; top: 0; z-index: 5; background: var(--light-color);">
+                            <tr>
+                                <th>Voter Name</th>
+                                <th>Phone</th>
+                                <th>Constituency</th>
+                                <th>Island</th>
+                                <th>Caller</th>
+                                <th>Date & Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="calls-table-body">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">No calls recorded yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Call Detail Panel -->
+            <div id="call-detail-panel" class="call-detail-panel" style="display: none;">
+                <div id="call-detail-content" style="padding: 20px;">
+                    <!-- Content will be populated here -->
+                </div>
+            </div>
+        </div>
+        
+        <div id="call-detail-backdrop" class="call-detail-backdrop" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 99; backdrop-filter: blur(2px);" onclick="closeCallDetailPanel()"></div>
         </div>
         <div id="calls-pagination" class="table-pagination" style="display: none;"></div>
     `,
@@ -462,27 +1064,43 @@ const pageTemplates = {
             </div>
         </div>
         
-        <div class="table-container">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>No.</th>
-                        <th>Image</th>
-                        <th>ID Number</th>
-                        <th>Name</th>
-                        <th>Permanent Address</th>
-                        <th>Current Location</th>
-                        <th>Pledge Status</th>
-                        <th>Date Recorded</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="pledges-table-body">
-                    <tr>
-                        <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">No pledges recorded yet</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div id="pledges-table-detail-wrapper" class="pledges-table-detail-wrapper">
+            <!-- Pledges Table -->
+            <div class="pledges-table-container" style="display: flex; flex-direction: column; background: white; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); overflow: hidden; height: 100%;">
+                <div class="table-container" style="flex: 1; overflow-y: auto; overflow-x: auto; min-height: 0;">
+                    <table class="data-table" style="margin: 0; width: 100%;">
+                        <thead style="position: sticky; top: 0; z-index: 5; background: var(--light-color);">
+                            <tr>
+                                <th>No.</th>
+                                <th>Image</th>
+                                <th>ID Number</th>
+                                <th>Name</th>
+                                <th>Constituency</th>
+                                <th>Island</th>
+                                <th>Permanent Address</th>
+                                <th>Current Location</th>
+                                <th>Pledge Status</th>
+                                <th>Candidate Name</th>
+                                <th>Date Recorded</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pledges-table-body">
+                            <tr>
+                                <td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">No pledges recorded yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Pledge Detail Panel -->
+            <div id="pledge-detail-panel" class="pledge-detail-panel" style="display: none;">
+                <div id="pledge-detail-content" style="padding: 20px;">
+                    <!-- Content will be populated here -->
+                </div>
+            </div>
+        </div>
+        
+        <div id="pledge-detail-backdrop" class="pledge-detail-backdrop" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 99; backdrop-filter: blur(2px);" onclick="closePledgeDetailPanel()"></div>
         </div>
         <div id="pledges-pagination" class="table-pagination" style="display: none;"></div>
     `,
@@ -516,6 +1134,8 @@ const pageTemplates = {
                     <tr>
                         <th>No.</th>
                         <th>Name</th>
+                        <th>Constituency</th>
+                        <th>Island</th>
                         <th>Assigned Area</th>
                         <th>Assigned Voters</th>
                         <th>Number of Pledges</th>
@@ -582,6 +1202,8 @@ const pageTemplates = {
                         <thead>
                             <tr>
                                 <th>Ballot Number</th>
+                                <th>Constituency</th>
+                                <th>Island</th>
                                 <th>Location</th>
                                 <th>Expected Voters</th>
                                 <th>Status</th>
@@ -590,7 +1212,7 @@ const pageTemplates = {
                         </thead>
                         <tbody id="ballots-table-body">
                             <tr>
-                                <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-light);">No ballots added yet</td>
+                                <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">No ballots added yet</td>
                             </tr>
                         </tbody>
                     </table>
@@ -650,6 +1272,8 @@ const pageTemplates = {
                                 <thead>
                                     <tr>
                                         <th>Flight Number</th>
+                                        <th>Constituency</th>
+                                        <th>Island</th>
                                         <th>Route</th>
                                         <th>Departure Time</th>
                                         <th>Arrival Time</th>
@@ -660,7 +1284,7 @@ const pageTemplates = {
                                 </thead>
                                 <tbody id="flights-table-body">
                                     <tr>
-                                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">No flights scheduled yet</td>
+                                        <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">No flights scheduled yet</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -674,6 +1298,8 @@ const pageTemplates = {
                                 <thead>
                                     <tr>
                                         <th>Boat Name/Number</th>
+                                        <th>Constituency</th>
+                                        <th>Island</th>
                                         <th>Route</th>
                                         <th>Departure Time</th>
                                         <th>Arrival Time</th>
@@ -684,7 +1310,7 @@ const pageTemplates = {
                                 </thead>
                                 <tbody id="speedboats-table-body">
                                     <tr>
-                                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">No speed boats scheduled yet</td>
+                                        <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">No speed boats scheduled yet</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -700,6 +1326,8 @@ const pageTemplates = {
                                         <th>Taxi Number</th>
                                         <th>Driver Name</th>
                                         <th>Contact</th>
+                                        <th>Constituency</th>
+                                        <th>Island</th>
                                         <th>Route/Area</th>
                                         <th>Capacity</th>
                                         <th>Status</th>
@@ -708,7 +1336,7 @@ const pageTemplates = {
                                 </thead>
                                 <tbody id="taxis-table-body">
                                     <tr>
-                                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">No taxis assigned yet</td>
+                                        <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">No taxis assigned yet</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -943,161 +1571,10 @@ const pageTemplates = {
                 </button>
             </div>
         </div>
-    `,
-
-    settings: `
-        <div class="page-header">
-            <h1>Settings</h1>
-            <p class="page-subtitle">Manage your campaign and account settings</p>
-        </div>
-        
-        <div class="settings-container">
-            <div class="settings-section">
-                <h2>Campaign Information</h2>
-                <div class="settings-card">
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h3>Campaign Name</h3>
-                            <p>Current campaign name displayed across the platform</p>
-                        </div>
-                        <div class="setting-value">
-                            <span id="setting-campaign-name">Loading...</span>
-                            <button class="icon-btn-sm">Edit</button>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h3>Campaign Type</h3>
-                            <p>Type of election campaign</p>
-                        </div>
-                        <div class="setting-value">
-                            <span id="setting-campaign-type">Loading...</span>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h3>Location</h3>
-                            <p>Atoll, Constituency, and Island</p>
-                        </div>
-                        <div class="setting-value">
-                            <span id="setting-location">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="settings-section">
-                <h2>Account Settings</h2>
-                <div class="settings-card">
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h3>Email Address</h3>
-                            <p>Your account email address</p>
-                        </div>
-                        <div class="setting-value">
-                            <span id="setting-email">Loading...</span>
-                            <button class="icon-btn-sm">Change</button>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h3>Password</h3>
-                            <p>Change your account password</p>
-                        </div>
-                        <div class="setting-value">
-                            <button class="icon-btn-sm">Change Password</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="settings-section">
-                <h2>Notification Preferences</h2>
-                <div class="settings-card">
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h3>Email Notifications</h3>
-                            <p>Receive notifications via email</p>
-                        </div>
-                        <div class="setting-value">
-                            <label class="toggle-switch">
-                                <input type="checkbox" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h3>Push Notifications</h3>
-                            <p>Receive push notifications in browser</p>
-                        </div>
-                        <div class="setting-value">
-                            <label class="toggle-switch">
-                                <input type="checkbox" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="settings-section">
-                <h2>Messenger Settings</h2>
-                <div class="settings-card">
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h3>Enable Messenger</h3>
-                            <p>Enable the messenger chatbox to communicate with team members</p>
-                        </div>
-                        <div class="setting-value">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="messenger-enabled-toggle">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h3>Enable Bottom Navigation</h3>
-                            <p>Show bottom navigation dock on mobile devices for quick access to all sections</p>
-                        </div>
-                        <div class="setting-value">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="mobile-bottom-nav-toggle">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="settings-section">
-            </div>
-            
-            <div class="settings-section">
-                <h2>Zero Day Management</h2>
-                <div class="settings-card">
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h3>Enable Zero Day</h3>
-                            <p>Show Zero Day management in sidebar menu (under Dashboard)</p>
-                        </div>
-                        <div class="setting-value">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="zero-day-toggle">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     `
 };
 
 // Function to load page content
-// Navigation debouncing and performance optimization
-let currentSection = null;
 let navigationTimeout = null;
 let isNavigating = false;
 
@@ -1125,6 +1602,7 @@ function _loadPageContentInternal(section) {
 
     isNavigating = true;
     currentSection = section;
+    window.currentPage = section; // Set current page for global filter
 
     // Use requestAnimationFrame for smooth transitions
     requestAnimationFrame(() => {
@@ -1163,6 +1641,11 @@ function _loadPageContentInternal(section) {
                     }, 1000);
                 }
 
+                // Restore and apply global filter state when navigating to a new page
+                if (typeof window.applyGlobalFilterOnPageLoad === 'function') {
+                    window.applyGlobalFilterOnPageLoad(section);
+                }
+
                 // Load dynamic data from Firebase for each section
                 if (section === 'dashboard') {
                     loadDashboardData();
@@ -1172,6 +1655,43 @@ function _loadPageContentInternal(section) {
                 } else if (section === 'voters') {
                     loadVotersData();
                     setupSearchListeners('voters');
+                    // Setup search input listener for new search field
+                    setTimeout(() => {
+                        const searchInput = document.getElementById('voters-search-input');
+                        const oldSearchInput = document.getElementById('voter-search');
+                        if (searchInput) {
+                            // Sync with old search input if it exists
+                            if (oldSearchInput && oldSearchInput.value) {
+                                searchInput.value = oldSearchInput.value;
+                            }
+                            searchInput.addEventListener('input', (e) => {
+                                const searchTerm = e.target.value.toLowerCase().trim();
+                                if (oldSearchInput) {
+                                    oldSearchInput.value = searchTerm;
+                                }
+                                renderCachedVotersData();
+                            });
+                        }
+
+                        // Setup filter dropdown listeners
+                        const filterBallot = document.getElementById('voter-filter-ballot');
+                        const filterGender = document.getElementById('voter-filter-gender');
+                        const groupBy = document.getElementById('voter-group-by');
+
+                        const applyFilters = debounce(() => {
+                            paginationState.voters.currentPage = 1;
+                            renderCachedVotersData();
+                        }, 300);
+
+                        if (filterBallot) filterBallot.addEventListener('change', applyFilters);
+                        if (filterGender) filterGender.addEventListener('change', applyFilters);
+                        if (groupBy) groupBy.addEventListener('change', applyFilters);
+
+                        // Populate filter dropdowns after data loads
+                        setTimeout(() => {
+                            populateVoterFilters();
+                        }, 500);
+                    }, 100);
                     // Restore statistics visibility preference
                     setTimeout(() => {
                         restoreVotersStatsVisibility();
@@ -1190,6 +1710,8 @@ function _loadPageContentInternal(section) {
                     setupSearchListeners('agents');
                 } else if (section === 'zero-day') {
                     loadZeroDayData();
+                } else if (section === 'settings') {
+                    initializeSettingsPage();
                 } else if (section === 'analytics') {
                     loadAnalyticsData();
                 } else if (section === 'settings') {
@@ -1307,10 +1829,80 @@ async function loadDashboardData(forceRefresh = false) {
             }
         };
 
+        // Helper function to check if data matches global filter
+        // Logic: Island takes priority - if island selected, filter by island only
+        // If constituency selected but no island, filter by constituency only
+        // If both empty, show all
+        const matchesGlobalFilter = (data) => {
+            const globalFilter = window.globalFilterState || {
+                constituency: null,
+                island: null
+            };
+
+            if (!globalFilter.initialized) {
+                return true; // No filter applied
+            }
+
+            // If island is selected, filter ONLY by island (ignore constituency)
+            if (globalFilter.island) {
+                return data.island === globalFilter.island;
+            }
+
+            // If constituency is selected (but no island), filter by constituency only
+            if (globalFilter.constituency) {
+                return data.constituency === globalFilter.constituency;
+            }
+
+            // If both are empty, show all
+            return true;
+        };
+
+        // Helper function to apply global filter to snapshot
+        const applyGlobalFilterToSnapshot = (snapshot, filterField = null) => {
+            const globalFilter = window.globalFilterState || {
+                constituency: null,
+                island: null
+            };
+            if (!globalFilter.initialized || (!globalFilter.constituency && !globalFilter.island)) {
+                return snapshot.size; // No filter applied
+            }
+
+            let filteredCount = 0;
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                let matches = true;
+
+                // For candidates, filter by constituency/island field
+                if (filterField === 'constituency') {
+                    // Island takes priority - if island selected, filter by island only
+                    if (globalFilter.island) {
+                        matches = data.island === globalFilter.island;
+                    } else if (globalFilter.constituency) {
+                        matches = data.constituency === globalFilter.constituency;
+                    }
+                }
+
+                // For voters, filter by constituency and island
+                if (filterField === 'voter') {
+                    // Island takes priority - if island selected, filter by island only
+                    if (globalFilter.island) {
+                        matches = data.island === globalFilter.island;
+                    } else if (globalFilter.constituency) {
+                        matches = data.constituency === globalFilter.constituency;
+                    }
+                }
+
+                if (matches) filteredCount++;
+            });
+
+            return filteredCount;
+        };
+
         // Candidates listener
         const unsubCandidates = onSnapshot(candidatesQuery,
             (snapshot) => {
-                updateStat('stat-candidates', snapshot.size);
+                const filteredCount = applyGlobalFilterToSnapshot(snapshot, 'constituency');
+                updateStat('stat-candidates', filteredCount);
                 if (statsLoaded < totalStats) checkComplete();
             },
             (error) => {
@@ -1324,7 +1916,8 @@ async function loadDashboardData(forceRefresh = false) {
         // Voters listener
         const unsubVoters = onSnapshot(votersQuery,
             (snapshot) => {
-                updateStat('stat-voters', snapshot.size);
+                const filteredCount = applyGlobalFilterToSnapshot(snapshot, 'voter');
+                updateStat('stat-voters', filteredCount);
                 if (statsLoaded < totalStats) checkComplete();
             },
             (error) => {
@@ -1336,6 +1929,7 @@ async function loadDashboardData(forceRefresh = false) {
         window.dashboardListeners.push(unsubVoters);
 
         // Events listener - count only upcoming events (future dates)
+        // Note: Events don't have direct constituency/island fields, so we don't filter them
         const unsubEvents = onSnapshot(eventsQuery,
             (snapshot) => {
                 const now = new Date();
@@ -1361,19 +1955,111 @@ async function loadDashboardData(forceRefresh = false) {
         );
         window.dashboardListeners.push(unsubEvents);
 
-        // Calls listener
+        // Calls listener - filter via voter data (client-side filtering)
         const unsubCalls = onSnapshot(callsQuery,
-            (snapshot) => {
-                updateStat('stat-calls', snapshot.size);
-                if (statsLoaded < totalStats) checkComplete();
-            },
-            (error) => {
-                console.warn('Error listening to calls:', error);
-                updateStat('stat-calls', 0);
-                if (statsLoaded < totalStats) checkComplete();
-            }
+            async (snapshot) => {
+                    const globalFilter = window.globalFilterState || {
+                        constituency: null,
+                        island: null
+                    };
+                    let filteredCount = snapshot.size;
+
+                    // If global filter is active, filter calls via voter data
+                    if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
+                        const {
+                            doc,
+                            getDoc
+                        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                        const voterIds = new Set();
+                        snapshot.forEach(callDoc => {
+                            const callData = callDoc.data();
+                            if (callData.voterDocumentId) voterIds.add(callData.voterDocumentId);
+                            else if (callData.voterId) voterIds.add(callData.voterId);
+                        });
+
+                        // Fetch voter data
+                        const voterDataMap = new Map();
+                        if (voterIds.size > 0) {
+                            const voterPromises = Array.from(voterIds).map(async (voterId) => {
+                                try {
+                                    const voterDocRef = doc(window.db, 'voters', voterId);
+                                    const voterDoc = await getDoc(voterDocRef);
+                                    if (voterDoc.exists()) {
+                                        return {
+                                            id: voterId,
+                                            data: voterDoc.data()
+                                        };
+                                    }
+                                } catch (error) {
+                                    console.warn(`Could not fetch voter for call filter: ${voterId}`, error);
+                                }
+                                return null;
+                            });
+                            const voterResults = await Promise.all(voterPromises);
+                            voterResults.forEach(result => {
+                                if (result) voterDataMap.set(result.id, result.data);
+                            });
+                        }
+
+                        // Filter calls
+                        filteredCount = 0;
+                        snapshot.forEach(callDoc => {
+                            const callData = callDoc.data();
+                            const voterId = callData.voterDocumentId || callData.voterId;
+                            if (!voterId) {
+                                filteredCount++; // Include calls without voter reference
+                                return;
+                            }
+
+                            const voterData = voterDataMap.get(voterId);
+                            if (!voterData) {
+                                filteredCount++; // Include if voter data not loaded
+                                return;
+                            }
+
+                            let matches = true;
+                            // Island takes priority - if island selected, filter by island only
+                            if (globalFilter.island) {
+                                matches = voterData.island === globalFilter.island;
+                            } else if (globalFilter.constituency) {
+                                // If constituency selected but no island, filter by constituency only
+                                matches = voterData.constituency === globalFilter.constituency;
+                            }
+
+                            if (matches) filteredCount++;
+                        });
+                    }
+
+                    updateStat('stat-calls', filteredCount);
+                    if (statsLoaded < totalStats) checkComplete();
+                },
+                (error) => {
+                    console.warn('Error listening to calls:', error);
+                    updateStat('stat-calls', 0);
+                    if (statsLoaded < totalStats) checkComplete();
+                }
         );
         window.dashboardListeners.push(unsubCalls);
+
+        // Initialize election countdown timer
+        initializeElectionCountdown();
+
+        // Initialize date and location display
+        initializeDashboardInfo();
+
+        // Add pledge stats listener
+        setupPledgeStatsListener();
+
+        // Add agent stats listener
+        setupAgentStatsListener();
+
+        // Load voter detailed stats by default (since container is open)
+        setTimeout(() => {
+            const votersContent = document.getElementById('stat-content-voters');
+            if (votersContent && votersContent.style.display !== 'none') {
+                loadDetailedStats('voters');
+            }
+        }, 500);
 
     } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -1382,6 +2068,789 @@ async function loadDashboardData(forceRefresh = false) {
             window.updateComponentProgress('dashboard', 100);
         }
     }
+}
+
+// Initialize and start election countdown timer
+function initializeElectionCountdown() {
+    const countdownContainer = document.getElementById('election-countdown-container');
+    const countdownTimer = document.getElementById('countdown-timer');
+    const electionDateDisplay = document.getElementById('election-date-display');
+
+    if (!countdownContainer || !countdownTimer) return;
+
+    // Get election date/time from campaign data
+    const campaignData = window.campaignData || {};
+    const electionDate = campaignData.electionDate;
+    const electionTime = campaignData.electionTime || '08:30';
+    const electionDateTime = campaignData.electionDateTime;
+
+    if (!electionDate && !electionDateTime) {
+        countdownContainer.style.display = 'none';
+        return;
+    }
+
+    // Show countdown container
+    countdownContainer.style.display = 'block';
+
+    // Parse election date/time
+    let targetDate;
+    if (electionDateTime) {
+        // If electionDateTime is a Firestore Timestamp, convert it
+        if (electionDateTime && typeof electionDateTime.toDate === 'function') {
+            targetDate = electionDateTime.toDate();
+        } else if (electionDateTime instanceof Date) {
+            targetDate = electionDateTime;
+        } else if (typeof electionDateTime === 'string') {
+            targetDate = new Date(electionDateTime);
+        } else if (electionDateTime && electionDateTime.seconds) {
+            // Firestore Timestamp object with seconds property
+            targetDate = new Date(electionDateTime.seconds * 1000);
+        } else {
+            targetDate = new Date(electionDateTime);
+        }
+    } else if (electionDate) {
+        // Combine date and time
+        targetDate = new Date(electionDate + 'T' + electionTime);
+    } else {
+        countdownContainer.style.display = 'none';
+        return;
+    }
+
+    // Validate date
+    if (isNaN(targetDate.getTime())) {
+        console.error('Invalid election date:', {
+            electionDate,
+            electionTime,
+            electionDateTime
+        });
+        countdownContainer.style.display = 'none';
+        return;
+    }
+
+    // Display formatted election date
+    if (electionDateDisplay) {
+        const formattedDate = targetDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        const formattedTime = targetDate.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+        electionDateDisplay.textContent = `${formattedDate} at ${formattedTime}`;
+    }
+
+    // Update countdown immediately
+    updateCountdown(targetDate, countdownTimer);
+
+    // Update countdown every second
+    const countdownInterval = setInterval(() => {
+        updateCountdown(targetDate, countdownTimer);
+
+        // Check if election has passed
+        const now = new Date();
+        if (now >= targetDate) {
+            clearInterval(countdownInterval);
+            countdownTimer.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 20px;">
+                    <h3 style="margin: 0; font-size: 24px; font-weight: 700; color: white;">Election Day Has Arrived!</h3>
+                    <p style="margin: 10px 0 0 0; font-size: 16px; color: rgba(255, 255, 255, 0.9);">Good luck with your campaign!</p>
+                </div>
+            `;
+        }
+    }, 1000);
+
+    // Store interval for cleanup
+    if (!window.countdownIntervals) {
+        window.countdownIntervals = [];
+    }
+    window.countdownIntervals.push(countdownInterval);
+}
+
+// Update countdown display
+function updateCountdown(targetDate, countdownElement) {
+    const now = new Date();
+    const timeRemaining = targetDate - now;
+
+    if (timeRemaining <= 0) {
+        return;
+    }
+
+    // Calculate time units
+    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+    // Create compact countdown HTML for top corner
+    countdownElement.innerHTML = `
+        <div style="background: rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 10px; text-align: center; backdrop-filter: blur(10px);">
+            <div style="font-size: 24px; font-weight: 700; color: white; margin-bottom: 4px; line-height: 1;">${days}</div>
+            <div style="font-size: 10px; color: rgba(255, 255, 255, 0.95); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">DAYS</div>
+        </div>
+        <div style="background: rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 10px; text-align: center; backdrop-filter: blur(10px);">
+            <div style="font-size: 24px; font-weight: 700; color: white; margin-bottom: 4px; line-height: 1;">${hours.toString().padStart(2, '0')}</div>
+            <div style="font-size: 10px; color: rgba(255, 255, 255, 0.95); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">HOURS</div>
+        </div>
+        <div style="background: rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 10px; text-align: center; backdrop-filter: blur(10px);">
+            <div style="font-size: 24px; font-weight: 700; color: white; margin-bottom: 4px; line-height: 1;">${minutes.toString().padStart(2, '0')}</div>
+            <div style="font-size: 10px; color: rgba(255, 255, 255, 0.95); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">MIN</div>
+        </div>
+        <div style="background: rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 10px; text-align: center; backdrop-filter: blur(10px);">
+            <div style="font-size: 24px; font-weight: 700; color: white; margin-bottom: 4px; line-height: 1;">${seconds.toString().padStart(2, '0')}</div>
+            <div style="font-size: 10px; color: rgba(255, 255, 255, 0.95); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">SEC</div>
+        </div>
+    `;
+}
+
+// Initialize dashboard date and location display
+function initializeDashboardInfo() {
+    const dateEl = document.getElementById('dashboard-date');
+    const locationEl = document.getElementById('dashboard-location');
+
+    if (dateEl) {
+        const now = new Date();
+        const formattedDate = now.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        dateEl.textContent = formattedDate;
+    }
+
+    if (locationEl && window.campaignData) {
+        const constituency = window.campaignData.constituency || '';
+        locationEl.textContent = constituency;
+    }
+}
+
+// Setup pledge stats listener
+async function setupPledgeStatsListener() {
+    if (!window.db || !window.userEmail) return;
+
+    try {
+        const {
+            collection,
+            query,
+            where,
+            onSnapshot
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const pledgesQuery = query(collection(window.db, 'pledges'), where('email', '==', window.userEmail));
+
+        const unsubPledges = onSnapshot(pledgesQuery,
+            async (snapshot) => {
+                    const globalFilter = window.globalFilterState || {
+                        constituency: null,
+                        island: null
+                    };
+                    let filteredCount = snapshot.size;
+
+                    // If global filter is active, filter pledges via voter data
+                    if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
+                        const {
+                            doc,
+                            getDoc
+                        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                        const voterIds = new Set();
+                        snapshot.forEach(pledgeDoc => {
+                            const pledgeData = pledgeDoc.data();
+                            if (pledgeData.voterDocumentId) voterIds.add(pledgeData.voterDocumentId);
+                        });
+
+                        // Fetch voter data
+                        const voterDataMap = new Map();
+                        if (voterIds.size > 0) {
+                            const voterPromises = Array.from(voterIds).map(async (voterId) => {
+                                try {
+                                    const voterDocRef = doc(window.db, 'voters', voterId);
+                                    const voterDoc = await getDoc(voterDocRef);
+                                    if (voterDoc.exists()) {
+                                        return {
+                                            id: voterId,
+                                            data: voterDoc.data()
+                                        };
+                                    }
+                                } catch (error) {
+                                    console.warn(`Could not fetch voter for pledge filter: ${voterId}`, error);
+                                }
+                                return null;
+                            });
+                            const voterResults = await Promise.all(voterPromises);
+                            voterResults.forEach(result => {
+                                if (result) voterDataMap.set(result.id, result.data);
+                            });
+                        }
+
+                        // Filter pledges
+                        filteredCount = 0;
+                        snapshot.forEach(pledgeDoc => {
+                            const pledgeData = pledgeDoc.data();
+                            const voterId = pledgeData.voterDocumentId;
+                            if (!voterId) {
+                                filteredCount++; // Include pledges without voter reference
+                                return;
+                            }
+
+                            const voterData = voterDataMap.get(voterId);
+                            if (!voterData) {
+                                filteredCount++; // Include if voter data not loaded
+                                return;
+                            }
+
+                            let matches = true;
+                            // Island takes priority - if island selected, filter by island only
+                            if (globalFilter.island) {
+                                matches = voterData.island === globalFilter.island;
+                            } else if (globalFilter.constituency) {
+                                // If constituency selected but no island, filter by constituency only
+                                matches = voterData.constituency === globalFilter.constituency;
+                            }
+
+                            if (matches) filteredCount++;
+                        });
+                    }
+
+                    const pledgeEl = document.getElementById('stat-pledges');
+                    if (pledgeEl) {
+                        pledgeEl.textContent = filteredCount || 0;
+                    }
+                },
+                (error) => {
+                    console.warn('Error listening to pledges:', error);
+                    const pledgeEl = document.getElementById('stat-pledges');
+                    if (pledgeEl) {
+                        pledgeEl.textContent = '0';
+                    }
+                }
+        );
+
+        if (!window.dashboardListeners) {
+            window.dashboardListeners = [];
+        }
+        window.dashboardListeners.push(unsubPledges);
+    } catch (error) {
+        console.error('Error setting up pledge stats listener:', error);
+    }
+}
+
+// Setup agent stats listener
+async function setupAgentStatsListener() {
+    if (!window.db || !window.userEmail) return;
+
+    try {
+        const {
+            collection,
+            query,
+            where,
+            onSnapshot
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const agentsQuery = query(collection(window.db, 'agents'), where('email', '==', window.userEmail));
+
+        const unsubAgents = onSnapshot(agentsQuery,
+            (snapshot) => {
+                const agentEl = document.getElementById('stat-agents');
+                if (agentEl) {
+                    agentEl.textContent = snapshot.size || 0;
+                }
+            },
+            (error) => {
+                console.warn('Error listening to agents:', error);
+                const agentEl = document.getElementById('stat-agents');
+                if (agentEl) {
+                    agentEl.textContent = '0';
+                }
+            }
+        );
+
+        if (!window.dashboardListeners) {
+            window.dashboardListeners = [];
+        }
+        window.dashboardListeners.push(unsubAgents);
+    } catch (error) {
+        console.error('Error setting up agent stats listener:', error);
+    }
+}
+
+// Toggle stat container expand/collapse
+function toggleStatContainer(section) {
+    const container = document.querySelector(`[data-section="${section}"]`);
+    const content = document.getElementById(`stat-content-${section}`);
+    const expandBtn = container.querySelector(`[data-target="${section}"]`);
+
+    if (!container || !content) return;
+
+    const isExpanded = content.style.display !== 'none';
+
+    if (isExpanded) {
+        // Collapse
+        content.style.display = 'none';
+        if (expandBtn) {
+            expandBtn.classList.remove('expanded');
+            expandBtn.querySelector('.expand-icon').style.transform = 'rotate(0deg)';
+        }
+    } else {
+        // Expand
+        content.style.display = 'block';
+        if (expandBtn) {
+            expandBtn.classList.add('expanded');
+            expandBtn.querySelector('.expand-icon').style.transform = 'rotate(180deg)';
+        }
+        // Load detailed statistics
+        loadDetailedStats(section);
+    }
+}
+
+// Toggle show more section
+function toggleShowMore() {
+    const section = document.getElementById('dashboard-show-more-section');
+    const btn = document.getElementById('dashboard-show-more-btn');
+    const icon = document.getElementById('show-more-icon');
+
+    if (!section || !btn) return;
+
+    const isVisible = section.style.display !== 'none';
+
+    if (isVisible) {
+        section.style.display = 'none';
+        btn.querySelector('span').textContent = 'Show More';
+        if (icon) icon.style.transform = 'rotate(0deg)';
+    } else {
+        section.style.display = 'block';
+        btn.querySelector('span').textContent = 'Show Less';
+        if (icon) icon.style.transform = 'rotate(180deg)';
+        // Load more statistics
+        loadMoreStatistics();
+    }
+}
+
+// Load detailed statistics for expanded containers
+async function loadDetailedStats(section) {
+    if (!window.db || !window.userEmail) return;
+
+    const contentEl = document.getElementById(`stat-content-${section}`);
+    if (!contentEl) return;
+
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        switch (section) {
+            case 'voters':
+                await loadVoterDetailedStats(contentEl);
+                break;
+            case 'candidates':
+                await loadCandidateDetailedStats(contentEl);
+                break;
+            case 'pledges':
+                await loadPledgeDetailedStats(contentEl);
+                break;
+            case 'agents':
+                await loadAgentDetailedStats(contentEl);
+                break;
+        }
+    } catch (error) {
+        console.error(`Error loading detailed stats for ${section}:`, error);
+        contentEl.innerHTML = '<p style="color: var(--text-light); padding: 20px; text-align: center;">Error loading statistics</p>';
+    }
+}
+
+// Load voter detailed statistics
+async function loadVoterDetailedStats(container) {
+    if (!window.db || !window.userEmail) return;
+
+    const {
+        collection,
+        query,
+        where,
+        getDocs
+    } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    const votersQuery = query(collection(window.db, 'voters'), where('email', '==', window.userEmail));
+    const snapshot = await getDocs(votersQuery);
+
+    // Apply global filter
+    const globalFilter = window.globalFilterState || {
+        constituency: null,
+        island: null
+    };
+    let filteredDocs = snapshot.docs;
+    if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
+        filteredDocs = snapshot.docs.filter(doc => {
+            const data = doc.data();
+            // Island takes priority - if island selected, filter by island only
+            if (globalFilter.island) {
+                return data.island === globalFilter.island;
+            } else if (globalFilter.constituency) {
+                // If constituency selected but no island, filter by constituency only
+                return data.constituency === globalFilter.constituency;
+            }
+            return true;
+        });
+    }
+
+    const voters = [];
+    filteredDocs.forEach(doc => voters.push(doc.data()));
+
+    // Calculate statistics
+    const totalVoters = voters.length;
+    const byGender = {};
+    const byIsland = {};
+    const byConstituency = {};
+    const byBallot = {};
+    const withPledges = voters.filter(v => v.pledge).length;
+    const assignedVoters = voters.filter(v => v.assignedAgentId).length;
+
+    voters.forEach(voter => {
+        // Gender stats
+        const gender = voter.gender || 'Unknown';
+        byGender[gender] = (byGender[gender] || 0) + 1;
+
+        // Island stats
+        const island = voter.island || 'Unknown';
+        byIsland[island] = (byIsland[island] || 0) + 1;
+
+        // Constituency stats
+        const constituency = voter.constituency || 'Unknown';
+        byConstituency[constituency] = (byConstituency[constituency] || 0) + 1;
+
+        // Ballot stats
+        const ballot = voter.ballotBox || voter.ballot || 'Unknown';
+        byBallot[ballot] = (byBallot[ballot] || 0) + 1;
+    });
+
+    // Create charts HTML
+    const genderChart = createBarChart(Object.keys(byGender), Object.values(byGender), 'Gender Distribution');
+    const islandChart = createBarChart(Object.keys(byIsland).slice(0, 10), Object.values(byIsland).slice(0, 10), 'Top 10 Islands');
+
+    container.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px;">
+            <div class="stat-detail-card">
+                <div class="stat-detail-label">Total Voters</div>
+                <div class="stat-detail-value">${totalVoters}</div>
+            </div>
+            <div class="stat-detail-card">
+                <div class="stat-detail-label">With Pledges</div>
+                <div class="stat-detail-value">${withPledges}</div>
+                <div class="stat-detail-percentage">${totalVoters > 0 ? Math.round((withPledges / totalVoters) * 100) : 0}%</div>
+            </div>
+            <div class="stat-detail-card">
+                <div class="stat-detail-label">Assigned to Agents</div>
+                <div class="stat-detail-value">${assignedVoters}</div>
+                <div class="stat-detail-percentage">${totalVoters > 0 ? Math.round((assignedVoters / totalVoters) * 100) : 0}%</div>
+            </div>
+            <div class="stat-detail-card">
+                <div class="stat-detail-label">Unassigned</div>
+                <div class="stat-detail-value">${totalVoters - assignedVoters}</div>
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <div class="chart-container">
+                <h4 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: var(--text-color);">Gender Distribution</h4>
+                ${genderChart}
+            </div>
+            <div class="chart-container">
+                <h4 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: var(--text-color);">Top Islands</h4>
+                ${islandChart}
+            </div>
+        </div>
+    `;
+}
+
+// Load candidate detailed statistics
+async function loadCandidateDetailedStats(container) {
+    if (!window.db || !window.userEmail) return;
+
+    const {
+        collection,
+        query,
+        where,
+        getDocs
+    } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    const candidatesQuery = query(collection(window.db, 'candidates'), where('email', '==', window.userEmail));
+    const snapshot = await getDocs(candidatesQuery);
+
+    const candidates = [];
+    snapshot.forEach(doc => candidates.push(doc.data()));
+
+    const totalCandidates = candidates.length;
+
+    container.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+            <div class="stat-detail-card">
+                <div class="stat-detail-label">Total Candidates</div>
+                <div class="stat-detail-value">${totalCandidates}</div>
+            </div>
+        </div>
+        <div style="margin-top: 24px;">
+            <button onclick="navigateToSection('candidates')" style="background: var(--primary-color); color: white; border: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: 600; cursor: pointer;">
+                View All Candidates
+            </button>
+        </div>
+    `;
+}
+
+// Load pledge detailed statistics
+async function loadPledgeDetailedStats(container) {
+    if (!window.db || !window.userEmail) return;
+
+    const {
+        collection,
+        query,
+        where,
+        getDocs
+    } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    const pledgesQuery = query(collection(window.db, 'pledges'), where('email', '==', window.userEmail));
+    const snapshot = await getDocs(pledgesQuery);
+
+    const pledges = [];
+    snapshot.forEach(doc => pledges.push(doc.data()));
+
+    const totalPledges = pledges.length;
+    const positivePledges = pledges.filter(p => {
+        const pledge = (p.pledge || '').toLowerCase();
+        return pledge.includes('yes') || pledge.includes('support') || pledge.includes('positive') || pledge === 'yes';
+    }).length;
+    const negativePledges = totalPledges - positivePledges;
+
+    const pledgeChart = createPieChart(['Positive', 'Negative'], [positivePledges, negativePledges], ['#059669', '#dc2626']);
+
+    container.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px;">
+            <div class="stat-detail-card">
+                <div class="stat-detail-label">Total Pledges</div>
+                <div class="stat-detail-value">${totalPledges}</div>
+            </div>
+            <div class="stat-detail-card">
+                <div class="stat-detail-label">Positive Pledges</div>
+                <div class="stat-detail-value" style="color: var(--success-color);">${positivePledges}</div>
+                <div class="stat-detail-percentage">${totalPledges > 0 ? Math.round((positivePledges / totalPledges) * 100) : 0}%</div>
+            </div>
+            <div class="stat-detail-card">
+                <div class="stat-detail-label">Negative Pledges</div>
+                <div class="stat-detail-value" style="color: var(--danger-color);">${negativePledges}</div>
+                <div class="stat-detail-percentage">${totalPledges > 0 ? Math.round((negativePledges / totalPledges) * 100) : 0}%</div>
+            </div>
+        </div>
+        <div class="chart-container">
+            <h4 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: var(--text-color);">Pledge Breakdown</h4>
+            ${pledgeChart}
+        </div>
+    `;
+}
+
+// Load agent detailed statistics
+async function loadAgentDetailedStats(container) {
+    if (!window.db || !window.userEmail) return;
+
+    const {
+        collection,
+        query,
+        where,
+        getDocs
+    } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    const agentsQuery = query(collection(window.db, 'agents'), where('email', '==', window.userEmail));
+    const agentsSnapshot = await getDocs(agentsQuery);
+
+    const agents = [];
+    agentsSnapshot.forEach(doc => agents.push({
+        id: doc.id,
+        ...doc.data()
+    }));
+
+    // Get voter assignments
+    const votersQuery = query(collection(window.db, 'voters'), where('email', '==', window.userEmail));
+    const votersSnapshot = await getDocs(votersQuery);
+
+    const agentStats = {};
+    agents.forEach(agent => {
+        agentStats[agent.id] = {
+            name: agent.name || 'Unknown',
+            assigned: 0,
+            pledges: 0
+        };
+    });
+
+    votersSnapshot.forEach(doc => {
+        const voter = doc.data();
+        if (voter.assignedAgentId && agentStats[voter.assignedAgentId]) {
+            agentStats[voter.assignedAgentId].assigned++;
+        }
+    });
+
+    // Get pledge counts
+    const pledgesQuery = query(collection(window.db, 'pledges'), where('email', '==', window.userEmail));
+    const pledgesSnapshot = await getDocs(pledgesQuery);
+    pledgesSnapshot.forEach(doc => {
+        const pledge = doc.data();
+        if (pledge.agentId && agentStats[pledge.agentId]) {
+            agentStats[pledge.agentId].pledges++;
+        }
+    });
+
+    const totalAssigned = Object.values(agentStats).reduce((sum, stat) => sum + stat.assigned, 0);
+    const totalPledges = Object.values(agentStats).reduce((sum, stat) => sum + stat.pledges, 0);
+
+    const agentList = Object.values(agentStats).map(stat => stat.name);
+    const assignedList = Object.values(agentStats).map(stat => stat.assigned);
+    const agentChart = createBarChart(agentList, assignedList, 'Voters Assigned per Agent');
+
+    container.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px;">
+            <div class="stat-detail-card">
+                <div class="stat-detail-label">Total Agents</div>
+                <div class="stat-detail-value">${agents.length}</div>
+            </div>
+            <div class="stat-detail-card">
+                <div class="stat-detail-label">Total Assigned Voters</div>
+                <div class="stat-detail-value">${totalAssigned}</div>
+            </div>
+            <div class="stat-detail-card">
+                <div class="stat-detail-label">Total Pledges Collected</div>
+                <div class="stat-detail-value">${totalPledges}</div>
+            </div>
+        </div>
+        <div class="chart-container">
+            <h4 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: var(--text-color);">Agent Performance</h4>
+            ${agentChart}
+        </div>
+    `;
+}
+
+// Load more statistics (for Show More section)
+async function loadMoreStatistics() {
+    const container = document.getElementById('dashboard-more-stats');
+    if (!container) return;
+
+    // Check if Events and Calls stats already exist, if not add them
+    let eventsExists = container.querySelector('[data-section="events"]');
+    let callsExists = container.querySelector('[data-section="calls"]');
+
+    if (!eventsExists || !callsExists) {
+        // Load Events, Calls, Analytics stats - append to existing content
+        const eventsCallsHTML = `
+            <!-- Events Statistics -->
+            <div class="dashboard-stat-container" data-section="events">
+            <div class="dashboard-stat-header" onclick="toggleStatContainer('events')">
+                <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
+                    <div style="width: 56px; height: 56px; border-radius: 12px; background: linear-gradient(135deg, var(--info-color) 0%, rgba(2, 132, 199, 0.8) 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        </svg>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <h3 style="margin: 0 0 4px 0; font-size: 24px; font-weight: 700; color: var(--text-color);">
+                                            <span id="stat-events">0</span> TOTAL
+                                        </h3>
+                                        <p style="margin: 0; font-size: 14px; color: var(--text-light); font-weight: 500;">Events Statistics</p>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <button class="stat-expand-btn" onclick="event.stopPropagation(); navigateToSection('events')" style="width: 40px; height: 40px; border-radius: 10px; background: var(--light-color); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                    <button class="stat-expand-btn" data-target="events" style="width: 40px; height: 40px; border-radius: 10px; background: var(--light-color); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+                                        <svg class="expand-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="dashboard-stat-content" id="stat-content-events" style="display: none;"></div>
+                        </div>
+                        
+                        <!-- Calls Statistics -->
+                        <div class="dashboard-stat-container" data-section="calls">
+                            <div class="dashboard-stat-header" onclick="toggleStatContainer('calls')">
+                                <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
+                                    <div style="width: 56px; height: 56px; border-radius: 12px; background: linear-gradient(135deg, var(--warning-color) 0%, rgba(217, 119, 6, 0.8) 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                        </svg>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <h3 style="margin: 0 0 4px 0; font-size: 24px; font-weight: 700; color: var(--text-color);">
+                                            <span id="stat-calls">0</span> TOTAL
+                                        </h3>
+                                        <p style="margin: 0; font-size: 14px; color: var(--text-light); font-weight: 500;">Calls Statistics</p>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <button class="stat-expand-btn" onclick="event.stopPropagation(); navigateToSection('calls')" style="width: 40px; height: 40px; border-radius: 10px; background: var(--light-color); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                    <button class="stat-expand-btn" data-target="calls" style="width: 40px; height: 40px; border-radius: 10px; background: var(--light-color); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+                                        <svg class="expand-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="dashboard-stat-content" id="stat-content-calls" style="display: none;"></div>
+                        </div>
+        `;
+        container.insertAdjacentHTML('beforeend', eventsCallsHTML);
+    }
+}
+
+// Create bar chart HTML
+function createBarChart(labels, values, title) {
+    const maxValue = Math.max(...values, 1);
+    const bars = labels.map((label, index) => {
+        const percentage = (values[index] / maxValue) * 100;
+        return `
+            <div style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <span style="font-size: 13px; color: var(--text-color); font-weight: 500;">${label}</span>
+                    <span style="font-size: 13px; color: var(--text-light); font-weight: 600;">${values[index]}</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: var(--border-light); border-radius: 4px; overflow: hidden;">
+                    <div style="width: ${percentage}%; height: 100%; background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light) 100%); transition: width 0.5s ease;"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    return `<div style="background: var(--light-color); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">${bars}</div>`;
+}
+
+// Create pie chart HTML (simple version)
+function createPieChart(labels, values, colors) {
+    const total = values.reduce((sum, val) => sum + val, 0);
+    if (total === 0) {
+        return '<p style="color: var(--text-light); text-align: center; padding: 20px;">No data available</p>';
+    }
+
+    const items = labels.map((label, index) => {
+        const percentage = (values[index] / total) * 100;
+        return `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--white); border-radius: 8px; margin-bottom: 8px; border-left: 4px solid ${colors[index]}">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 12px; height: 12px; border-radius: 50%; background: ${colors[index]};"></div>
+                    <span style="font-size: 14px; color: var(--text-color); font-weight: 500;">${label}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 16px; font-weight: 700; color: var(--text-color);">${values[index]}</span>
+                    <span style="font-size: 13px; color: var(--text-light);">${Math.round(percentage)}%</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    return `<div style="background: var(--light-color); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">${items}</div>`;
 }
 
 // Load recent activities
@@ -1686,7 +3155,7 @@ async function loadCandidatesData(forceRefresh = false) {
         const snapshot = await getDocs(candidatesQuery);
 
         // Store in cache
-        const candidatesArray = [];
+        let candidatesArray = [];
         snapshot.forEach(doc => {
             candidatesArray.push({
                 id: doc.id,
@@ -1694,12 +3163,32 @@ async function loadCandidatesData(forceRefresh = false) {
             });
         });
 
+        // Apply global filter (constituency)
+        const globalFilter = window.globalFilterState || {
+            constituency: null,
+            island: null
+        };
+        if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
+            const beforeFilterCount = candidatesArray.length;
+            candidatesArray = candidatesArray.filter(candidate => {
+                // Island takes priority - if island selected, filter by island only
+                if (globalFilter.island) {
+                    return candidate.island === globalFilter.island;
+                } else if (globalFilter.constituency) {
+                    // If constituency selected but no island, filter by constituency only
+                    return candidate.constituency === globalFilter.constituency;
+                }
+                return true;
+            });
+            console.log(`[loadCandidatesData] After global filter (constituency: ${globalFilter.constituency || 'All'}, island: ${globalFilter.island || 'All'}): ${candidatesArray.length} candidates (was ${beforeFilterCount})`);
+        }
+
         dataCache.candidates.data = candidatesArray;
         dataCache.candidates.timestamp = Date.now();
         dataCache.candidates.userEmail = window.userEmail;
 
         if (candidatesArray.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-light);">No candidates registered yet</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-light);">No candidates registered yet</td></tr>';
             renderPagination('candidates', 0);
             return;
         }
@@ -1716,9 +3205,15 @@ async function loadCandidatesData(forceRefresh = false) {
             const data = item;
             const initials = data.name ? data.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NA';
             const candidateId = data.candidateId || 'N/A';
+            const rowNumber = startIndex + index + 1;
 
             const row = document.createElement('tr');
+            row.className = 'candidate-table-row';
+            row.setAttribute('data-candidate-id', item.id);
+            row.style.cursor = 'pointer';
+            row.onclick = () => viewCandidateDetails(item.id);
             row.innerHTML = `
+                <td style="text-align: center; color: var(--text-light); font-weight: 600;">${rowNumber}</td>
                 <td>
                     <div class="table-cell-user">
                         <div class="user-avatar">${initials}</div>
@@ -1730,20 +3225,8 @@ async function loadCandidatesData(forceRefresh = false) {
                 </td>
                 <td>${data.position || 'N/A'}</td>
                 <td>${data.constituency || 'N/A'}</td>
+                <td>${data.island || 'N/A'}</td>
                 <td><span class="status-badge ${data.status === 'active' ? 'status-active' : 'status-pending'}">${data.status || 'Pending'}</span></td>
-                <td>
-                    <div class="table-actions">
-                        <button class="icon-btn" title="Edit" onclick="editCandidate('${item.id}')">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        </button>
-                        <button class="icon-btn" title="View Details" onclick="viewCandidateDetails('${item.id}')">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                        </button>
-                        <button class="icon-btn icon-btn-danger" title="Delete" onclick="deleteCandidate('${item.id}')">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        </button>
-                    </div>
-                </td>
             `;
             fragment.appendChild(row);
         });
@@ -1756,9 +3239,21 @@ async function loadCandidatesData(forceRefresh = false) {
 
         // Render pagination
         renderPagination('candidates', candidatesArray.length);
+
+        // Auto-select first candidate on initial load (only if detail panel is not already showing)
+        const detailPanel = document.getElementById('candidate-detail-panel');
+        if (candidatesArray.length > 0 && detailPanel && detailPanel.style.display === 'none') {
+            // Small delay to ensure DOM is ready
+            setTimeout(() => {
+                const firstCandidate = candidatesArray[0];
+                if (firstCandidate && firstCandidate.id) {
+                    viewCandidateDetails(firstCandidate.id);
+                }
+            }, 100);
+        }
     } catch (error) {
         console.error('Error loading candidates:', error);
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-light);">Error loading candidates</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-light);">Error loading candidates</td></tr>';
         renderPagination('candidates', 0);
     }
 }
@@ -1770,7 +3265,25 @@ function renderCachedCandidatesData() {
     const tbody = document.getElementById('candidates-table-body');
     if (!tbody) return false;
 
-    const candidatesArray = dataCache.candidates.data;
+    let candidatesArray = dataCache.candidates.data;
+
+    // Apply global filter (constituency)
+    const globalFilter = window.globalFilterState || {
+        constituency: null,
+        island: null
+    };
+    if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
+        candidatesArray = candidatesArray.filter(candidate => {
+            // Island takes priority - if island selected, filter by island only
+            if (globalFilter.island) {
+                return candidate.island === globalFilter.island;
+            } else if (globalFilter.constituency) {
+                // If constituency selected but no island, filter by constituency only
+                return candidate.constituency === globalFilter.constituency;
+            }
+            return true;
+        });
+    }
 
     // Pagination
     const state = paginationState.candidates;
@@ -1780,13 +3293,19 @@ function renderCachedCandidatesData() {
 
     const fragment = document.createDocumentFragment();
 
-    paginatedCandidates.forEach((item) => {
+    paginatedCandidates.forEach((item, index) => {
         const data = item;
         const initials = data.name ? data.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NA';
         const candidateId = data.candidateId || 'N/A';
+        const rowNumber = startIndex + index + 1;
 
         const row = document.createElement('tr');
+        row.className = 'candidate-table-row';
+        row.setAttribute('data-candidate-id', item.id);
+        row.style.cursor = 'pointer';
+        row.onclick = () => viewCandidateDetails(item.id);
         row.innerHTML = `
+            <td style="text-align: center; color: var(--text-light); font-weight: 600;">${rowNumber}</td>
             <td>
                 <div class="table-cell-user">
                     <div class="user-avatar">${initials}</div>
@@ -1798,20 +3317,8 @@ function renderCachedCandidatesData() {
             </td>
             <td>${data.position || 'N/A'}</td>
             <td>${data.constituency || 'N/A'}</td>
+            <td>${data.island || 'N/A'}</td>
             <td><span class="status-badge ${data.status === 'active' ? 'status-active' : 'status-pending'}">${data.status || 'Pending'}</span></td>
-            <td>
-                <div class="table-actions">
-                    <button class="icon-btn" title="Edit" onclick="editCandidate('${item.id}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                    </button>
-                    <button class="icon-btn" title="View Details" onclick="viewCandidateDetails('${item.id}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                    </button>
-                    <button class="icon-btn icon-btn-danger" title="Delete" onclick="deleteCandidate('${item.id}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
-                </div>
-            </td>
         `;
         fragment.appendChild(row);
     });
@@ -1821,6 +3328,19 @@ function renderCachedCandidatesData() {
         tbody.textContent = '';
         tbody.appendChild(fragment);
     });
+
+    // Auto-select first candidate on initial load (only if detail panel is not already showing)
+    const detailPanel = document.getElementById('candidate-detail-panel');
+    if (candidatesArray.length > 0 && detailPanel && detailPanel.style.display === 'none') {
+        // Small delay to ensure DOM is ready
+        setTimeout(() => {
+            const firstCandidate = candidatesArray[0];
+            if (firstCandidate && firstCandidate.id) {
+                viewCandidateDetails(firstCandidate.id);
+            }
+        }, 100);
+    }
+
     return true;
 }
 
@@ -1883,7 +3403,7 @@ function setupSearchListeners(tableType) {
 
     // Voters search
     if (tableType === 'voters') {
-        const voterSearch = document.getElementById('voter-search');
+        const voterSearch = document.getElementById('voter-search') || document.getElementById('voters-search-input');
         if (voterSearch) {
             const debouncedSearch = debounce(() => {
                 if (voterDataCache.data) {
@@ -1941,7 +3461,7 @@ const paginationState = {
     },
     voters: {
         currentPage: 1,
-        recordsPerPage: 15
+        recordsPerPage: 10
     },
     events: {
         currentPage: 1,
@@ -1964,9 +3484,14 @@ const paginationState = {
 };
 
 // Pagination utility functions
-function renderPagination(tableType, totalRecords, recordsPerPage = 15) {
+function renderPagination(tableType, totalRecords, recordsPerPage = null) {
     const paginationContainer = document.getElementById(`${tableType}-pagination`);
     if (!paginationContainer) return;
+
+    // Use recordsPerPage from paginationState if not provided
+    if (recordsPerPage === null) {
+        recordsPerPage = paginationState[tableType].recordsPerPage || 15;
+    }
 
     if (totalRecords <= recordsPerPage) {
         paginationContainer.style.display = 'none';
@@ -2289,11 +3814,18 @@ const pendingImageLookups = new Map();
 // Image index loaded from images/index.json (for static hosting)
 let imageIndex = null;
 let imageIndexLoading = null;
+// Global setting for showing voter images (default: true)
+window.showVoterImages = true;
 
 // Function to get voter image URL, checking images folder first based on ID card number
 // Returns the best available image URL (existing imageUrl takes priority, then images folder)
 // This is a synchronous function that returns immediately (uses cache or returns empty for async lookup)
 function getVoterImageUrl(voterData, idCardNumber = null) {
+    // Check if voter images are disabled
+    if (window.showVoterImages === false) {
+        return '';
+    }
+
     // Get existing image URL from voter data first (highest priority)
     if (!voterData) {
         return '';
@@ -2380,6 +3912,11 @@ async function checkImageExists(url) {
 // Async function to lookup image from images folder by ID card number
 // This calls the server endpoint to find matching images, with fallback for static hosting
 async function lookupImageFromFolder(idCardNumber) {
+    // Check if voter images are disabled
+    if (window.showVoterImages === false) {
+        return null;
+    }
+
     if (!idCardNumber || !idCardNumber.trim()) {
         return null;
     }
@@ -3299,6 +4836,261 @@ function clearAllCaches() {
     });
 }
 
+// Helper function to create a voter table row
+function createVoterTableRow(id, data, rowNumber) {
+    // Format date of birth
+    let dobDisplay = 'N/A';
+    if (data.dateOfBirth) {
+        if (data.dateOfBirth.toDate) {
+            const dob = data.dateOfBirth.toDate();
+            dobDisplay = dob.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        } else if (typeof data.dateOfBirth === 'string') {
+            const dob = new Date(data.dateOfBirth);
+            if (!isNaN(dob.getTime())) {
+                dobDisplay = dob.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+            } else {
+                dobDisplay = data.dateOfBirth;
+            }
+        }
+    }
+
+    const initials = data.name ? data.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NA';
+    const idNumber = data.idNumber || data.voterId || id;
+    const permanentAddress = (data.permanentAddress && data.permanentAddress.trim()) || (data.address && data.address.trim()) || 'N/A';
+    const currentLocation = (data.currentLocation && data.currentLocation.trim()) || (data.location && data.location.trim()) || 'N/A';
+
+    // Get image URL, checking images folder if needed
+    let imageUrl = getVoterImageUrl(data, idNumber);
+
+    const age = data.age !== undefined && data.age !== null && data.age !== '' ? data.age : 'N/A';
+    const gender = data.gender ? (data.gender.charAt(0).toUpperCase() + data.gender.slice(1)) : 'N/A';
+    const island = data.island || 'N/A';
+    const ballotBox = data.ballot || data.ballotBox || 'N/A';
+    const constituency = (window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : (data.constituency || 'N/A');
+    const number = data.number || data.phone || 'N/A';
+
+    const row = document.createElement('tr');
+    row.className = 'voter-table-row';
+    row.style.cursor = 'pointer';
+    row.setAttribute('data-voter-id', id);
+    row.setAttribute('data-voter-data', JSON.stringify({
+        id,
+        ...data
+    }));
+    row.onclick = (e) => {
+        // Don't trigger if clicking on action buttons
+        if (e.target.closest('.icon-btn')) return;
+        viewVoterDetails(id, data);
+    };
+    row.onmouseenter = function() {
+        this.style.backgroundColor = 'var(--light-color)';
+    };
+    row.onmouseleave = function() {
+        if (!this.classList.contains('selected')) {
+            this.style.backgroundColor = '';
+        }
+    };
+    row.innerHTML = `
+        <td style="text-align: center; color: var(--text-light); font-weight: 600; padding: 12px; font-size: 13px;">${rowNumber}</td>
+        <td style="padding: 12px;">
+            ${(imageUrl && window.showVoterImages !== false) ? 
+                `<img src="${imageUrl}" alt="${data.name || 'Voter'}" class="voter-image" loading="lazy" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" data-voter-id="${idNumber || ''}" onerror="this.onerror=null; this.style.display='none'; const fallback=this.nextElementSibling; if(fallback) fallback.style.display='flex'; if(window.showVoterImages !== false) { tryLoadImageFromFolder(this, '${idNumber || ''}').then(found => { if(found) { this.src=found; this.style.display=''; if(fallback) fallback.style.display='none'; } }); }">` :
+                `<div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 14px;">${initials}</div>`
+            }
+            ${(imageUrl && window.showVoterImages !== false) ? `<div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; display: none; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 14px;">${initials}</div>` : ''}
+        </td>
+        <td style="font-size: 13px; color: var(--text-color); padding: 12px;">${idNumber || 'N/A'}</td>
+        <td style="padding: 12px;">
+            <div class="table-cell-user">
+                <strong style="font-size: 13px; color: var(--text-color);">${data.name || 'N/A'}</strong>
+            </div>
+        </td>
+        <td style="font-size: 13px; color: var(--text-color); padding: 12px;">${constituency}</td>
+        <td style="font-size: 13px; color: var(--text-color); padding: 12px;">${island}</td>
+        <td style="font-size: 13px; color: var(--text-color); padding: 12px;">${dobDisplay}</td>
+        <td style="font-size: 13px; color: var(--text-color); text-align: center; padding: 12px;">${age}</td>
+        <td style="font-size: 13px; color: var(--text-color); padding: 12px;">${gender}</td>
+        <td style="font-size: 13px; color: var(--text-color); padding: 12px;">${ballotBox}</td>
+    `;
+
+    // If no image URL found, try to lookup from images folder asynchronously
+    if (!imageUrl && idNumber && idNumber.trim()) {
+        // Start async lookup - will update image when found
+        lookupImageFromFolder(idNumber).then(foundUrl => {
+            if (foundUrl) {
+                // Find the avatar div (initials) and replace it with image
+                const avatarDiv = row.querySelector('.user-avatar');
+                if (avatarDiv) {
+                    const img = document.createElement('img');
+                    img.src = foundUrl;
+                    img.alt = data.name || 'Voter';
+                    img.className = 'voter-image';
+                    img.loading = 'lazy';
+                    img.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; object-fit: cover;';
+                    img.setAttribute('data-voter-id', idNumber);
+                    img.onerror = function() {
+                        // If image fails to load, show initials again
+                        this.style.display = 'none';
+                        const fallback = document.createElement('div');
+                        fallback.className = 'user-avatar';
+                        fallback.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 14px;';
+                        fallback.textContent = initials;
+                        this.parentNode.replaceChild(fallback, this);
+                    };
+                    avatarDiv.parentNode.replaceChild(img, avatarDiv);
+                }
+            }
+        }).catch(err => {
+            console.warn('[createVoterTableRow] Image lookup failed:', err);
+        });
+    }
+
+    return row;
+}
+
+// Helper function to create a voter mobile card
+function createVoterMobileCard(id, data, rowNumber) {
+    const initials = data.name ? data.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NA';
+    const idNumber = data.idNumber || data.voterId || id;
+    const imageUrl = getVoterImageUrl(data, idNumber);
+
+    // Format date of birth
+    let dobDisplay = 'N/A';
+    if (data.dateOfBirth) {
+        if (data.dateOfBirth.toDate) {
+            const dob = data.dateOfBirth.toDate();
+            dobDisplay = dob.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        } else if (typeof data.dateOfBirth === 'string') {
+            const dob = new Date(data.dateOfBirth);
+            if (!isNaN(dob.getTime())) {
+                dobDisplay = dob.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+            } else {
+                dobDisplay = data.dateOfBirth;
+            }
+        }
+    }
+
+    const age = data.age !== undefined && data.age !== null && data.age !== '' ? data.age : 'N/A';
+    const gender = data.gender ? (data.gender.charAt(0).toUpperCase() + data.gender.slice(1)) : 'N/A';
+    const island = data.island || 'N/A';
+    const ballotBox = data.ballot || data.ballotBox || 'N/A';
+    const constituency = (window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : (data.constituency || 'N/A');
+
+    const card = document.createElement('div');
+    card.className = 'voter-mobile-card';
+    card.setAttribute('data-voter-id', id);
+    card.setAttribute('data-voter-data', JSON.stringify({
+        id,
+        ...data
+    }));
+    card.onclick = () => {
+        viewVoterDetails(id, data);
+    };
+
+    card.innerHTML = `
+        <div class="voter-mobile-card-header">
+            ${(imageUrl && window.showVoterImages !== false) ? 
+                `<img src="${imageUrl}" alt="${data.name || 'Voter'}" class="voter-image" loading="lazy" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" data-voter-id="${idNumber || ''}" onerror="this.onerror=null; this.style.display='none'; const fallback=this.nextElementSibling; if(fallback) fallback.style.display='flex'; if(window.showVoterImages !== false) { tryLoadImageFromFolder(this, '${idNumber || ''}').then(found => { if(found) { this.src=found; this.style.display=''; if(fallback) fallback.style.display='none'; } }); }">` :
+                `<div class="user-avatar" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 16px;">${initials}</div>`
+            }
+            ${(imageUrl && window.showVoterImages !== false) ? `<div class="user-avatar" style="width: 50px; height: 50px; border-radius: 50%; display: none; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 16px;">${initials}</div>` : ''}
+            <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 15px; color: var(--text-color); margin-bottom: 4px;">${data.name || 'N/A'}</div>
+                <div style="font-size: 12px; color: var(--text-light);">ID: ${idNumber || 'N/A'}</div>
+            </div>
+        </div>
+        <div class="voter-mobile-card-body">
+            <div class="voter-mobile-card-field">
+                <span class="voter-mobile-card-label">Date of Birth</span>
+                <span class="voter-mobile-card-value">${dobDisplay}</span>
+            </div>
+            <div class="voter-mobile-card-field">
+                <span class="voter-mobile-card-label">Age</span>
+                <span class="voter-mobile-card-value">${age}</span>
+            </div>
+            <div class="voter-mobile-card-field">
+                <span class="voter-mobile-card-label">Gender</span>
+                <span class="voter-mobile-card-value">${gender}</span>
+            </div>
+            <div class="voter-mobile-card-field">
+                <span class="voter-mobile-card-label">Island</span>
+                <span class="voter-mobile-card-value">${island}</span>
+            </div>
+            <div class="voter-mobile-card-field">
+                <span class="voter-mobile-card-label">Constituency</span>
+                <span class="voter-mobile-card-value">${constituency}</span>
+            </div>
+            <div class="voter-mobile-card-field">
+                <span class="voter-mobile-card-label">Ballot Box</span>
+                <span class="voter-mobile-card-value">${ballotBox}</span>
+            </div>
+        </div>
+    `;
+
+    return card;
+}
+
+// Function to populate voter filter dropdowns
+function populateVoterFilters() {
+    if (!voterDataCache.data || !voterDataCache.data.filteredDocs) return;
+
+    const allDocs = voterDataCache.data.filteredDocs;
+    const ballotBoxes = new Set();
+    const genders = new Set();
+
+    allDocs.forEach(({
+        data
+    }) => {
+        if (data.ballot) ballotBoxes.add(data.ballot);
+        if (data.ballotBox) ballotBoxes.add(data.ballotBox);
+        if (data.gender) genders.add(data.gender);
+    });
+
+    // Populate Ballot Box dropdown
+    const ballotSelect = document.getElementById('voter-filter-ballot');
+    if (ballotSelect) {
+        const currentValue = ballotSelect.value;
+        ballotSelect.innerHTML = '<option value="">All Ballot Boxes</option>';
+        Array.from(ballotBoxes).sort().forEach(ballot => {
+            const option = document.createElement('option');
+            option.value = ballot;
+            option.textContent = ballot;
+            ballotSelect.appendChild(option);
+        });
+        if (currentValue) ballotSelect.value = currentValue;
+    }
+
+    // Populate Gender dropdown
+    const genderSelect = document.getElementById('voter-filter-gender');
+    if (genderSelect) {
+        const currentValue = genderSelect.value;
+        genderSelect.innerHTML = '<option value="">All Genders</option>';
+        Array.from(genders).sort().forEach(gender => {
+            const option = document.createElement('option');
+            option.value = gender;
+            option.textContent = gender;
+            genderSelect.appendChild(option);
+        });
+        if (currentValue) genderSelect.value = currentValue;
+    }
+}
+
 // Function to render cached data immediately (optimized for instant display)
 function renderCachedVotersData() {
     if (!voterDataCache.data) {
@@ -3319,7 +5111,12 @@ function renderCachedVotersData() {
 
     // Safety check: ensure allDocs is an array
     if (!Array.isArray(allDocs)) {
-        console.warn('[renderCachedVotersData] Cache data structure invalid, clearing cache and reloading...');
+        console.warn('[renderCachedVotersData] Cache data structure invalid, clearing cache and reloading...', {
+            hasData: !!voterDataCache.data,
+            dataType: typeof voterDataCache.data,
+            filteredDocsType: typeof allDocs,
+            filteredDocsValue: allDocs
+        });
         clearVoterCache();
         if (typeof loadVotersData === 'function') {
             loadVotersData(true);
@@ -3362,29 +5159,111 @@ function renderCachedVotersData() {
         };
     }
 
-    // Apply search filter
-    const searchInput = document.getElementById('voter-search');
+    // Apply search filter - check both search inputs
+    const searchInput = document.getElementById('voter-search') || document.getElementById('voters-search-input');
     const searchTerm = (searchInput && searchInput.value) ? searchInput.value.toLowerCase().trim() : '';
 
+    // Get filter values
+    const filterBallotEl = document.getElementById('voter-filter-ballot');
+    const filterGenderEl = document.getElementById('voter-filter-gender');
+    const groupByEl = document.getElementById('voter-group-by');
+
+    const filterBallot = filterBallotEl ? filterBallotEl.value || '' : '';
+    const filterGender = filterGenderEl ? filterGenderEl.value || '' : '';
+    const groupBy = groupByEl ? groupByEl.value || '' : '';
+
+    // Get global filter state
+    const globalFilter = window.globalFilterState || {
+        constituency: null,
+        island: null
+    };
+
     let filteredDocs = allDocs || [];
-    if (searchTerm && Array.isArray(allDocs)) {
+    if (Array.isArray(allDocs)) {
         filteredDocs = allDocs.filter(({
             data
         }) => {
-            const name = (data.name || '').toLowerCase();
-            const idNumber = (data.idNumber || data.voterId || '').toLowerCase();
-            const permanentAddress = (data.permanentAddress || data.address || '').toLowerCase();
-            const currentLocation = (data.currentLocation || data.location || '').toLowerCase();
-            const island = (data.island || '').toLowerCase();
-            const atoll = (data.atoll || '').toLowerCase();
+            // Global filter: Constituency
+            if (globalFilter.constituency && data.constituency !== globalFilter.constituency) {
+                return false;
+            }
 
-            return name.includes(searchTerm) ||
-                idNumber.includes(searchTerm) ||
-                permanentAddress.includes(searchTerm) ||
-                currentLocation.includes(searchTerm) ||
-                island.includes(searchTerm) ||
-                atoll.includes(searchTerm);
+            // Global filter: Island
+            if (globalFilter.island && data.island !== globalFilter.island) {
+                return false;
+            }
+
+            // Search filter
+            if (searchTerm) {
+                const name = (data.name || '').toLowerCase();
+                const idNumber = (data.idNumber || data.voterId || '').toLowerCase();
+                const permanentAddress = (data.permanentAddress || data.address || '').toLowerCase();
+                const currentLocation = (data.currentLocation || data.location || '').toLowerCase();
+                const island = (data.island || '').toLowerCase();
+
+                if (!name.includes(searchTerm) &&
+                    !idNumber.includes(searchTerm) &&
+                    !permanentAddress.includes(searchTerm) &&
+                    !currentLocation.includes(searchTerm) &&
+                    !island.includes(searchTerm)) {
+                    return false;
+                }
+            }
+
+            // Ballot Box filter
+            if (filterBallot && data.ballot !== filterBallot && data.ballotBox !== filterBallot) {
+                return false;
+            }
+
+            // Gender filter
+            if (filterGender && data.gender !== filterGender) {
+                return false;
+            }
+
+            return true;
         });
+    }
+
+    // Apply grouping if selected
+    if (groupBy && filteredDocs.length > 0) {
+        const grouped = {};
+        filteredDocs.forEach(({
+            id,
+            data
+        }) => {
+            let groupKey = '';
+            switch (groupBy) {
+                case 'island':
+                    groupKey = data.island || 'Unknown';
+                    break;
+                case 'constituency':
+                    groupKey = data.constituency || 'Unknown';
+                    break;
+                case 'ballot':
+                    groupKey = data.ballot || data.ballotBox || 'Unknown';
+                    break;
+                case 'gender':
+                    groupKey = data.gender || 'Unknown';
+                    break;
+                case 'permanentAddress':
+                    groupKey = (data.permanentAddress && data.permanentAddress.trim()) || (data.address && data.address.trim()) || 'Unknown';
+                    break;
+                case 'currentLocation':
+                    groupKey = (data.currentLocation && data.currentLocation.trim()) || (data.location && data.location.trim()) || 'Unknown';
+                    break;
+            }
+            if (!grouped[groupKey]) {
+                grouped[groupKey] = [];
+            }
+            grouped[groupKey].push({
+                id,
+                data
+            });
+        });
+        // Store grouped data for rendering
+        window.voterGroupedData = grouped;
+    } else {
+        window.voterGroupedData = null;
     }
 
     // Update statistics immediately (cache hit = instant display)
@@ -3409,10 +5288,74 @@ function renderCachedVotersData() {
         paginationState.voters.lastSearchTerm = searchTerm;
     }
 
-    // Render table
+    // Render table with grouping if enabled
+    if (window.voterGroupedData && Object.keys(window.voterGroupedData).length > 0) {
+        tbody.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+        let rowNumber = 1;
+
+        // Sort group keys for consistent display
+        const sortedGroups = Object.keys(window.voterGroupedData).sort();
+
+        sortedGroups.forEach(groupKey => {
+            const groupVoters = window.voterGroupedData[groupKey];
+
+            // Add group header row
+            const headerRow = document.createElement('tr');
+            headerRow.style.backgroundColor = 'var(--primary-50)';
+            headerRow.style.fontWeight = '600';
+            let groupLabel = '';
+            switch (groupBy) {
+                case 'island':
+                    groupLabel = 'Island';
+                    break;
+                case 'constituency':
+                    groupLabel = 'Constituency';
+                    break;
+                case 'ballot':
+                    groupLabel = 'Ballot Box';
+                    break;
+                case 'gender':
+                    groupLabel = 'Gender';
+                    break;
+                case 'permanentAddress':
+                    groupLabel = 'Permanent Address';
+                    break;
+                case 'currentLocation':
+                    groupLabel = 'Current Location';
+                    break;
+                default:
+                    groupLabel = 'Group';
+            }
+            // Truncate long addresses/locations for display
+            let displayKey = groupKey;
+            if (groupBy === 'permanentAddress' || groupBy === 'currentLocation') {
+                if (groupKey.length > 60) {
+                    displayKey = groupKey.substring(0, 60) + '...';
+                }
+            }
+            headerRow.innerHTML = `<td colspan="9" style="padding: 12px; font-size: 13px; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.5px;" title="${groupKey}">${groupLabel}: ${displayKey} (${groupVoters.length})</td>`;
+            fragment.appendChild(headerRow);
+
+            // Add voters in this group
+            groupVoters.forEach(({
+                id,
+                data
+            }) => {
+                const row = createVoterTableRow(id, data, rowNumber++);
+                if (row) fragment.appendChild(row);
+            });
+        });
+
+        tbody.appendChild(fragment);
+        renderPagination('voters', filteredDocs.length);
+        return true;
+    }
+
+    // Render table (non-grouped)
     if (filteredDocs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-light);">' +
-            (searchTerm ? 'No voters found matching your search' : 'No voters registered yet') + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">' +
+            (searchTerm || filterBallot || filterGender ? 'No voters found matching your filters' : 'No voters registered yet') + '</td></tr>';
         renderPagination('voters', filteredDocs.length);
         return true;
     }
@@ -3431,100 +5374,27 @@ function renderCachedVotersData() {
         id,
         data
     }) => {
-        // Format date of birth
-        let dobDisplay = 'N/A';
-        if (data.dateOfBirth) {
-            if (data.dateOfBirth.toDate) {
-                const dob = data.dateOfBirth.toDate();
-                dobDisplay = dob.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                });
-            } else if (typeof data.dateOfBirth === 'string') {
-                const dob = new Date(data.dateOfBirth);
-                if (!isNaN(dob.getTime())) {
-                    dobDisplay = dob.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit'
-                    });
-                } else {
-                    dobDisplay = data.dateOfBirth;
-                }
-            }
-        }
-
-        const initials = data.name ? data.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NA';
-        const idNumber = data.idNumber || data.voterId || id;
-        const permanentAddress = (data.permanentAddress && data.permanentAddress.trim()) || (data.address && data.address.trim()) || 'N/A';
-        const currentLocation = (data.currentLocation && data.currentLocation.trim()) || (data.location && data.location.trim()) || 'N/A';
-
-        // Get image URL, checking images folder if needed
-        let imageUrl = getVoterImageUrl(data, idNumber);
-
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td style="text-align: center; color: var(--text-light); font-weight: 600;">${rowNumber}</td>
-            <td>
-                ${imageUrl ? 
-                    `<img src="${imageUrl}" alt="${data.name || 'Voter'}" class="voter-image" loading="lazy" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" data-voter-id="${idNumber || ''}" onerror="this.onerror=null; this.style.display='none'; const fallback=this.nextElementSibling; if(fallback) fallback.style.display='flex'; tryLoadImageFromFolder(this, '${idNumber || ''}').then(found => { if(found) { this.src=found; this.style.display=''; if(fallback) fallback.style.display='none'; } });">` :
-                    `<div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 14px;">${initials}</div>`
-                }
-                ${imageUrl ? `<div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; display: none; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 14px;">${initials}</div>` : ''}
-            </td>
-            <td>
-                <div class="table-cell-user">
-                    <strong>${data.name || 'N/A'}</strong>
-                </div>
-            </td>
-            <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${permanentAddress}">${permanentAddress}</td>
-            <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${currentLocation}">${currentLocation}</td>
-            <td>
-                <button class="icon-btn" title="View Details" onclick="viewVoterDetails('${id}')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                </button>
-            </td>
-        `;
-        fragment.appendChild(row);
-
-        // If no image URL found, try to lookup from images folder asynchronously
-        if (!imageUrl && idNumber && idNumber.trim()) {
-            // Start async lookup - will update image when found
-            lookupImageFromFolder(idNumber).then(foundUrl => {
-                if (foundUrl) {
-                    // Find the avatar div (initials) and replace it with image
-                    const avatarDiv = row.querySelector('.user-avatar');
-                    if (avatarDiv) {
-                        const img = document.createElement('img');
-                        img.src = foundUrl;
-                        img.alt = data.name || 'Voter';
-                        img.className = 'voter-image';
-                        img.loading = 'lazy';
-                        img.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; object-fit: cover;';
-                        img.setAttribute('data-voter-id', idNumber);
-                        img.onerror = function() {
-                            // If image fails to load, show initials again
-                            this.style.display = 'none';
-                            const fallback = document.createElement('div');
-                            fallback.className = 'user-avatar';
-                            fallback.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 14px;';
-                            fallback.textContent = initials;
-                            this.parentNode.replaceChild(fallback, this);
-                        };
-                        avatarDiv.parentNode.replaceChild(img, avatarDiv);
-                    }
-                }
-            }).catch((error) => {
-                console.warn(`Failed to load image for voter ${idNumber}:`, error);
-            });
-        }
-
-        rowNumber++;
+        const row = createVoterTableRow(id, data, rowNumber++);
+        if (row) fragment.appendChild(row);
     });
+
+    // Also render mobile cards
+    const mobileList = document.getElementById('voters-mobile-list');
+    if (mobileList) {
+        const mobileFragment = document.createDocumentFragment();
+        let mobileRowNumber = startIndex + 1;
+        paginatedVoters.forEach(({
+            id,
+            data
+        }) => {
+            const card = createVoterMobileCard(id, data, mobileRowNumber++);
+            if (card) mobileFragment.appendChild(card);
+        });
+        requestAnimationFrame(() => {
+            mobileList.textContent = '';
+            mobileList.appendChild(mobileFragment);
+        });
+    }
 
     // Batch DOM update for instant cached rendering
     // Use requestAnimationFrame for smooth rendering
@@ -3626,36 +5496,50 @@ async function loadVotersData(forceRefresh = false) {
             };
             console.log(`[loadVotersData] Combined results: ${combinedDocs.length} unique voters found`);
 
-            // If still no results, try loading all and filtering client-side (fallback for debugging)
+            // If still no results, try loading all voters (fallback - useful if email fields aren't set or for admin)
             if (combinedDocs.length === 0) {
-                console.log('[loadVotersData] No results from queries, trying fallback: loading all voters and filtering client-side');
+                console.log('[loadVotersData] No results from filtered queries, trying fallback: loading ALL voters from Firestore');
                 try {
                     const allVotersQuery = query(collection(window.db, 'voters'));
                     const allSnapshot = await getDocs(allVotersQuery);
-                    console.log(`[loadVotersData] Loaded ${allSnapshot.docs.length} total voters, filtering by email...`);
-
-                    // Filter client-side
-                    const filtered = allSnapshot.docs.filter(doc => {
-                        const data = doc.data();
-                        return data.email === window.userEmail || data.campaignEmail === window.userEmail;
-                    });
-                    console.log(`[loadVotersData] After client-side filtering: ${filtered.length} voters match`);
+                    console.log(`[loadVotersData] Loaded ${allSnapshot.docs.length} total voters from Firestore`);
 
                     // Log sample data for debugging
-                    if (allSnapshot.docs.length > 0 && filtered.length === 0) {
+                    if (allSnapshot.docs.length > 0) {
                         const sampleDoc = allSnapshot.docs[0];
                         const sampleData = sampleDoc.data();
                         console.log('[loadVotersData] Sample voter from database:', {
+                            id: sampleDoc.id,
                             email: sampleData.email,
                             campaignEmail: sampleData.campaignEmail,
                             userEmail: window.userEmail,
-                            name: sampleData.name
+                            name: sampleData.name,
+                            allFields: Object.keys(sampleData)
                         });
-                    }
 
-                    snapshot = {
-                        docs: filtered
-                    };
+                        // If user is admin or no email fields match, load all voters
+                        const isAdmin = window.userEmail === 'rixaski@gmail.com';
+                        if (isAdmin || !sampleData.email || !sampleData.campaignEmail) {
+                            console.log('[loadVotersData] Admin user or email fields not set - loading ALL voters without filtering');
+                            snapshot = {
+                                docs: allSnapshot.docs
+                            };
+                        } else {
+                            // Filter client-side by email
+                            const filtered = allSnapshot.docs.filter(doc => {
+                                const data = doc.data();
+                                return data.email === window.userEmail || data.campaignEmail === window.userEmail;
+                            });
+                            console.log(`[loadVotersData] After client-side filtering: ${filtered.length} voters match`);
+                            snapshot = {
+                                docs: filtered
+                            };
+                        }
+                    } else {
+                        snapshot = {
+                            docs: []
+                        };
+                    }
                 } catch (fallbackError) {
                     console.error('[loadVotersData] Fallback query also failed:', fallbackError);
                     throw fallbackError;
@@ -3670,7 +5554,7 @@ async function loadVotersData(forceRefresh = false) {
             }
         } catch (queryError) {
             console.error('Error querying voters:', queryError);
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-light);">Error loading voters. Please check console for details.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">Error loading voters. Please check console for details.</td></tr>';
             // Mark voters as complete even on error
             if (window.updateComponentProgress) {
                 window.updateComponentProgress('voters', 100);
@@ -3678,23 +5562,51 @@ async function loadVotersData(forceRefresh = false) {
             return;
         }
 
-        // Filter to ensure we only show voters matching user email (in case of data inconsistency)
-        const filteredDocs = snapshot.docs.filter(doc => {
+        // Filter to ensure we only show voters matching user email (unless admin or no email fields set)
+        const isAdmin = window.userEmail === 'rixaski@gmail.com';
+        let filteredDocs = snapshot.docs.filter(doc => {
             const data = doc.data();
+            // Admin can see all voters, or if email fields aren't set, show all
+            if (isAdmin || (!data.email && !data.campaignEmail)) {
+                return true;
+            }
             const matches = data.email === window.userEmail || data.campaignEmail === window.userEmail;
-            if (!matches && snapshot.docs.length > 0) {
-                // Log first non-matching voter for debugging
-                if (snapshot.docs.indexOf(doc) === 0) {
-                    console.log('[loadVotersData] Sample voter data:', {
-                        email: data.email,
-                        campaignEmail: data.campaignEmail,
-                        userEmail: window.userEmail,
-                        name: data.name
-                    });
-                }
+            if (!matches && snapshot.docs.length > 0 && snapshot.docs.indexOf(doc) === 0) {
+                console.log('[loadVotersData] Sample voter data (filtered out):', {
+                    email: data.email,
+                    campaignEmail: data.campaignEmail,
+                    userEmail: window.userEmail,
+                    name: data.name
+                });
             }
             return matches;
         });
+
+        console.log(`[loadVotersData] After email filtering: ${filteredDocs.length} voters`);
+
+        // Apply global filter (constituency and island)
+        if (window.globalFilterState && window.globalFilterState.initialized) {
+            const filterState = window.globalFilterState;
+            const beforeFilterCount = filteredDocs.length;
+
+            filteredDocs = filteredDocs.filter(doc => {
+                const data = doc.data();
+
+                // Island takes priority - if island selected, filter by island only
+                if (filterState.island) {
+                    return data.island === filterState.island;
+                } else if (filterState.constituency) {
+                    // If constituency selected but no island, filter by constituency only
+                    return data.constituency === filterState.constituency;
+                }
+
+                return true;
+            });
+
+            console.log(`[loadVotersData] After global filter (constituency: ${filterState.constituency || 'All'}, island: ${filterState.island || 'All'}): ${filteredDocs.length} voters (was ${beforeFilterCount})`);
+        }
+
+        console.log(`[loadVotersData] Final filtered count: ${filteredDocs.length} voters to display (admin: ${isAdmin})`);
 
         console.log(`[loadVotersData] Processing ${filteredDocs.length} voters...`);
 
@@ -3730,7 +5642,7 @@ async function loadVotersData(forceRefresh = false) {
         if (pendingEl) pendingEl.textContent = pending;
 
         if (filteredDocs.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-light);">No voters registered yet</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">No voters registered yet</td></tr>';
             renderPagination('voters', 0);
             // Mark voters as complete even if empty
             if (window.updateComponentProgress) {
@@ -3844,6 +5756,24 @@ async function loadVotersData(forceRefresh = false) {
 
             // Create row element
             const row = document.createElement('tr');
+            row.className = 'voter-table-row';
+            row.style.cursor = 'pointer';
+            row.setAttribute('data-voter-id', doc.id);
+            row.onclick = (e) => {
+                // Don't trigger if clicking on action buttons
+                if (e.target.closest('.icon-btn')) return;
+                viewVoterDetails(doc.id, data);
+            };
+            row.onmouseenter = function() {
+                this.style.backgroundColor = 'var(--light-color)';
+            };
+            row.onmouseleave = function() {
+                if (!this.classList.contains('selected')) {
+                    this.style.backgroundColor = '';
+                }
+            };
+            const constituency = (window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : 'N/A';
+
             row.innerHTML = `
                 <td style="text-align: center; color: var(--text-light); font-weight: 600;">${rowNumber}</td>
                 <td>
@@ -3852,21 +5782,18 @@ async function loadVotersData(forceRefresh = false) {
                         `<div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 14px;">${initials}</div>`
                     }
                 </td>
+                <td style="font-size: 13px; color: var(--text-color);">${idNumber !== 'N/A' ? idNumber : 'N/A'}</td>
                 <td>
                     <div class="table-cell-user">
                         <strong>${data.name || 'N/A'}</strong>
                     </div>
                 </td>
-                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${permanentAddress}">${permanentAddress}</td>
-                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${currentLocation}">${currentLocation}</td>
-                <td>
-                    <button class="icon-btn" title="View Details" onclick="viewVoterDetails('${doc.id}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                    </button>
-                </td>
+                <td style="font-size: 13px; color: var(--text-color);">${constituency}</td>
+                <td style="font-size: 13px; color: var(--text-color);">${island}</td>
+                <td style="font-size: 13px; color: var(--text-color);">${dobDisplay}</td>
+                <td style="font-size: 13px; color: var(--text-color); text-align: center;">${age}</td>
+                <td style="font-size: 13px; color: var(--text-color);">${gender}</td>
+                <td style="font-size: 13px; color: var(--text-color);">${ballotBox}</td>
             `;
 
             fragment.appendChild(row);
@@ -3926,21 +5853,34 @@ async function loadVotersData(forceRefresh = false) {
         });
 
         // Cache the data for future use (store doc ID and data for reconstruction)
-        voterDataCache.data = {
-            filteredDocs: filteredDocs.map(doc => ({
-                id: doc.id,
-                data: doc.data()
-            })),
-            stats: {
-                total,
-                todayCount,
-                verified,
-                pending
-            }
-        };
-        voterDataCache.timestamp = Date.now();
-        voterDataCache.userEmail = window.userEmail;
-        console.log('[loadVotersData] Data cached for future use');
+        // Ensure filteredDocs is an array before caching
+        if (!Array.isArray(filteredDocs)) {
+            console.error('[loadVotersData] filteredDocs is not an array, cannot cache data', {
+                filteredDocsType: typeof filteredDocs,
+                filteredDocsValue: filteredDocs
+            });
+        } else {
+            voterDataCache.data = {
+                filteredDocs: filteredDocs.map(doc => ({
+                    id: doc.id,
+                    data: doc.data()
+                })),
+                stats: {
+                    total,
+                    todayCount,
+                    verified,
+                    pending
+                }
+            };
+            voterDataCache.timestamp = Date.now();
+            voterDataCache.userEmail = window.userEmail;
+            console.log('[loadVotersData] Data cached for future use');
+        }
+
+        // Populate filter dropdowns after data is loaded
+        setTimeout(() => {
+            populateVoterFilters();
+        }, 100);
 
         // Loading indicator is already replaced by actual table content
     } catch (error) {
@@ -3961,33 +5901,57 @@ window.clearVoterCache = clearVoterCache;
 window.clearCache = clearCache;
 window.clearAllCaches = clearAllCaches;
 
+// Calendar state
+let calendarState = {
+    currentMonth: new Date().getMonth(),
+    currentYear: new Date().getFullYear(),
+    selectedDate: null
+};
+
+// Event type colors
+const eventTypeColors = {
+    rally: '#e74c3c',
+    meeting: '#3498db',
+    canvassing: '#2ecc71',
+    'door-to-door': '#16a085',
+    'kanmathi-jalsaa': '#d35400',
+    'jagaha-jalsaa': '#8e44ad',
+    fundraiser: '#f39c12',
+    debate: '#9b59b6',
+    press: '#1abc9c',
+    other: '#95a5a6'
+};
+
+// Event type labels
+const eventTypeLabels = {
+    rally: 'Rally',
+    meeting: 'Meeting',
+    canvassing: 'Canvassing',
+    'door-to-door': 'Door to Door',
+    'kanmathi-jalsaa': 'Kanmathi Jalsaa',
+    'jagaha-jalsaa': 'Jagaha Jalsaa',
+    fundraiser: 'Fundraiser',
+    debate: 'Debate',
+    press: 'Press Conference',
+    other: 'Other'
+};
+
 // Load events data
 async function loadEventsData(forceRefresh = false) {
     if (!window.db || !window.userEmail) return;
 
-    const grid = document.getElementById('events-grid');
-    if (!grid) return;
+    const calendarGrid = document.getElementById('calendar-grid');
+    const agendaView = document.getElementById('events-agenda-view');
+
+    if (!calendarGrid && !agendaView) return;
 
     // Check cache first
     if (!forceRefresh && isCacheValid('events')) {
         console.log('[loadEventsData] Using cached data - instant load');
-        renderCachedEventsData();
+        renderCalendar();
+        renderAgendaView();
         return;
     }
-
-    // Show skeleton loading for events grid
-    grid.innerHTML = `
-        ${Array(6).fill(0).map(() => `
-            <div class="event-card" style="opacity: 0.7;">
-                <div class="event-date" style="background: var(--border-light);"></div>
-                <div class="event-content">
-                    <div style="height: 20px; background: var(--border-light); border-radius: 4px; margin-bottom: 10px; width: 70%; animation: skeleton-loading 1.5s ease-in-out infinite;"></div>
-                    <div style="height: 16px; background: var(--border-light); border-radius: 4px; margin-bottom: 8px; width: 50%; animation: skeleton-loading 1.5s ease-in-out infinite;"></div>
-                    <div style="height: 14px; background: var(--border-light); border-radius: 4px; width: 40%; animation: skeleton-loading 1.5s ease-in-out infinite;"></div>
-                </div>
-            </div>
-        `).join('')}
-    `;
 
     try {
         const {
@@ -4013,12 +5977,13 @@ async function loadEventsData(forceRefresh = false) {
             }
         }
 
-        // Convert to array and sort if needed (when index was missing)
+        // Convert to array and sort if needed
         const eventsArray = [];
         snapshot.forEach(doc => {
+            const data = doc.data();
             eventsArray.push({
                 id: doc.id,
-                ...doc.data()
+                ...data
             });
         });
 
@@ -4026,7 +5991,7 @@ async function loadEventsData(forceRefresh = false) {
         eventsArray.sort((a, b) => {
             const aDate = a.eventDate ? (a.eventDate.toDate ? a.eventDate.toDate() : new Date(a.eventDate)) : new Date(0);
             const bDate = b.eventDate ? (b.eventDate.toDate ? b.eventDate.toDate() : new Date(b.eventDate)) : new Date(0);
-            return aDate - bDate; // Ascending order
+            return aDate - bDate;
         });
 
         // Store in cache
@@ -4034,62 +5999,371 @@ async function loadEventsData(forceRefresh = false) {
         dataCache.events.timestamp = Date.now();
         dataCache.events.userEmail = window.userEmail;
 
-        if (eventsArray.length === 0) {
-            grid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-light); grid-column: 1 / -1;"><p>No events scheduled yet</p></div>';
-            return;
-        }
-
-        // Use DocumentFragment for efficient DOM updates
-        const fragment = document.createDocumentFragment();
-        eventsArray.forEach(event => {
-            // Use event data directly from array, not doc.data()
-            const data = event;
-            const eventDate = data.eventDate ? (data.eventDate.toDate ? data.eventDate.toDate() : new Date(data.eventDate)) : new Date();
-            const day = eventDate.getDate();
-            const month = eventDate.toLocaleString('default', {
-                month: 'short'
-            });
-
-            // Ensure we use actual data fields
-            const eventName = data.eventName || 'Untitled Event';
-            const location = data.location || 'Location TBD';
-            const startTime = data.startTime || 'TBD';
-            const endTime = data.endTime || 'TBD';
-            const expectedAttendees = data.expectedAttendees || 0;
-
-            const eventCard = document.createElement('div');
-            eventCard.className = 'event-card';
-            eventCard.innerHTML = `
-                <div class="event-date">
-                    <span class="event-day">${day}</span>
-                    <span class="event-month">${month}</span>
-                </div>
-                <div class="event-content">
-                    <h3>${eventName}</h3>
-                    <p class="event-location">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; margin-right: 4px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                        ${location}
-                    </p>
-                    <p class="event-time">${startTime} - ${endTime}</p>
-                    <div class="event-actions">
-                        <span class="event-attendees">Expected: ${expectedAttendees}+</span>
-                        <button class="icon-btn-sm" onclick="viewEventDetails('${data.id}')">View</button>
-                    </div>
-                </div>
-            `;
-            fragment.appendChild(eventCard);
-        });
-
-        // Use requestAnimationFrame for smooth rendering
-        requestAnimationFrame(() => {
-            grid.textContent = '';
-            grid.appendChild(fragment);
-        });
+        // Render calendar and agenda
+        renderCalendar();
+        renderAgendaView();
     } catch (error) {
         console.error('Error loading events:', error);
-        grid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-light); grid-column: 1 / -1;"><p>Error loading events</p></div>';
+        if (calendarGrid) {
+            calendarGrid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-light); grid-column: 1 / -1;"><p>Error loading events</p></div>';
+        }
     }
 }
+
+// Render calendar
+function renderCalendar() {
+    const calendarGrid = document.getElementById('calendar-grid');
+    const monthYearEl = document.getElementById('calendar-month-year');
+
+    if (!calendarGrid) return;
+
+    const {
+        currentMonth,
+        currentYear
+    } = calendarState;
+    const today = new Date();
+    const isCurrentMonth = today.getMonth() === currentMonth && today.getFullYear() === currentYear;
+
+    // Update month/year header
+    if (monthYearEl) {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        monthYearEl.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+    }
+
+    // Get events from cache
+    const events = dataCache.events.data || [];
+
+    // Group events by date
+    const eventsByDate = {};
+    events.forEach(event => {
+        const eventDate = event.eventDate ? (event.eventDate.toDate ? event.eventDate.toDate() : new Date(event.eventDate)) : null;
+        if (eventDate) {
+            const dateKey = `${eventDate.getFullYear()}-${eventDate.getMonth()}-${eventDate.getDate()}`;
+            if (!eventsByDate[dateKey]) {
+                eventsByDate[dateKey] = [];
+            }
+            eventsByDate[dateKey].push(event);
+        }
+    });
+
+    // Get first day of month and number of days
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const lastDay = new Date(currentYear, currentMonth + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    // Day names
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    // Build calendar HTML
+    let calendarHTML = '<div class="calendar-weekdays">';
+    dayNames.forEach(day => {
+        calendarHTML += `<div class="calendar-weekday">${day}</div>`;
+    });
+    calendarHTML += '</div>';
+
+    calendarHTML += '<div class="calendar-days">';
+
+    // Empty cells for days before month starts
+    for (let i = 0; i < startingDayOfWeek; i++) {
+        calendarHTML += '<div class="calendar-day calendar-day-empty"></div>';
+    }
+
+    // Days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateKey = `${currentYear}-${currentMonth}-${day}`;
+        const dayEvents = eventsByDate[dateKey] || [];
+        const isToday = isCurrentMonth && day === today.getDate();
+        const isSelected = calendarState.selectedDate &&
+            calendarState.selectedDate.getDate() === day &&
+            calendarState.selectedDate.getMonth() === currentMonth &&
+            calendarState.selectedDate.getFullYear() === currentYear;
+
+        calendarHTML += `<div class="calendar-day ${isToday ? 'calendar-day-today' : ''} ${isSelected ? 'calendar-day-selected' : ''}" data-date="${dateKey}" onclick="selectCalendarDate(${currentYear}, ${currentMonth}, ${day})">`;
+        calendarHTML += `<div class="calendar-day-number">${day}</div>`;
+
+        if (dayEvents.length > 0) {
+            calendarHTML += '<div class="calendar-day-events">';
+            // Show up to 3 events, then "+X more"
+            const eventsToShow = dayEvents.slice(0, 3);
+            const remainingCount = dayEvents.length - 3;
+
+            eventsToShow.forEach(event => {
+                const eventType = event.eventType || 'other';
+                const eventColor = eventTypeColors[eventType] || eventTypeColors.other;
+                const eventName = event.eventName || 'Untitled Event';
+                const startTime = event.startTime || '';
+
+                calendarHTML += `<div class="calendar-event-block" style="background-color: ${eventColor}20; border-left: 3px solid ${eventColor};" onclick="event.stopPropagation(); viewEventInDetail('${event.id}')" title="${eventName}">`;
+                calendarHTML += `<div class="calendar-event-title">${eventName}</div>`;
+                if (startTime) {
+                    calendarHTML += `<div class="calendar-event-time">${startTime}</div>`;
+                }
+                calendarHTML += `</div>`;
+            });
+
+            if (remainingCount > 0) {
+                calendarHTML += `<div class="calendar-event-more">+${remainingCount} more</div>`;
+            }
+
+            calendarHTML += '</div>';
+        }
+
+        calendarHTML += '</div>';
+    }
+
+    calendarHTML += '</div>';
+
+    calendarGrid.innerHTML = calendarHTML;
+}
+
+// Render agenda view (mobile)
+function renderAgendaView() {
+    const agendaView = document.getElementById('events-agenda-view');
+    if (!agendaView) return;
+
+    const events = dataCache.events.data || [];
+
+    if (events.length === 0) {
+        agendaView.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--text-light);">No events scheduled yet</p>';
+        return;
+    }
+
+    // Group events by date
+    const eventsByDate = {};
+    events.forEach(event => {
+        const eventDate = event.eventDate ? (event.eventDate.toDate ? event.eventDate.toDate() : new Date(event.eventDate)) : null;
+        if (eventDate) {
+            const dateKey = eventDate.toDateString();
+            if (!eventsByDate[dateKey]) {
+                eventsByDate[dateKey] = [];
+            }
+            eventsByDate[dateKey].push(event);
+        }
+    });
+
+    // Sort dates
+    const sortedDates = Object.keys(eventsByDate).sort((a, b) => new Date(a) - new Date(b));
+
+    let agendaHTML = '';
+    sortedDates.forEach(dateKey => {
+        const date = new Date(dateKey);
+        const dateStr = date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        const dayEvents = eventsByDate[dateKey];
+
+        agendaHTML += `<div class="agenda-date-group">`;
+        agendaHTML += `<div class="agenda-date-header">${dateStr}</div>`;
+        agendaHTML += `<div class="agenda-events-list">`;
+
+        dayEvents.forEach(event => {
+            const eventType = event.eventType || 'other';
+            const eventColor = eventTypeColors[eventType] || eventTypeColors.other;
+            const eventName = event.eventName || 'Untitled Event';
+            const startTime = event.startTime || '';
+            const endTime = event.endTime || '';
+            const venue = event.venue || '';
+            const island = event.island || '';
+
+            agendaHTML += `<div class="agenda-event-item" onclick="viewEventInDetail('${event.id}')">`;
+            agendaHTML += `<div class="agenda-event-time">${startTime}${endTime ? ` - ${endTime}` : ''}</div>`;
+            agendaHTML += `<div class="agenda-event-content">`;
+            agendaHTML += `<div class="agenda-event-title">${eventName}</div>`;
+            if (venue || island) {
+                agendaHTML += `<div class="agenda-event-location">${island ? island + (venue ? ' • ' : '') : ''}${venue || ''}</div>`;
+            }
+            agendaHTML += `</div>`;
+            agendaHTML += `<div class="agenda-event-type" style="background-color: ${eventColor}20; border-left: 3px solid ${eventColor};"></div>`;
+            agendaHTML += `</div>`;
+        });
+
+        agendaHTML += `</div></div>`;
+    });
+
+    agendaView.innerHTML = agendaHTML;
+}
+
+// Select calendar date
+function selectCalendarDate(year, month, day) {
+    calendarState.selectedDate = new Date(year, month, day);
+    renderCalendar();
+    showEventsForDate(calendarState.selectedDate);
+}
+
+// Show events for selected date
+function showEventsForDate(date) {
+    const events = dataCache.events.data || [];
+    const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+
+    const dayEvents = events.filter(event => {
+        const eventDate = event.eventDate ? (event.eventDate.toDate ? event.eventDate.toDate() : new Date(event.eventDate)) : null;
+        if (!eventDate) return false;
+        const eventDateKey = `${eventDate.getFullYear()}-${eventDate.getMonth()}-${eventDate.getDate()}`;
+        return eventDateKey === dateKey;
+    });
+
+    const detailPanel = document.getElementById('events-detail-panel');
+    const detailContent = document.getElementById('events-detail-content');
+    const detailDate = document.getElementById('events-detail-date');
+    const closeBtn = document.getElementById('events-detail-close');
+
+    if (!detailPanel || !detailContent) return;
+
+    // Show close button on mobile
+    if (closeBtn && window.innerWidth < 1024) {
+        closeBtn.style.display = 'flex';
+    }
+
+    // Update date header
+    if (detailDate) {
+        const dateStr = date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        detailDate.textContent = dateStr;
+    }
+
+    // Show panel on desktop
+    if (window.innerWidth >= 1024) {
+        detailPanel.style.display = 'flex';
+    }
+
+    if (dayEvents.length === 0) {
+        detailContent.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--text-light);">No events scheduled for this date</p>';
+        return;
+    }
+
+    let eventsHTML = '<div class="events-detail-list">';
+    dayEvents.forEach(event => {
+        const eventType = event.eventType || 'other';
+        const eventColor = eventTypeColors[eventType] || eventTypeColors.other;
+        const eventLabel = eventTypeLabels[eventType] || 'Other';
+        const eventName = event.eventName || 'Untitled Event';
+        const startTime = event.startTime || '';
+        const endTime = event.endTime || '';
+        const venue = event.venue || '';
+        const island = event.island || '';
+        const location = event.location || '';
+        const description = event.description || '';
+        const expectedAttendees = event.expectedAttendees || 0;
+
+        eventsHTML += `<div class="event-detail-card" onclick="viewEventInDetail('${event.id}')">`;
+        eventsHTML += `<div class="event-detail-header">`;
+        eventsHTML += `<div class="event-detail-title">${eventName}</div>`;
+        eventsHTML += `<span class="event-type-badge" style="background-color: ${eventColor}20; color: ${eventColor}; border: 1px solid ${eventColor};">${eventLabel}</span>`;
+        eventsHTML += `</div>`;
+
+        if (startTime || endTime) {
+            eventsHTML += `<div class="event-detail-time">`;
+            eventsHTML += `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
+            eventsHTML += `${startTime}${endTime ? ` - ${endTime}` : ''}`;
+            eventsHTML += `</div>`;
+        }
+
+        if (venue || island) {
+            eventsHTML += `<div class="event-detail-location">`;
+            eventsHTML += `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`;
+            eventsHTML += `${island ? island + (venue ? ' • ' : '') : ''}${venue || ''}`;
+            if (location) {
+                eventsHTML += ` • ${location}`;
+            }
+            eventsHTML += `</div>`;
+        }
+
+        if (description) {
+            eventsHTML += `<div class="event-detail-description">${description}</div>`;
+        }
+
+        if (expectedAttendees > 0) {
+            eventsHTML += `<div class="event-detail-attendees">Expected: ${expectedAttendees} attendees</div>`;
+        }
+
+        eventsHTML += `</div>`;
+    });
+    eventsHTML += '</div>';
+
+    detailContent.innerHTML = eventsHTML;
+}
+
+// View event in detail (opens modal)
+function viewEventInDetail(eventId) {
+    // This will open the event edit modal
+    if (window.openModal && window.editEvent) {
+        window.editEvent(eventId);
+    }
+}
+
+// Navigate calendar month
+function navigateCalendarMonth(direction) {
+    if (direction === 'prev') {
+        calendarState.currentMonth--;
+        if (calendarState.currentMonth < 0) {
+            calendarState.currentMonth = 11;
+            calendarState.currentYear--;
+        }
+    } else if (direction === 'next') {
+        calendarState.currentMonth++;
+        if (calendarState.currentMonth > 11) {
+            calendarState.currentMonth = 0;
+            calendarState.currentYear++;
+        }
+    }
+    renderCalendar();
+}
+
+// Navigate to today
+function navigateCalendarToToday() {
+    const today = new Date();
+    calendarState.currentMonth = today.getMonth();
+    calendarState.currentYear = today.getFullYear();
+    calendarState.selectedDate = null;
+    renderCalendar();
+
+    // Clear detail panel
+    const detailPanel = document.getElementById('events-detail-panel');
+    const detailContent = document.getElementById('events-detail-content');
+    const detailDate = document.getElementById('events-detail-date');
+
+    if (detailPanel) detailPanel.style.display = 'none';
+    if (detailContent) detailContent.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--text-light);">Click on a date to view events</p>';
+    if (detailDate) detailDate.textContent = 'Select a date';
+}
+
+// Close events detail panel
+function closeEventsDetailPanel() {
+    const detailPanel = document.getElementById('events-detail-panel');
+    const closeBtn = document.getElementById('events-detail-close');
+
+    if (detailPanel) {
+        detailPanel.style.display = 'none';
+    }
+    if (closeBtn) {
+        closeBtn.style.display = 'none';
+    }
+
+    // Clear selection
+    calendarState.selectedDate = null;
+    renderCalendar();
+}
+
+// Render cached events data
+function renderCachedEventsData() {
+    renderCalendar();
+    renderAgendaView();
+}
+
+// Make functions globally accessible
+window.navigateCalendarMonth = navigateCalendarMonth;
+window.navigateCalendarToToday = navigateCalendarToToday;
+window.selectCalendarDate = selectCalendarDate;
+window.viewEventInDetail = viewEventInDetail;
+window.closeEventsDetailPanel = closeEventsDetailPanel;
 
 // View event details
 async function viewEventDetails(eventId, navigateDirection = null) {
@@ -4628,7 +6902,76 @@ async function loadCallsData(forceRefresh = false) {
             pending = 0;
 
         // Convert Map to array for processing
-        const callsArray = Array.from(allCalls.values());
+        let callsArray = Array.from(allCalls.values());
+
+        // Apply global filter to calls (filter via voter data)
+        const globalFilter = window.globalFilterState || {
+            constituency: null,
+            island: null
+        };
+        if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
+            // Fetch voter data for calls that have voterId/idNumber
+            const voterIds = new Set();
+            callsArray.forEach(call => {
+                if (call.voterDocumentId) voterIds.add(call.voterDocumentId);
+                else if (call.voterId) voterIds.add(call.voterId);
+                else if (call.idNumber) {
+                    // Try to find voter by idNumber - we'll need to query or use cached data
+                    // For now, we'll filter client-side after fetching voter data
+                }
+            });
+
+            // Fetch voter data if we have voter IDs
+            const voterDataMap = new Map();
+            if (voterIds.size > 0) {
+                const {
+                    doc,
+                    getDoc
+                } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                const voterFetchPromises = Array.from(voterIds).map(async (voterId) => {
+                    try {
+                        const voterDocRef = doc(window.db, 'voters', voterId);
+                        const voterDoc = await getDoc(voterDocRef);
+                        if (voterDoc.exists()) {
+                            return {
+                                id: voterId,
+                                data: voterDoc.data()
+                            };
+                        }
+                    } catch (error) {
+                        console.warn(`Could not fetch voter data for call ${voterId}:`, error);
+                    }
+                    return null;
+                });
+
+                const voterResults = await Promise.all(voterFetchPromises);
+                voterResults.forEach(result => {
+                    if (result) voterDataMap.set(result.id, result.data);
+                });
+            }
+
+            // Filter calls based on voter's constituency/island
+            const beforeFilterCount = callsArray.length;
+            callsArray = callsArray.filter(call => {
+                const voterId = call.voterDocumentId || call.voterId;
+                if (!voterId) return true; // Include calls without voter reference
+
+                const voterData = voterDataMap.get(voterId);
+                if (!voterData) return true; // Include if voter data not loaded
+
+                // Island takes priority - if island selected, filter by island only
+                if (globalFilter.island) {
+                    return voterData.island === globalFilter.island;
+                } else if (globalFilter.constituency) {
+                    // If constituency selected but no island, filter by constituency only
+                    return voterData.constituency === globalFilter.constituency;
+                }
+
+                return true;
+            });
+
+            console.log(`[loadCallsData] After global filter: ${callsArray.length} calls (was ${beforeFilterCount})`);
+        }
 
         // Process statistics
         callsArray.forEach(callData => {
@@ -4665,7 +7008,7 @@ async function loadCallsData(forceRefresh = false) {
         if (successEl) successEl.textContent = `${successRate}%`;
 
         if (callsArray.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-light);">No calls recorded yet</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">No calls recorded yet</td></tr>';
             renderPagination('calls', 0);
             return;
         }
@@ -4691,22 +7034,37 @@ async function loadCallsData(forceRefresh = false) {
 
             const voterName = data.voterName || 'N/A';
             const phone = data.phone || data.number || 'N/A';
+            const constituency = data.constituency || (window.campaignData && window.campaignData.constituency) || 'N/A';
+            const island = data.island || 'N/A';
             const caller = data.caller || data.agentName || 'N/A';
             const status = data.status || 'pending';
             const statusClass = status === 'answered' ? 'status-success' : 'status-pending';
             const statusText = status === 'answered' ? 'Answered' : (status === 'no-answer' ? 'No Answer' : (status === 'busy' ? 'Busy' : 'Pending'));
 
             const row = document.createElement('tr');
+            row.className = 'call-table-row';
+            row.style.cursor = 'pointer';
+            row.setAttribute('data-call-id', call.id);
+            row.onclick = () => {
+                viewCallDetails(call.id);
+            };
+            row.onmouseenter = function() {
+                this.style.backgroundColor = 'var(--light-color)';
+            };
+            row.onmouseleave = function() {
+                if (!this.classList.contains('selected')) {
+                    this.style.backgroundColor = '';
+                }
+            };
             row.innerHTML = `
-                <td>${voterName}</td>
-                <td>${phone}</td>
-                <td>${caller}</td>
-                <td>${dateStr}</td>
-                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td>
-                    <button class="icon-btn" title="View Details" onclick="viewCallDetails('${call.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
-                </td>
-            `;
+            <td>${voterName}</td>
+            <td>${phone}</td>
+            <td>${constituency}</td>
+            <td>${island}</td>
+            <td>${caller}</td>
+            <td>${dateStr}</td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+        `;
             fragment.appendChild(row);
         });
 
@@ -4719,7 +7077,7 @@ async function loadCallsData(forceRefresh = false) {
         });
     } catch (error) {
         console.error('Error loading calls:', error);
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-light);">Error loading calls</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">Error loading calls</td></tr>';
         renderPagination('calls', 0);
     }
 }
@@ -4813,7 +7171,7 @@ async function loadPledgesData(forceRefresh = false) {
         console.error('[loadPledgesData] Database not initialized');
         const tbody = document.getElementById('pledges-table-body');
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">Database not initialized. Please refresh the page.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">Database not initialized. Please refresh the page.</td></tr>';
         }
         return;
     }
@@ -4822,7 +7180,7 @@ async function loadPledgesData(forceRefresh = false) {
         console.error('[loadPledgesData] userEmail not set');
         const tbody = document.getElementById('pledges-table-body');
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">User email not available. Please log in again.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">User email not available. Please log in again.</td></tr>';
         }
         return;
     }
@@ -4846,7 +7204,7 @@ async function loadPledgesData(forceRefresh = false) {
     }
 
     // Show skeleton loading
-    showTableSkeleton(tbody, 5, 9);
+    showTableSkeleton(tbody, 5, 11);
 
     try {
         const {
@@ -4920,7 +7278,7 @@ async function loadPledgesData(forceRefresh = false) {
         if (snapshot.empty) {
             console.log('[loadPledgesData] No pledges found for email:', window.userEmail);
             setTimeout(() => {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">No pledges recorded yet</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">No pledges recorded yet</td></tr>';
                 renderPagination('pledges', 0);
             }, 300);
             return;
@@ -4936,10 +7294,23 @@ async function loadPledgesData(forceRefresh = false) {
 
         // Batch fetch all voter data at once (much faster than individual fetches)
         const voterIds = new Set();
+        const voterIdNumbers = new Set(); // For fallback lookup by ID number
+        const candidateIds = new Set(); // For fetching candidate names
         snapshot.docs.forEach(pledgeDoc => {
             const pledgeData = pledgeDoc.data();
             if (pledgeData.voterDocumentId) {
                 voterIds.add(pledgeData.voterDocumentId);
+            } else if (pledgeData.voterId && pledgeData.voterId.length !== 20) {
+                // If no voterDocumentId, try to find by voterId (but not if it's a Firestore document ID)
+                voterIdNumbers.add(pledgeData.voterId);
+            }
+            // Collect candidate IDs
+            if (pledgeData.candidateIds && Array.isArray(pledgeData.candidateIds)) {
+                pledgeData.candidateIds.forEach(id => candidateIds.add(id));
+            } else if (pledgeData.candidateId) {
+                candidateIds.add(pledgeData.candidateId);
+            } else if (pledgeData.candidate) {
+                candidateIds.add(pledgeData.candidate);
             }
         });
 
@@ -4966,8 +7337,69 @@ async function loadPledgesData(forceRefresh = false) {
             voterResults.forEach(result => {
                 if (result) {
                     voterDataMap.set(result.id, result.data);
+                    // Also index by ID number for fallback lookup
+                    const idNumber = result.data.idNumber || result.data.voterId;
+                    if (idNumber && idNumber.length !== 20) {
+                        voterDataMap.set(`idNumber_${idNumber}`, result.data);
+                    }
                 }
             });
+        }
+
+        // Fallback: Try to find voters by ID number if voterDocumentId wasn't available
+        const missingVoterIds = new Set();
+        snapshot.docs.forEach(pledgeDoc => {
+            const pledgeData = pledgeDoc.data();
+            if (!pledgeData.voterDocumentId && pledgeData.voterId && pledgeData.voterId.length !== 20) {
+                // Check if we already have this voter in the map
+                if (!voterDataMap.has(`idNumber_${pledgeData.voterId}`)) {
+                    missingVoterIds.add(pledgeData.voterId);
+                }
+            }
+        });
+
+        if (missingVoterIds.size > 0) {
+            try {
+                // Firestore 'in' query limit is 10, so we need to batch
+                const idArray = Array.from(missingVoterIds);
+                const batches = [];
+                for (let i = 0; i < idArray.length; i += 10) {
+                    batches.push(idArray.slice(i, i + 10));
+                }
+
+                for (const batch of batches) {
+                    const voterIdQuery = query(
+                        collection(window.db, 'voters'),
+                        where('email', '==', window.userEmail),
+                        where('idNumber', 'in', batch)
+                    );
+                    const voterIdSnapshot = await getDocs(voterIdQuery);
+                    voterIdSnapshot.forEach(voterDoc => {
+                        const voterData = voterDoc.data();
+                        const idNumber = voterData.idNumber || voterData.voterId;
+                        if (idNumber) {
+                            voterDataMap.set(voterDoc.id, voterData);
+                            voterDataMap.set(`idNumber_${idNumber}`, voterData);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.warn('Error fetching voters by ID number:', error);
+            }
+        }
+
+        // Fetch candidate names
+        const candidateNamesMap = new Map();
+        if (candidateIds.size > 0) {
+            try {
+                const fetchedMap = await fetchCandidateNamesMap(Array.from(candidateIds));
+                // Convert object map to Map
+                Object.entries(fetchedMap).forEach(([id, name]) => {
+                    candidateNamesMap.set(id, name);
+                });
+            } catch (error) {
+                console.warn('Error fetching candidate names:', error);
+            }
         }
 
         // Now render pledges with pre-fetched voter data
@@ -4981,8 +7413,43 @@ async function loadPledgesData(forceRefresh = false) {
         let undecided = 0;
         let total = 0;
 
-        // Calculate stats from all pledges
-        snapshot.docs.forEach(pledgeDoc => {
+        // Apply global filter to pledges (filter via voter data)
+        const globalFilter = window.globalFilterState || {
+            constituency: null,
+            island: null
+        };
+        let filteredPledgeDocs = snapshot.docs;
+        let filteredPaginatedDocs = paginatedDocs;
+
+        if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
+            // Filter pledges based on their voter's constituency/island
+            filteredPledgeDocs = snapshot.docs.filter(pledgeDoc => {
+                const pledgeData = pledgeDoc.data();
+                const voterId = pledgeData.voterDocumentId;
+                if (!voterId) return true; // Include pledges without voter reference
+
+                const voterData = voterDataMap.get(voterId);
+                if (!voterData) return true; // Include if voter data not loaded yet
+
+                // Island takes priority - if island selected, filter by island only
+                if (globalFilter.island) {
+                    return voterData.island === globalFilter.island;
+                } else if (globalFilter.constituency) {
+                    // If constituency selected but no island, filter by constituency only
+                    return voterData.constituency === globalFilter.constituency;
+                }
+
+                return true;
+            });
+
+            // Recalculate pagination for filtered results
+            filteredPaginatedDocs = filteredPledgeDocs.slice(startIndex, endIndex);
+
+            console.log(`[loadPledgesData] After global filter: ${filteredPledgeDocs.length} pledges (was ${snapshot.docs.length})`);
+        }
+
+        // Calculate stats from filtered pledges
+        filteredPledgeDocs.forEach(pledgeDoc => {
             const pledgeData = pledgeDoc.data();
             total++;
             if (pledgeData.pledge === 'yes') {
@@ -4994,9 +7461,19 @@ async function loadPledgesData(forceRefresh = false) {
             }
         });
 
-        for (const pledgeDoc of paginatedDocs) {
+        for (const pledgeDoc of filteredPaginatedDocs) {
             const pledgeData = pledgeDoc.data();
-            const voterData = pledgeData.voterDocumentId ? voterDataMap.get(pledgeData.voterDocumentId) : null;
+            let voterData = null;
+
+            // Try to get voter data by voterDocumentId first
+            if (pledgeData.voterDocumentId) {
+                voterData = voterDataMap.get(pledgeData.voterDocumentId);
+            }
+
+            // Fallback: Try to find by ID number if voterDocumentId lookup failed
+            if (!voterData && pledgeData.voterId && pledgeData.voterId.length !== 20) {
+                voterData = voterDataMap.get(`idNumber_${pledgeData.voterId}`);
+            }
 
             // Use voter data if available, otherwise fall back to pledge data
             const displayData = voterData || pledgeData;
@@ -5016,7 +7493,7 @@ async function loadPledgesData(forceRefresh = false) {
             let imageUrl = getVoterImageUrl(voterData || pledgeData, idNumber !== 'N/A' ? idNumber : null);
             const permanentAddress = voterData ?
                 ((voterData.permanentAddress && voterData.permanentAddress.trim()) || (voterData.address && voterData.address.trim()) || 'N/A') :
-                ((pledgeData.permanentAddress && pledgeData.permanentAddress.trim()) || 'N/A');
+                ((pledgeData.permanentAddress && pledgeData.permanentAddress.trim()) || (pledgeData.address && pledgeData.address.trim()) || 'N/A');
             const currentLocation = voterData ?
                 ((voterData.currentLocation && voterData.currentLocation.trim()) || (voterData.location && voterData.location.trim()) || 'N/A') :
                 ((pledgeData.currentLocation && pledgeData.currentLocation.trim()) || 'N/A');
@@ -5042,8 +7519,43 @@ async function loadPledgesData(forceRefresh = false) {
                 statusText = 'No';
             }
 
+            const constituency = pledgeData.constituency || (voterData && voterData.constituency) || (window.campaignData && window.campaignData.constituency) || 'N/A';
+            const island = pledgeData.island || (voterData && voterData.island) || 'N/A';
+
+            // Get candidate names for this pledge
+            let candidateNames = [];
+            if (pledgeData.candidateIds && Array.isArray(pledgeData.candidateIds) && pledgeData.candidateIds.length > 0) {
+                candidateNames = pledgeData.candidateIds
+                    .map(id => {
+                        const name = candidateNamesMap.get(id);
+                        return name || 'Unknown Candidate';
+                    })
+                    .filter(name => name); // Only filter out null/undefined, keep 'Unknown Candidate'
+            } else if (pledgeData.candidateId) {
+                const name = candidateNamesMap.get(pledgeData.candidateId);
+                candidateNames = [name || 'Unknown Candidate'];
+            } else if (pledgeData.candidate) {
+                const name = candidateNamesMap.get(pledgeData.candidate);
+                candidateNames = [name || 'Unknown Candidate'];
+            }
+            const candidateDisplay = candidateNames.length > 0 ? candidateNames.join(', ') : 'N/A';
+
             const row = document.createElement('tr');
             const currentPledgeId = pledgeDoc.id;
+            row.className = 'pledge-table-row';
+            row.style.cursor = 'pointer';
+            row.setAttribute('data-pledge-id', currentPledgeId);
+            row.onclick = () => {
+                viewPledgeDetails(currentPledgeId);
+            };
+            row.onmouseenter = function() {
+                this.style.backgroundColor = 'var(--light-color)';
+            };
+            row.onmouseleave = function() {
+                if (!this.classList.contains('selected')) {
+                    this.style.backgroundColor = '';
+                }
+            };
             row.innerHTML = `
                 <td style="text-align: center; color: var(--text-light); font-weight: 600;">${rowNumber}</td>
                 <td>
@@ -5058,32 +7570,13 @@ async function loadPledgesData(forceRefresh = false) {
                         <strong>${voterName}</strong>
                     </div>
                 </td>
+                <td>${constituency}</td>
+                <td>${island}</td>
                 <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${permanentAddress}">${permanentAddress}</td>
                 <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${currentLocation}">${currentLocation}</td>
                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${candidateDisplay}">${candidateDisplay}</td>
                 <td>${dateStr}</td>
-                <td>
-                    <div class="table-actions">
-                        <button class="icon-btn" title="View Details" onclick="viewPledgeDetails('${currentPledgeId}')">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
-                        <button class="icon-btn" title="Edit Pledge" onclick="editPledge('${currentPledgeId}')">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                        </button>
-                        <button class="icon-btn" title="Delete Pledge" onclick="deletePledge('${currentPledgeId}')" style="color: var(--danger-color);">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </td>
             `;
 
             fragment.appendChild(row);
@@ -5116,8 +7609,8 @@ async function loadPledgesData(forceRefresh = false) {
         requestAnimationFrame(() => {
             tbody.textContent = '';
             tbody.appendChild(fragment);
-            // Render pagination
-            renderPagination('pledges', snapshot.docs.length);
+            // Render pagination (use filtered count)
+            renderPagination('pledges', filteredPledgeDocs.length);
         });
     } catch (error) {
         console.error('Error loading pledges:', error);
@@ -5136,7 +7629,7 @@ async function loadPledgesData(forceRefresh = false) {
             window.showErrorDialog(errorMessage, 'Error Loading Pledges');
         }
 
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">
             <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
                 <p style="color: var(--danger-color); font-weight: 600;">${errorMessage}</p>
                 <button class="btn-secondary btn-compact" onclick="loadPledgesData(true)" style="margin-top: 10px;">Retry</button>
@@ -5275,7 +7768,7 @@ function renderCachedPledgesData() {
     updatePledgeStatisticsFromArray(filteredPledges);
 
     if (filteredPledges.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">' +
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">' +
             (searchTerm || filterValue ? 'No pledges found matching your search' : 'No pledges recorded yet') + '</td></tr>';
         renderPagination('pledges', 0);
         return true;
@@ -5295,12 +7788,74 @@ function renderCachedPledgesData() {
     const endIndex = startIndex + state.recordsPerPage;
     const paginatedPledges = filteredPledges.slice(startIndex, endIndex);
 
+    // Collect all candidate IDs from filtered pledges
+    const candidateIds = new Set();
+    paginatedPledges.forEach(pledge => {
+        const pledgeData = pledge;
+        if (pledgeData.candidateIds && Array.isArray(pledgeData.candidateIds)) {
+            pledgeData.candidateIds.forEach(id => candidateIds.add(id));
+        } else if (pledgeData.candidateId) {
+            candidateIds.add(pledgeData.candidateId);
+        } else if (pledgeData.candidate) {
+            candidateIds.add(pledgeData.candidate);
+        }
+    });
+
+    // Fetch candidate names
+    const candidateNamesMap = new Map();
+    if (candidateIds.size > 0) {
+        fetchCandidateNamesMap(Array.from(candidateIds)).then(fetchedMap => {
+            // Convert object map to Map
+            Object.entries(fetchedMap).forEach(([id, name]) => {
+                candidateNamesMap.set(id, name);
+            });
+            // Update candidate name cells after fetching
+            paginatedPledges.forEach((pledge, idx) => {
+                const pledgeData = pledge;
+                let candidateNames = [];
+                if (pledgeData.candidateIds && Array.isArray(pledgeData.candidateIds) && pledgeData.candidateIds.length > 0) {
+                    candidateNames = pledgeData.candidateIds
+                        .map(id => {
+                            const name = candidateNamesMap.get(id);
+                            return name || 'Unknown Candidate';
+                        })
+                        .filter(name => name); // Only filter out null/undefined, keep 'Unknown Candidate'
+                } else if (pledgeData.candidateId) {
+                    const name = candidateNamesMap.get(pledgeData.candidateId);
+                    candidateNames = [name || 'Unknown Candidate'];
+                } else if (pledgeData.candidate) {
+                    const name = candidateNamesMap.get(pledgeData.candidate);
+                    candidateNames = [name || 'Unknown Candidate'];
+                }
+                const candidateDisplay = candidateNames.length > 0 ? candidateNames.join(', ') : 'N/A';
+                const candidateCell = document.querySelector(`.candidate-name-cell[data-pledge-id="${pledge.id || pledgeData.id}"]`);
+                if (candidateCell) {
+                    candidateCell.textContent = candidateDisplay;
+                    candidateCell.title = candidateDisplay;
+                }
+            });
+        }).catch(error => {
+            console.warn('Error fetching candidate names in renderCachedPledgesData:', error);
+        });
+    }
+
     const fragment = document.createDocumentFragment();
     let rowNumber = startIndex + 1;
 
     paginatedPledges.forEach(pledge => {
         const pledgeData = pledge;
-        const voterData = pledge.voterData || (pledge.voterDocumentId ? voterDataMap.get(pledge.voterDocumentId) : null);
+        let voterData = pledge.voterData || null;
+
+        // Try to get voter data by voterDocumentId
+        if (!voterData && pledge.voterDocumentId) {
+            voterData = voterDataMap.get(pledge.voterDocumentId);
+        }
+
+        // Fallback: Try to find by ID number if voterDocumentId lookup failed
+        if (!voterData && pledgeData.voterId && pledgeData.voterId.length !== 20) {
+            voterData = voterDataMap.get(`idNumber_${pledgeData.voterId}`);
+        }
+
         const displayData = voterData || pledgeData;
 
         const voterName = voterData ? (voterData.name || pledgeData.voterName || 'N/A') : (pledgeData.voterName || 'N/A');
@@ -5332,7 +7887,36 @@ function renderCachedPledgesData() {
             statusText = 'No';
         }
 
+        const constituency = pledgeData.constituency || (voterData && voterData.constituency) || (window.campaignData && window.campaignData.constituency) || 'N/A';
+        const island = pledgeData.island || (voterData && voterData.island) || 'N/A';
+
+        // Get candidate names for this pledge (will be updated asynchronously)
+        let candidateDisplay = 'N/A';
+        if (pledgeData.candidateIds && Array.isArray(pledgeData.candidateIds) && pledgeData.candidateIds.length > 0) {
+            candidateDisplay = 'Loading...';
+        } else if (pledgeData.candidateId) {
+            candidateDisplay = 'Loading...';
+        } else if (pledgeData.candidate) {
+            candidateDisplay = 'Loading...';
+        }
+
         const row = document.createElement('tr');
+        row.className = 'pledge-table-row';
+        row.style.cursor = 'pointer';
+        row.setAttribute('data-pledge-id', pledge.id || pledgeData.id);
+        row.onclick = (e) => {
+            // Don't trigger if clicking on action buttons
+            if (e.target.closest('.icon-btn')) return;
+            viewPledgeDetails(pledge.id || pledgeData.id);
+        };
+        row.onmouseenter = function() {
+            this.style.backgroundColor = 'var(--light-color)';
+        };
+        row.onmouseleave = function() {
+            if (!this.classList.contains('selected')) {
+                this.style.backgroundColor = '';
+            }
+        };
         row.innerHTML = `
             <td style="text-align: center; color: var(--text-light); font-weight: 600;">${rowNumber}</td>
             <td>
@@ -5347,32 +7931,13 @@ function renderCachedPledgesData() {
                     <strong>${voterName}</strong>
                 </div>
             </td>
+            <td>${constituency}</td>
+            <td>${island}</td>
             <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${permanentAddress}">${permanentAddress}</td>
             <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${currentLocation}">${currentLocation}</td>
             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+            <td class="candidate-name-cell" data-pledge-id="${pledge.id || pledgeData.id}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${candidateDisplay}">${candidateDisplay}</td>
             <td>${dateStr}</td>
-            <td>
-                <div class="table-actions">
-                    <button class="icon-btn" title="View Details" onclick="viewPledgeDetails('${pledge.id || pledgeData.id}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                    </button>
-                    <button class="icon-btn" title="Edit Pledge" onclick="editPledge('${pledge.id || pledgeData.id}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                    </button>
-                    <button class="icon-btn" title="Delete Pledge" onclick="deletePledge('${pledge.id || pledgeData.id}')" style="color: var(--danger-color);">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                    </button>
-                </div>
-            </td>
         `;
         fragment.appendChild(row);
 
@@ -5536,12 +8101,33 @@ async function loadAgentsData(forceRefresh = false) {
             // Create promise for voter count and pledges queries
             const statsPromise = (async () => {
                 try {
-                    // Count assigned voters
+                    // Count assigned voters (with global filter applied)
                     const votersQuery = query(collection(window.db, 'voters'),
                         where('email', '==', window.userEmail),
                         where('assignedAgentId', '==', agentDoc.id));
                     const votersSnapshot = await getDocs(votersQuery);
-                    const votersCount = votersSnapshot.size;
+
+                    // Apply global filter to voter count
+                    const globalFilter = window.globalFilterState || {
+                        constituency: null,
+                        island: null
+                    };
+                    let votersCount = votersSnapshot.size;
+                    if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
+                        votersCount = 0;
+                        votersSnapshot.forEach(voterDoc => {
+                            const voterData = voterDoc.data();
+                            let matches = true;
+                            // Island takes priority - if island selected, filter by island only
+                            if (globalFilter.island) {
+                                matches = voterData.island === globalFilter.island;
+                            } else if (globalFilter.constituency) {
+                                // If constituency selected but no island, filter by constituency only
+                                matches = voterData.constituency === globalFilter.constituency;
+                            }
+                            if (matches) votersCount++;
+                        });
+                    }
 
                     // Count pledges by this agent
                     const pledgesQuery = query(collection(window.db, 'pledges'),
@@ -5762,16 +8348,32 @@ function renderCachedCallsData() {
         const statusClass = status === 'answered' ? 'status-success' : 'status-pending';
         const statusText = status === 'answered' ? 'Answered' : (status === 'no-answer' ? 'No Answer' : (status === 'busy' ? 'Busy' : 'Pending'));
 
+        const constituency = data.constituency || (window.campaignData && window.campaignData.constituency) || 'N/A';
+        const island = data.island || 'N/A';
+
         const row = document.createElement('tr');
+        row.className = 'call-table-row';
+        row.style.cursor = 'pointer';
+        row.setAttribute('data-call-id', call.id);
+        row.onclick = () => {
+            viewCallDetails(call.id);
+        };
+        row.onmouseenter = function() {
+            this.style.backgroundColor = 'var(--light-color)';
+        };
+        row.onmouseleave = function() {
+            if (!this.classList.contains('selected')) {
+                this.style.backgroundColor = '';
+            }
+        };
         row.innerHTML = `
             <td>${voterName}</td>
             <td>${phone}</td>
+            <td>${constituency}</td>
+            <td>${island}</td>
             <td>${caller}</td>
             <td>${dateStr}</td>
             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-            <td>
-                <button class="icon-btn" title="View Details" onclick="viewCallDetails('${call.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
-            </td>
         `;
         fragment.appendChild(row);
     });
@@ -5824,10 +8426,15 @@ function renderCachedAgentsData() {
         const agentName = data.name || 'N/A';
         const assignedArea = data.assignedArea || 'N/A';
 
+        const constituency = data.constituency || (window.campaignData && window.campaignData.constituency) || 'N/A';
+        const island = data.island || 'N/A';
+
         const row = document.createElement('tr');
         row.innerHTML = `
             <td style="text-align: center; font-weight: 600; color: var(--text-light);">${rowNumber}</td>
             <td style="font-weight: 600; color: var(--text-color);">${agentName}</td>
+            <td>${constituency}</td>
+            <td>${island}</td>
             <td>${assignedArea}</td>
             <td style="text-align: center;">
                 <span style="font-weight: 600; color: var(--primary-color);">${assignedVotersCount}</span>
@@ -6143,30 +8750,171 @@ async function loadAnalyticsData() {
         ]);
 
         // Extract data
-        const voters = votersSnap.docs.map(doc => ({
+        let voters = votersSnap.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }));
-        const pledges = pledgesSnap.docs.map(doc => ({
+        let pledges = pledgesSnap.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }));
-        const calls = callsSnap.docs.map(doc => ({
+        let calls = callsSnap.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }));
-        const agents = agentsSnap.docs.map(doc => ({
+        let agents = agentsSnap.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }));
-        const events = eventsSnap.docs.map(doc => ({
+        let events = eventsSnap.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }));
-        const candidates = candidatesSnap.docs.map(doc => ({
+        let candidates = candidatesSnap.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }));
+
+        // Apply global filter
+        const globalFilter = window.globalFilterState || {
+            constituency: null,
+            island: null
+        };
+
+        if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
+            // Filter voters, candidates, agents directly
+            voters = voters.filter(voter => {
+                // Island takes priority - if island selected, filter by island only
+                if (globalFilter.island) {
+                    return voter.island === globalFilter.island;
+                } else if (globalFilter.constituency) {
+                    // If constituency selected but no island, filter by constituency only
+                    return voter.constituency === globalFilter.constituency;
+                }
+                return true;
+            });
+
+            candidates = candidates.filter(candidate => {
+                if (globalFilter.island) {
+                    return candidate.island === globalFilter.island;
+                } else if (globalFilter.constituency) {
+                    return candidate.constituency === globalFilter.constituency;
+                }
+                return true;
+            });
+
+            agents = agents.filter(agent => {
+                if (globalFilter.island) {
+                    return agent.island === globalFilter.island;
+                } else if (globalFilter.constituency) {
+                    return agent.constituency === globalFilter.constituency;
+                }
+                return true;
+            });
+
+            // Filter pledges and calls via voter data
+            const {
+                doc: docFn,
+                getDoc: getDocFn
+            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+            // Fetch voter data for pledges
+            const voterIdsForPledges = new Set();
+            pledges.forEach(pledge => {
+                if (pledge.voterDocumentId) voterIdsForPledges.add(pledge.voterDocumentId);
+            });
+
+            const voterDataMapForPledges = new Map();
+            if (voterIdsForPledges.size > 0) {
+                const voterPromises = Array.from(voterIdsForPledges).map(async (voterId) => {
+                    try {
+                        const voterDocRef = docFn(window.db, 'voters', voterId);
+                        const voterDoc = await getDocFn(voterDocRef);
+                        if (voterDoc.exists()) {
+                            return {
+                                id: voterId,
+                                data: voterDoc.data()
+                            };
+                        }
+                    } catch (error) {
+                        console.warn(`Could not fetch voter data for pledge ${voterId}:`, error);
+                    }
+                    return null;
+                });
+                const voterResults = await Promise.all(voterPromises);
+                voterResults.forEach(result => {
+                    if (result) voterDataMapForPledges.set(result.id, result.data);
+                });
+            }
+
+            // Filter pledges based on voter data
+            pledges = pledges.filter(pledge => {
+                const voterId = pledge.voterDocumentId;
+                if (!voterId) return true; // Include pledges without voter reference
+
+                const voterData = voterDataMapForPledges.get(voterId);
+                if (!voterData) return true; // Include if voter data not loaded
+
+                // Island takes priority - if island selected, filter by island only
+                if (globalFilter.island) {
+                    return voterData.island === globalFilter.island;
+                } else if (globalFilter.constituency) {
+                    // If constituency selected but no island, filter by constituency only
+                    return voterData.constituency === globalFilter.constituency;
+                }
+                return true;
+            });
+
+            // Fetch voter data for calls
+            const voterIdsForCalls = new Set();
+            calls.forEach(call => {
+                if (call.voterDocumentId) voterIdsForCalls.add(call.voterDocumentId);
+                else if (call.voterId) voterIdsForCalls.add(call.voterId);
+            });
+
+            const voterDataMapForCalls = new Map();
+            if (voterIdsForCalls.size > 0) {
+                const voterPromises = Array.from(voterIdsForCalls).map(async (voterId) => {
+                    try {
+                        const voterDocRef = docFn(window.db, 'voters', voterId);
+                        const voterDoc = await getDocFn(voterDocRef);
+                        if (voterDoc.exists()) {
+                            return {
+                                id: voterId,
+                                data: voterDoc.data()
+                            };
+                        }
+                    } catch (error) {
+                        console.warn(`Could not fetch voter data for call ${voterId}:`, error);
+                    }
+                    return null;
+                });
+                const voterResults = await Promise.all(voterPromises);
+                voterResults.forEach(result => {
+                    if (result) voterDataMapForCalls.set(result.id, result.data);
+                });
+            }
+
+            // Filter calls based on voter data
+            calls = calls.filter(call => {
+                const voterId = call.voterDocumentId || call.voterId;
+                if (!voterId) return true; // Include calls without voter reference
+
+                const voterData = voterDataMapForCalls.get(voterId);
+                if (!voterData) return true; // Include if voter data not loaded
+
+                // Island takes priority - if island selected, filter by island only
+                if (globalFilter.island) {
+                    return voterData.island === globalFilter.island;
+                } else if (globalFilter.constituency) {
+                    // If constituency selected but no island, filter by constituency only
+                    return voterData.constituency === globalFilter.constituency;
+                }
+                return true;
+            });
+
+            console.log(`[loadAnalyticsData] After global filter (constituency: ${globalFilter.constituency || 'All'}, island: ${globalFilter.island || 'All'}): ${voters.length} voters, ${pledges.length} pledges, ${calls.length} calls`);
+        }
 
         // Update key metrics
         updateKeyMetrics(voters, pledges, calls, agents);
@@ -6610,10 +9358,32 @@ async function generateReport(type) {
 
         if (type === 'voter') {
             const snapshot = await getDocs(query(collection(window.db, 'voters'), where('email', '==', window.userEmail)));
-            data = snapshot.docs.map(doc => {
-                const d = doc.data();
+            let votersData = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            // Apply global filter
+            const globalFilter = window.globalFilterState || {
+                constituency: null,
+                island: null
+            };
+            if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
+                votersData = votersData.filter(voter => {
+                    // Island takes priority - if island selected, filter by island only
+                    if (globalFilter.island) {
+                        return voter.island === globalFilter.island;
+                    } else if (globalFilter.constituency) {
+                        // If constituency selected but no island, filter by constituency only
+                        return voter.constituency === globalFilter.constituency;
+                    }
+                    return true;
+                });
+            }
+
+            data = votersData.map((d, index) => {
                 return {
-                    'No.': snapshot.docs.indexOf(doc) + 1,
+                    'No.': index + 1,
                     'ID Number': d.idNumber || 'N/A',
                     'Name': d.name || 'N/A',
                     'Date of Birth': d.dateOfBirth ? (d.dateOfBirth.toDate ? d.dateOfBirth.toDate().toLocaleDateString() : d.dateOfBirth) : 'N/A',
@@ -6628,11 +9398,100 @@ async function generateReport(type) {
             });
             filename = `voter-report-${Date.now()}.csv`;
         } else if (type === 'call') {
-            const snapshot = await getDocs(query(collection(window.db, 'calls'), where('email', '==', window.userEmail)));
-            data = snapshot.docs.map(doc => {
-                const d = doc.data();
+            const {
+                doc: docFn,
+                getDoc: getDocFn
+            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+            // Try both email and campaignEmail queries
+            let callsData = [];
+            try {
+                const callsQuery1 = query(collection(window.db, 'calls'), where('campaignEmail', '==', window.userEmail));
+                const snapshot1 = await getDocs(callsQuery1);
+                snapshot1.forEach(doc => {
+                    callsData.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+            } catch (e) {
+                console.warn('Error querying calls by campaignEmail:', e);
+            }
+
+            try {
+                const callsQuery2 = query(collection(window.db, 'calls'), where('email', '==', window.userEmail));
+                const snapshot2 = await getDocs(callsQuery2);
+                snapshot2.forEach(doc => {
+                    // Avoid duplicates
+                    if (!callsData.find(c => c.id === doc.id)) {
+                        callsData.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    }
+                });
+            } catch (e) {
+                console.warn('Error querying calls by email:', e);
+            }
+
+            // Apply global filter via voter data
+            const globalFilter = window.globalFilterState || {
+                constituency: null,
+                island: null
+            };
+            if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
+                // Fetch voter data for calls
+                const voterIds = new Set();
+                callsData.forEach(call => {
+                    if (call.voterDocumentId) voterIds.add(call.voterDocumentId);
+                    else if (call.voterId) voterIds.add(call.voterId);
+                });
+
+                const voterDataMap = new Map();
+                if (voterIds.size > 0) {
+                    const voterPromises = Array.from(voterIds).map(async (voterId) => {
+                        try {
+                            const voterDocRef = docFn(window.db, 'voters', voterId);
+                            const voterDoc = await getDocFn(voterDocRef);
+                            if (voterDoc.exists()) {
+                                return {
+                                    id: voterId,
+                                    data: voterDoc.data()
+                                };
+                            }
+                        } catch (error) {
+                            console.warn(`Could not fetch voter data for call ${voterId}:`, error);
+                        }
+                        return null;
+                    });
+                    const voterResults = await Promise.all(voterPromises);
+                    voterResults.forEach(result => {
+                        if (result) voterDataMap.set(result.id, result.data);
+                    });
+                }
+
+                // Filter calls based on voter data
+                callsData = callsData.filter(call => {
+                    const voterId = call.voterDocumentId || call.voterId;
+                    if (!voterId) return true; // Include calls without voter reference
+
+                    const voterData = voterDataMap.get(voterId);
+                    if (!voterData) return true; // Include if voter data not loaded
+
+                    // Island takes priority - if island selected, filter by island only
+                    if (globalFilter.island) {
+                        return voterData.island === globalFilter.island;
+                    } else if (globalFilter.constituency) {
+                        // If constituency selected but no island, filter by constituency only
+                        return voterData.constituency === globalFilter.constituency;
+                    }
+                    return true;
+                });
+            }
+
+            data = callsData.map(d => {
                 return {
-                    'Date': d.date ? (d.date.toDate ? d.date.toDate().toLocaleDateString() : d.date) : 'N/A',
+                    'Date': d.callDate ? (d.callDate.toDate ? d.callDate.toDate().toLocaleDateString() : d.callDate) : (d.date ? (d.date.toDate ? d.date.toDate().toLocaleDateString() : d.date) : 'N/A'),
                     'Voter Name': d.voterName || 'N/A',
                     'Voter ID': d.voterId || 'N/A',
                     'Status': d.status || 'N/A',
@@ -6642,12 +9501,44 @@ async function generateReport(type) {
             });
             filename = `call-report-${Date.now()}.csv`;
         } else if (type === 'event') {
-            const snapshot = await getDocs(query(collection(window.db, 'events'), where('email', '==', window.userEmail)));
-            data = snapshot.docs.map(doc => {
-                const d = doc.data();
+            // Try both email and campaignEmail queries
+            let eventsData = [];
+            try {
+                const eventsQuery1 = query(collection(window.db, 'events'), where('campaignEmail', '==', window.userEmail));
+                const snapshot1 = await getDocs(eventsQuery1);
+                snapshot1.forEach(doc => {
+                    eventsData.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+            } catch (e) {
+                console.warn('Error querying events by campaignEmail:', e);
+            }
+
+            try {
+                const eventsQuery2 = query(collection(window.db, 'events'), where('email', '==', window.userEmail));
+                const snapshot2 = await getDocs(eventsQuery2);
+                snapshot2.forEach(doc => {
+                    // Avoid duplicates
+                    if (!eventsData.find(e => e.id === doc.id)) {
+                        eventsData.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    }
+                });
+            } catch (e) {
+                console.warn('Error querying events by email:', e);
+            }
+
+            // Note: Events don't have constituency/island fields directly, so no global filter applied
+            // If events need filtering in the future, it would need to be via related data
+
+            data = eventsData.map(d => {
                 return {
                     'Event Name': d.eventName || 'N/A',
-                    'Date': d.date ? (d.date.toDate ? d.date.toDate().toLocaleDateString() : d.date) : 'N/A',
+                    'Date': d.eventDate ? (d.eventDate.toDate ? d.eventDate.toDate().toLocaleDateString() : d.eventDate) : (d.date ? (d.date.toDate ? d.date.toDate().toLocaleDateString() : d.date) : 'N/A'),
                     'Location': d.location || 'N/A',
                     'Start Time': d.startTime || 'N/A',
                     'End Time': d.endTime || 'N/A',
@@ -6659,20 +9550,77 @@ async function generateReport(type) {
         } else if (type === 'pledge') {
             // Fetch pledges with voter details
             const {
-                getDoc,
-                doc
+                getDoc: getDocFn,
+                doc: docFn
             } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
             const pledgesSnapshot = await getDocs(query(collection(window.db, 'pledges'), where('email', '==', window.userEmail)));
-            const pledges = [];
+            let pledgesData = pledgesSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
 
-            for (const pledgeDoc of pledgesSnapshot.docs) {
-                const pledgeData = pledgeDoc.data();
+            // Apply global filter via voter data
+            const globalFilter = window.globalFilterState || {
+                constituency: null,
+                island: null
+            };
+            if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
+                // Fetch voter data for pledges
+                const voterIds = new Set();
+                pledgesData.forEach(pledge => {
+                    if (pledge.voterDocumentId) voterIds.add(pledge.voterDocumentId);
+                });
+
+                const voterDataMap = new Map();
+                if (voterIds.size > 0) {
+                    const voterPromises = Array.from(voterIds).map(async (voterId) => {
+                        try {
+                            const voterDocRef = docFn(window.db, 'voters', voterId);
+                            const voterDoc = await getDocFn(voterDocRef);
+                            if (voterDoc.exists()) {
+                                return {
+                                    id: voterId,
+                                    data: voterDoc.data()
+                                };
+                            }
+                        } catch (error) {
+                            console.warn(`Could not fetch voter data for pledge ${voterId}:`, error);
+                        }
+                        return null;
+                    });
+                    const voterResults = await Promise.all(voterPromises);
+                    voterResults.forEach(result => {
+                        if (result) voterDataMap.set(result.id, result.data);
+                    });
+                }
+
+                // Filter pledges based on voter data
+                pledgesData = pledgesData.filter(pledge => {
+                    const voterId = pledge.voterDocumentId;
+                    if (!voterId) return true; // Include pledges without voter reference
+
+                    const voterData = voterDataMap.get(voterId);
+                    if (!voterData) return true; // Include if voter data not loaded
+
+                    // Island takes priority - if island selected, filter by island only
+                    if (globalFilter.island) {
+                        return voterData.island === globalFilter.island;
+                    } else if (globalFilter.constituency) {
+                        // If constituency selected but no island, filter by constituency only
+                        return voterData.constituency === globalFilter.constituency;
+                    }
+                    return true;
+                });
+            }
+
+            const pledges = [];
+            for (const pledgeData of pledgesData) {
                 let voterName = 'N/A';
                 let voterId = 'N/A';
 
                 if (pledgeData.voterDocumentId) {
                     try {
-                        const voterDoc = await getDoc(doc(window.db, 'voters', pledgeData.voterDocumentId));
+                        const voterDoc = await getDocFn(docFn(window.db, 'voters', pledgeData.voterDocumentId));
                         if (voterDoc.exists()) {
                             const voterData = voterDoc.data();
                             voterName = voterData.name || 'N/A';
@@ -6687,7 +9635,7 @@ async function generateReport(type) {
                     'Voter Name': voterName,
                     'Voter ID': voterId,
                     'Pledge Status': pledgeData.pledge || 'N/A',
-                    'Date Recorded': pledgeData.dateRecorded ? (pledgeData.dateRecorded.toDate ? pledgeData.dateRecorded.toDate().toLocaleDateString() : pledgeData.dateRecorded) : 'N/A',
+                    'Date Recorded': pledgeData.recordedAt ? (pledgeData.recordedAt.toDate ? pledgeData.recordedAt.toDate().toLocaleDateString() : pledgeData.recordedAt) : (pledgeData.dateRecorded ? (pledgeData.dateRecorded.toDate ? pledgeData.dateRecorded.toDate().toLocaleDateString() : pledgeData.dateRecorded) : 'N/A'),
                     'Agent': pledgeData.agentName || 'N/A'
                 });
             }
@@ -6696,25 +9644,158 @@ async function generateReport(type) {
             filename = `pledge-report-${Date.now()}.csv`;
         } else if (type === 'full') {
             // Generate comprehensive report with all data
+            const {
+                doc: docFn,
+                getDoc: getDocFn
+            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
             const [votersSnap, pledgesSnap, callsSnap, eventsSnap, agentsSnap] = await Promise.all([
-                getDocs(query(collection(window.db, 'voters'), where('email', '==', window.userEmail))),
-                getDocs(query(collection(window.db, 'pledges'), where('email', '==', window.userEmail))),
-                getDocs(query(collection(window.db, 'calls'), where('email', '==', window.userEmail))),
-                getDocs(query(collection(window.db, 'events'), where('email', '==', window.userEmail))),
-                getDocs(query(collection(window.db, 'agents'), where('email', '==', window.userEmail)))
+                getDocs(query(collection(window.db, 'voters'), where('email', '==', window.userEmail))).catch(() => ({
+                    size: 0,
+                    docs: []
+                })),
+                getDocs(query(collection(window.db, 'pledges'), where('email', '==', window.userEmail))).catch(() => ({
+                    size: 0,
+                    docs: []
+                })),
+                getDocs(query(collection(window.db, 'calls'), where('email', '==', window.userEmail))).catch(() => ({
+                    size: 0,
+                    docs: []
+                })),
+                getDocs(query(collection(window.db, 'events'), where('email', '==', window.userEmail))).catch(() => ({
+                    size: 0,
+                    docs: []
+                })),
+                getDocs(query(collection(window.db, 'agents'), where('email', '==', window.userEmail))).catch(() => ({
+                    size: 0,
+                    docs: []
+                }))
             ]);
+
+            // Apply global filter
+            const globalFilter = window.globalFilterState || {
+                constituency: null,
+                island: null
+            };
+
+            let voters = votersSnap.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            let pledges = pledgesSnap.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            let calls = callsSnap.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            let agents = agentsSnap.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            let events = eventsSnap.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
+                // Filter voters, agents directly
+                voters = voters.filter(voter => {
+                    if (globalFilter.island) {
+                        return voter.island === globalFilter.island;
+                    } else if (globalFilter.constituency) {
+                        return voter.constituency === globalFilter.constituency;
+                    }
+                    return true;
+                });
+
+                agents = agents.filter(agent => {
+                    if (globalFilter.island) {
+                        return agent.island === globalFilter.island;
+                    } else if (globalFilter.constituency) {
+                        return agent.constituency === globalFilter.constituency;
+                    }
+                    return true;
+                });
+
+                // Filter pledges and calls via voter data
+                const voterIds = new Set();
+                pledges.forEach(pledge => {
+                    if (pledge.voterDocumentId) voterIds.add(pledge.voterDocumentId);
+                });
+                calls.forEach(call => {
+                    if (call.voterDocumentId) voterIds.add(call.voterDocumentId);
+                    else if (call.voterId) voterIds.add(call.voterId);
+                });
+
+                const voterDataMap = new Map();
+                if (voterIds.size > 0) {
+                    const voterPromises = Array.from(voterIds).map(async (voterId) => {
+                        try {
+                            const voterDocRef = docFn(window.db, 'voters', voterId);
+                            const voterDoc = await getDocFn(voterDocRef);
+                            if (voterDoc.exists()) {
+                                return {
+                                    id: voterId,
+                                    data: voterDoc.data()
+                                };
+                            }
+                        } catch (error) {
+                            console.warn(`Could not fetch voter data: ${voterId}`, error);
+                        }
+                        return null;
+                    });
+                    const voterResults = await Promise.all(voterPromises);
+                    voterResults.forEach(result => {
+                        if (result) voterDataMap.set(result.id, result.data);
+                    });
+                }
+
+                // Filter pledges
+                pledges = pledges.filter(pledge => {
+                    const voterId = pledge.voterDocumentId;
+                    if (!voterId) return true;
+                    const voterData = voterDataMap.get(voterId);
+                    if (!voterData) return true;
+                    if (globalFilter.island) {
+                        return voterData.island === globalFilter.island;
+                    } else if (globalFilter.constituency) {
+                        return voterData.constituency === globalFilter.constituency;
+                    }
+                    return true;
+                });
+
+                // Filter calls
+                calls = calls.filter(call => {
+                    const voterId = call.voterDocumentId || call.voterId;
+                    if (!voterId) return true;
+                    const voterData = voterDataMap.get(voterId);
+                    if (!voterData) return true;
+                    if (globalFilter.island) {
+                        return voterData.island === globalFilter.island;
+                    } else if (globalFilter.constituency) {
+                        return voterData.constituency === globalFilter.constituency;
+                    }
+                    return true;
+                });
+            }
+
+            const filterInfo = globalFilter.initialized && (globalFilter.constituency || globalFilter.island) ?
+                `\nFilter Applied: ${globalFilter.island ? `Island: ${globalFilter.island}` : `Constituency: ${globalFilter.constituency}`}` :
+                '';
 
             const report = {
                 campaign: window.campaignData ? window.campaignData.campaignName : 'N/A',
                 generatedAt: new Date().toLocaleString(),
                 summary: {
-                    totalVoters: votersSnap.size,
-                    totalPledges: pledgesSnap.size,
-                    totalCalls: callsSnap.size,
-                    totalEvents: eventsSnap.size,
-                    totalAgents: agentsSnap.size
+                    totalVoters: voters.length,
+                    totalPledges: pledges.length,
+                    totalCalls: calls.length,
+                    totalEvents: events.length,
+                    totalAgents: agents.length
                 },
-                details: 'See individual sections for detailed breakdowns'
+                details: 'See individual sections for detailed breakdowns' + filterInfo
             };
 
             // Create comprehensive text report
@@ -6809,6 +9890,7 @@ function downloadTextFile(content, filename) {
 // Make functions globally available
 window.refreshAnalytics = refreshAnalytics;
 window.generateReport = generateReport;
+window.loadAnalyticsData = loadAnalyticsData;
 
 // Update mobile bottom navigation visibility based on settings
 function updateMobileBottomNavVisibility() {
@@ -6855,32 +9937,8 @@ window.updateMobileBottomNavVisibility = updateMobileBottomNavVisibility;
 
 // Populate settings page with campaign data
 function populateSettingsData() {
-    // Initialize messenger toggle state from localStorage
+    // Initialize mobile bottom nav toggle state from localStorage
     setTimeout(() => {
-        const messengerToggle = document.getElementById('messenger-enabled-toggle');
-        if (messengerToggle) {
-            const savedSetting = localStorage.getItem('messengerEnabled');
-            const isEnabled = savedSetting === 'true';
-            messengerToggle.checked = isEnabled;
-
-            // Update messenger visibility when settings page loads
-            if (typeof window.updateMessengerVisibility === 'function') {
-                window.updateMessengerVisibility();
-            } else if (typeof updateMessengerVisibility === 'function') {
-                updateMessengerVisibility();
-            }
-
-            // Add event listener for messenger toggle
-            messengerToggle.addEventListener('change', (e) => {
-                const enabled = e.target.checked;
-                localStorage.setItem('messengerEnabled', enabled.toString());
-                if (typeof window.updateMessengerVisibility === 'function') {
-                    window.updateMessengerVisibility();
-                }
-            });
-        }
-
-        // Initialize mobile bottom nav toggle state from localStorage
         const mobileNavToggle = document.getElementById('mobile-bottom-nav-toggle');
         if (mobileNavToggle) {
             const savedSetting = localStorage.getItem('mobileBottomNavEnabled');
@@ -6895,6 +9953,31 @@ function populateSettingsData() {
                 const enabled = e.target.checked;
                 localStorage.setItem('mobileBottomNavEnabled', enabled.toString());
                 updateMobileBottomNavVisibility();
+            });
+        }
+
+        // Initialize show voter images toggle state from Firestore
+        const showVoterImagesToggle = document.getElementById('show-voter-images-toggle');
+        if (showVoterImagesToggle) {
+            // Load setting from Firestore
+            loadShowVoterImagesSetting().then(enabled => {
+                window.showVoterImages = enabled !== false; // Default to true
+                showVoterImagesToggle.checked = window.showVoterImages;
+            }).catch(() => {
+                // Default to true if loading fails
+                window.showVoterImages = true;
+                showVoterImagesToggle.checked = true;
+            });
+
+            // Add event listener for show voter images toggle
+            showVoterImagesToggle.addEventListener('change', async (e) => {
+                const enabled = e.target.checked;
+                window.showVoterImages = enabled;
+                await saveShowVoterImagesSetting(enabled);
+                // Reload voters table if on voters page
+                if (currentSection === 'voters' && typeof loadVotersData === 'function') {
+                    loadVotersData();
+                }
             });
         }
 
@@ -6937,6 +10020,86 @@ function populateSettingsData() {
             });
         }
     }, 300);
+}
+
+// Load show voter images setting from Firestore
+async function loadShowVoterImagesSetting() {
+    if (!window.db || !window.userEmail) {
+        return true; // Default to true
+    }
+
+    try {
+        const {
+            getDoc,
+            doc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        const userRef = doc(window.db, 'users', window.userEmail);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            return userData.showVoterImages !== false; // Default to true if not set
+        }
+
+        return true; // Default to true
+    } catch (error) {
+        console.error('Error loading show voter images setting:', error);
+        return true; // Default to true on error
+    }
+}
+
+// Save show voter images setting to Firebase
+async function saveShowVoterImagesSetting(enabled) {
+    if (!window.db || !window.userEmail) {
+        console.error('Database or user email not available');
+        return;
+    }
+
+    try {
+        const {
+            doc,
+            updateDoc,
+            setDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        const userRef = doc(window.db, 'users', window.userEmail);
+
+        // Try to update, if document doesn't exist, create it
+        try {
+            await updateDoc(userRef, {
+                showVoterImages: enabled
+            });
+        } catch (error) {
+            if (error.code === 'not-found') {
+                // Document doesn't exist, create it
+                await setDoc(userRef, {
+                    email: window.userEmail,
+                    showVoterImages: enabled
+                }, {
+                    merge: true
+                });
+            } else {
+                throw error;
+            }
+        }
+
+        // Update local campaignData
+        if (window.campaignData) {
+            window.campaignData.showVoterImages = enabled;
+        } else {
+            window.campaignData = {
+                showVoterImages: enabled
+            };
+        }
+
+        console.log('[saveShowVoterImagesSetting] Show voter images setting saved:', enabled);
+    } catch (error) {
+        console.error('Error saving show voter images setting:', error);
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Failed to save voter images setting. Please try again.', 'Error');
+        }
+    }
 }
 
 // Save Zero Day toggle state to Firebase
@@ -7069,16 +10232,37 @@ async function loadBallotsData(forceRefresh = false, skipSkeleton = false) {
             getDocs
         } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
 
-        const ballotsQuery = query(
-            collection(window.db, 'ballots'),
-            where('email', '==', window.userEmail),
-            orderBy('ballotNumber', 'asc')
-        );
-
-        const snapshot = await getDocs(ballotsQuery);
+        // Try querying with email first, fallback to campaignEmail if needed
+        let snapshot;
+        try {
+            const ballotsQuery = query(
+                collection(window.db, 'ballots'),
+                where('email', '==', window.userEmail),
+                orderBy('ballotNumber', 'asc')
+            );
+            snapshot = await getDocs(ballotsQuery);
+        } catch (emailError) {
+            console.warn('[Ballots] Query by email failed, trying campaignEmail:', emailError);
+            try {
+                const campaignBallotsQuery = query(
+                    collection(window.db, 'ballots'),
+                    where('campaignEmail', '==', window.userEmail),
+                    orderBy('ballotNumber', 'asc')
+                );
+                snapshot = await getDocs(campaignBallotsQuery);
+            } catch (campaignError) {
+                console.warn('[Ballots] Query by campaignEmail failed, trying without orderBy:', campaignError);
+                // Fallback: query without orderBy
+                const simpleQuery = query(
+                    collection(window.db, 'ballots'),
+                    where('email', '==', window.userEmail)
+                );
+                snapshot = await getDocs(simpleQuery);
+            }
+        }
 
         // Combine local storage and Firebase data
-        const allBallots = [];
+        let allBallots = [];
 
         // Add local storage ballots (pending sync)
         localBallots.forEach(localBallot => {
@@ -7100,6 +10284,25 @@ async function loadBallotsData(forceRefresh = false, skipSkeleton = false) {
                 _isLocal: false
             });
         });
+
+        // Apply global filter
+        const globalFilter = window.globalFilterState || {
+            constituency: null,
+            island: null
+        };
+        if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
+            allBallots = allBallots.filter(ballot => {
+                // Island takes priority - if island selected, filter by island only
+                if (globalFilter.island) {
+                    return ballot.island === globalFilter.island;
+                } else if (globalFilter.constituency) {
+                    // If constituency selected but no island, filter by constituency only
+                    return ballot.constituency === globalFilter.constituency;
+                }
+                return true;
+            });
+            console.log(`[Ballots] After global filter (constituency: ${globalFilter.constituency || 'All'}, island: ${globalFilter.island || 'All'}): ${allBallots.length} ballots`);
+        }
 
         // Sort by ballot number
         allBallots.sort((a, b) => {
@@ -7129,7 +10332,7 @@ async function loadBallotsData(forceRefresh = false, skipSkeleton = false) {
             console.log('[Ballots] Using cached data due to error');
             renderBallotsTable(window.ballotsCache.data);
         } else {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--danger-color);">Error loading ballots</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--danger-color);">Error loading ballots</td></tr>';
         }
     }
 }
@@ -7140,7 +10343,7 @@ function renderBallotsTable(ballots) {
     if (!tbody) return;
 
     if (ballots.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-light);">No ballots added yet</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">No ballots added yet</td></tr>';
         return;
     }
 
@@ -7153,6 +10356,8 @@ function renderBallotsTable(ballots) {
 
         row.innerHTML = `
             <td><strong>${ballot.ballotNumber || 'N/A'}</strong>${pendingBadge}</td>
+            <td>${ballot.constituency || 'N/A'}</td>
+            <td>${ballot.island || 'N/A'}</td>
             <td>${ballot.location || 'N/A'}</td>
             <td>${ballot.expectedVoters || 0}</td>
             <td><span class="status-badge ${ballot.status === 'open' || ballot.status === 'active' ? 'status-active' : 'status-pending'}">${ballot.status ? ballot.status.charAt(0).toUpperCase() + ballot.status.slice(1) : 'Pending'}</span></td>
@@ -7405,7 +10610,8 @@ function renderTransportationTable(type, transportItems) {
         const emptyMsg = type === 'flights' ? 'No flights scheduled yet' :
             type === 'speedboats' ? 'No speed boats scheduled yet' :
             'No taxis assigned yet';
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">${emptyMsg}</td></tr>`;
+        const colspan = type === 'flights' ? 9 : type === 'speedboats' ? 9 : 9;
+        tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align: center; padding: 40px; color: var(--text-light);">${emptyMsg}</td></tr>`;
         return;
     }
 
@@ -7419,9 +10625,14 @@ function renderTransportationTable(type, transportItems) {
             row.style.opacity = '0.7';
         }
 
+        const constituency = item.constituency || (window.campaignData && window.campaignData.constituency) || 'N/A';
+        const island = item.island || 'N/A';
+
         if (type === 'flights') {
             row.innerHTML = `
                 <td><strong>${item.flightNumber || item.number || 'N/A'}</strong>${pendingBadge}</td>
+                <td>${constituency}</td>
+                <td>${island}</td>
                 <td>${item.route || 'N/A'}</td>
                 <td>${item.departureTime || 'N/A'}</td>
                 <td>${item.arrivalTime || 'N/A'}</td>
@@ -7445,6 +10656,8 @@ function renderTransportationTable(type, transportItems) {
         } else if (type === 'speedboats') {
             row.innerHTML = `
                 <td><strong>${item.boatName || item.number || 'N/A'}</strong>${pendingBadge}</td>
+                <td>${constituency}</td>
+                <td>${island}</td>
                 <td>${item.route || 'N/A'}</td>
                 <td>${item.departureTime || 'N/A'}</td>
                 <td>${item.arrivalTime || 'N/A'}</td>
@@ -7470,6 +10683,8 @@ function renderTransportationTable(type, transportItems) {
                 <td><strong>${item.taxiNumber || item.number || 'N/A'}</strong>${pendingBadge}</td>
                 <td>${item.driverName || 'N/A'}</td>
                 <td>${item.contact || 'N/A'}</td>
+                <td>${constituency}</td>
+                <td>${island}</td>
                 <td>${item.route || item.area || 'N/A'}</td>
                 <td>${item.capacity || 0}</td>
                 <td><span class="status-badge ${item.status === 'assigned' ? 'status-active' : 'status-pending'}">${item.status || 'Pending'}</span></td>
@@ -8007,12 +11222,36 @@ window.editBallot = async (id) => {
 
                 // Populate form fields
                 const ballotNumberField = document.getElementById('ballot-number');
+                const constituencyField = document.getElementById('ballot-constituency');
+                const islandField = document.getElementById('ballot-island');
                 const locationField = document.getElementById('ballot-location');
                 const expectedVotersField = document.getElementById('ballot-expected-voters');
                 const statusField = document.getElementById('ballot-status');
                 const notesField = document.getElementById('ballot-notes');
 
                 if (ballotNumberField) ballotNumberField.value = data.ballotNumber || '';
+                if (constituencyField) constituencyField.value = data.constituency || (window.campaignData && window.campaignData.constituency ? window.campaignData.constituency : '');
+                if (islandField) {
+                    // Setup island dropdown first, then set value
+                    // Use the same logic as setupIslandDropdown but for ballot form
+                    const constituency = data.constituency || (window.campaignData && window.campaignData.constituency ? window.campaignData.constituency : '');
+                    if (constituency && window.maldivesData && window.maldivesData.constituencyIslands && window.maldivesData.constituencyIslands[constituency]) {
+                        const islands = window.maldivesData.constituencyIslands[constituency];
+                        islandField.innerHTML = '<option value="">Select island</option>';
+                        islands.sort().forEach(island => {
+                            const option = document.createElement('option');
+                            option.value = island;
+                            option.textContent = island;
+                            islandField.appendChild(option);
+                        });
+                    }
+                    // Set the island value after dropdown is populated
+                    setTimeout(() => {
+                        if (islandField && data.island) {
+                            islandField.value = data.island;
+                        }
+                    }, 50);
+                }
                 if (locationField) locationField.value = data.location || '';
                 if (expectedVotersField) expectedVotersField.value = data.expectedVoters || '';
                 if (statusField) statusField.value = data.status || 'open';
@@ -9554,8 +12793,8 @@ function updateSettingsFields(data) {
         campaignTypeEl.textContent = typeMap[data.campaignType] || data.campaignType;
     }
 
-    if (locationEl && data.atoll && data.constituency && data.island) {
-        locationEl.textContent = `${data.atoll}, ${data.constituency}, ${data.island}`;
+    if (locationEl && data.constituency && data.island) {
+        locationEl.textContent = `${data.constituency}, ${data.island}`;
     }
 
     if (emailEl && data.email) {
@@ -10000,8 +13239,8 @@ function attachModalButtonListeners() {
     });
 }
 
-// View voter details function
-async function viewVoterDetails(voterId, navigateDirection = null) {
+// View voter details function - Right Side Panel
+async function viewVoterDetails(voterId, voterData = null) {
     if (!window.db || !window.userEmail) {
         if (window.showErrorDialog) {
             window.showErrorDialog('Database not initialized. Please refresh the page.');
@@ -10009,19 +13248,55 @@ async function viewVoterDetails(voterId, navigateDirection = null) {
         return;
     }
 
-    // Show loading indicator immediately
-    const modalOverlay = document.getElementById('modal-overlay');
-    if (modalOverlay) {
-        modalOverlay.style.display = 'flex';
-        const modalBody = document.getElementById('modal-body');
-        if (modalBody) {
-            modalBody.innerHTML = `
+    // Show detail panel
+    const detailPanel = document.getElementById('voter-detail-panel');
+    const detailContent = document.getElementById('voter-detail-content');
+
+    if (!detailPanel || !detailContent) {
+        console.warn('Voter detail panel not found');
+        return;
+    }
+
+    // Highlight selected row
+    document.querySelectorAll('.voter-table-row').forEach(row => {
+        row.classList.remove('selected');
+        row.style.backgroundColor = '';
+    });
+    const selectedRow = document.querySelector(`[data-voter-id="${voterId}"]`);
+    if (selectedRow) {
+        selectedRow.classList.add('selected');
+        selectedRow.style.backgroundColor = 'var(--primary-50)';
+    }
+
+    // Show backdrop on mobile
+    const backdrop = document.getElementById('voter-detail-backdrop');
+    const wrapper = document.getElementById('voters-table-detail-wrapper');
+
+    if (backdrop && window.innerWidth < 1024) {
+        backdrop.style.display = 'block';
+    }
+
+    // Adjust wrapper layout on desktop when detail panel is shown
+    if (wrapper && window.innerWidth >= 1024) {
+        wrapper.style.display = 'flex';
+        wrapper.style.gap = '24px';
+        const tableContainer = wrapper.querySelector('.voters-table-container');
+        if (tableContainer) {
+            tableContainer.style.width = 'calc(100% - 524px)';
+            tableContainer.style.flexShrink = '0';
+        }
+        detailPanel.style.position = 'relative';
+        detailPanel.style.width = '500px';
+        detailPanel.style.flexShrink = '0';
+    }
+
+    // Show loading state
+    detailPanel.style.display = 'flex';
+    detailContent.innerHTML = `
                 <div style="display: flex; justify-content: center; align-items: center; padding: 40px;">
                     <div class="loading-spinner" style="width: 40px; height: 40px; border: 4px solid var(--border-light); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
                 </div>
             `;
-        }
-    }
 
     try {
         const {
@@ -10051,58 +13326,26 @@ async function viewVoterDetails(voterId, navigateDirection = null) {
             }
         }
 
-        // If not in cache or cache invalid, fetch from Firebase
-        if (!data || currentIndex === -1) {
-            // Fallback: fetch all voters if cache not available (slower)
-            if (allVoters.length === 0) {
-                const {
-                    collection,
-                    query,
-                    where,
-                    getDocs
-                } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                const votersQuery = query(collection(window.db, 'voters'), where('email', '==', window.userEmail));
-                const allVotersSnapshot = await getDocs(votersQuery);
-                allVoters = allVotersSnapshot.docs.map(d => ({
-                    id: d.id,
-                    ...d.data()
-                }));
-                currentIndex = allVoters.findIndex(v => v.id === voterId);
-            }
-
-            // Handle navigation
-            if (navigateDirection === 'prev' && currentIndex > 0) {
-                voterId = allVoters[currentIndex - 1].id;
-                currentIndex = currentIndex - 1;
-            } else if (navigateDirection === 'next' && currentIndex < allVoters.length - 1) {
-                voterId = allVoters[currentIndex + 1].id;
-                currentIndex = currentIndex + 1;
-            }
-
-            // Fetch specific voter document
+        // Use provided voterData if available, otherwise fetch from cache or Firebase
+        if (voterData) {
+            data = voterData;
+            data.id = voterId;
+        } else if (!data || currentIndex === -1) {
+            // Fallback: fetch from Firebase if not in cache
             const voterRef = doc(window.db, 'voters', voterId);
             const voterSnap = await getDoc(voterRef);
 
             if (!voterSnap.exists()) {
-                if (window.showErrorDialog) {
-                    window.showErrorDialog('Voter not found.', 'Error');
-                }
-                if (modalOverlay) modalOverlay.style.display = 'none';
+                detailContent.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-light);">
+                        <p>Voter not found.</p>
+                    </div>
+                `;
                 return;
             }
 
             data = voterSnap.data();
-        } else {
-            // Use cached data - handle navigation
-            if (navigateDirection === 'prev' && currentIndex > 0) {
-                voterId = allVoters[currentIndex - 1].id;
-                currentIndex = currentIndex - 1;
-                data = allVoters[currentIndex];
-            } else if (navigateDirection === 'next' && currentIndex < allVoters.length - 1) {
-                voterId = allVoters[currentIndex + 1].id;
-                currentIndex = currentIndex + 1;
-                data = allVoters[currentIndex];
-            }
+            data.id = voterId;
         }
 
         // Minimal debug logging (only in development)
@@ -10110,11 +13353,15 @@ async function viewVoterDetails(voterId, navigateDirection = null) {
             console.log('[viewVoterDetails] Loaded voter:', voterId, 'from', data ? 'cache' : 'Firebase');
         }
 
-        // Verify the voter belongs to the current user's campaign
-        if (data.email !== window.userEmail && data.campaignEmail !== window.userEmail) {
+        // Verify the voter belongs to the current user's campaign (unless admin or no email fields set)
+        const isAdmin = window.userEmail === 'rixaski@gmail.com';
+        const hasEmailFields = data.email || data.campaignEmail;
+
+        if (!isAdmin && hasEmailFields && data.email !== window.userEmail && data.campaignEmail !== window.userEmail) {
             if (window.showErrorDialog) {
                 window.showErrorDialog('You do not have permission to view this voter.', 'Access Denied');
             }
+            detailPanel.style.display = 'none';
             return;
         }
 
@@ -10168,245 +13415,1538 @@ async function viewVoterDetails(voterId, navigateDirection = null) {
             imageLookupPromise = lookupImageFromFolder(idNumber);
         }
 
-        // Create modal HTML
-        const modalHTML = `
-            <div class="voter-details-modal" style="max-width: 600px; margin: 0 auto;">
-                <!-- Navigation and Actions at top -->
-                <div style="display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color); overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                    <!-- Navigation controls on left -->
-                    <div style="display: flex; gap: 6px; flex-wrap: nowrap; flex-shrink: 0;">
-                        <button 
-                            id="voter-nav-prev" 
-                            class="btn-secondary btn-compact" 
-                            ${currentIndex === 0 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
-                            onclick="viewVoterDetails('${voterId}', 'prev')"
-                            style="display: flex; align-items: center; gap: 6px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                            Previous
-                        </button>
-                        <span style="color: var(--text-light); font-size: 12px; padding: 8px 8px; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;">
-                            ${currentIndex + 1} of ${allVoters.length}
-                        </span>
-                        <button 
-                            id="voter-nav-next" 
-                            class="btn-secondary btn-compact" 
-                            ${currentIndex === allVoters.length - 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
-                            onclick="viewVoterDetails('${voterId}', 'next')"
-                            style="display: flex; align-items: center; gap: 6px;">
-                            Next
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </button>
-                    </div>
-                    <!-- CRUD actions on right -->
-                    <div style="display: flex; gap: 8px; flex-wrap: nowrap; flex-shrink: 0;">
-                        <button 
-                            type="button"
-                            title="Edit Voter"
-                            onclick="editVoter('${voterId}')"
-                            onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(111, 193, 218, 0.4)'"
-                            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(111, 193, 218, 0.3)'"
-                            style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: linear-gradient(135deg, #6fc1da 0%, #8dd4e8 100%); color: white; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(111, 193, 218, 0.3);">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                        </button>
-                        <button 
-                            type="button"
-                            title="Delete Voter"
-                            onclick="deleteVoter('${voterId}')"
-                            onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(220, 38, 38, 0.4)'"
-                            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(220, 38, 38, 0.3)'"
-                            style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: #dc2626; color: white; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
+        // Fetch all voter-related data
+        const [pledges, calls, events, assignments] = await Promise.all([
+            fetchVoterPledges(voterId, idNumber),
+            fetchVoterCalls(voterId, idNumber),
+            fetchVoterEvents(voterId, idNumber),
+            fetchVoterAssignments(voterId, idNumber)
+        ]);
 
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid var(--border-color);">
-                    ${imageUrl ? 
-                        `<img id="voter-detail-image" src="${imageUrl}" alt="${data.name || 'Voter'}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-color);" data-voter-id="${idNumber || ''}" onerror="this.onerror=null; this.style.display='none'; const fallback=this.nextElementSibling; if(fallback) fallback.style.display='flex'; tryLoadImageFromFolder(this, '${idNumber || ''}').then(found => { if(found) { this.src=found; this.style.display=''; if(fallback) fallback.style.display='none'; } });"><div id="voter-detail-fallback" style="width: 80px; height: 80px; border-radius: 50%; display: none; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 28px; border: 3px solid var(--primary-color);">${initials}</div>` :
-                        `<div id="voter-detail-fallback" style="width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 28px; border: 3px solid var(--primary-color);">${initials}</div>`
+        // Fetch candidate names for all pledges
+        const allCandidateIds = [];
+        pledges.forEach(pledge => {
+            if (pledge.candidateIds && Array.isArray(pledge.candidateIds)) {
+                allCandidateIds.push(...pledge.candidateIds);
+            } else if (pledge.candidateId) {
+                allCandidateIds.push(pledge.candidateId);
+            } else if (pledge.candidate) {
+                allCandidateIds.push(pledge.candidate);
+            }
+        });
+
+        const uniqueCandidateIds = [...new Set(allCandidateIds)];
+        const candidateNamesMap = {};
+        if (uniqueCandidateIds.length > 0) {
+            // Use the map function for direct ID -> name mapping
+            const fetchedMap = await fetchCandidateNamesMap(uniqueCandidateIds);
+            Object.assign(candidateNamesMap, fetchedMap);
+        }
+
+        // Update current voter index and total count for navigation
+        if (voterDataCache.data && voterDataCache.data.filteredDocs) {
+            const allVoters = voterDataCache.data.filteredDocs;
+            window.currentVoterIndex = allVoters.findIndex(v => v.id === voterId);
+            window.totalVotersCount = allVoters.length;
+        }
+
+        // Create detail panel HTML
+        const detailHTML = await createVoterDetailHTML(data, {
+            idNumber,
+            imageUrl,
+            initials,
+            dobDisplay,
+            registeredDisplay,
+            pledges,
+            calls,
+            events,
+            assignments,
+            candidateNamesMap
+        }, voterId);
+
+        detailContent.innerHTML = detailHTML;
+
+        // Render pledges using the new function
+        try {
+            renderVoterPledges(pledges, candidateNamesMap);
+        } catch (error) {
+            console.error('Error rendering voter pledges:', error);
+            // Don't break the entire view if pledges fail to render
+        }
+
+        // Store voter ID in panel for delete function
+        detailPanel.dataset.voterId = voterId;
+
+        // Update navigation count display
+        const countDisplay = document.getElementById('voter-detail-count');
+        if (countDisplay && window.currentVoterIndex !== undefined && window.totalVotersCount) {
+            countDisplay.textContent = `${(window.currentVoterIndex + 1)} of ${window.totalVotersCount}`;
+        }
+
+        // Update navigation buttons state
+        const prevBtn = document.getElementById('voter-prev-btn');
+        const nextBtn = document.getElementById('voter-next-btn');
+        if (prevBtn && window.currentVoterIndex !== undefined) {
+            prevBtn.disabled = window.currentVoterIndex === 0;
+            prevBtn.style.opacity = window.currentVoterIndex === 0 ? '0.5' : '1';
+            prevBtn.style.cursor = window.currentVoterIndex === 0 ? 'not-allowed' : 'pointer';
+        }
+        if (nextBtn && window.currentVoterIndex !== undefined && window.totalVotersCount) {
+            nextBtn.disabled = window.currentVoterIndex >= window.totalVotersCount - 1;
+            nextBtn.style.opacity = window.currentVoterIndex >= window.totalVotersCount - 1 ? '0.5' : '1';
+            nextBtn.style.cursor = window.currentVoterIndex >= window.totalVotersCount - 1 ? 'not-allowed' : 'pointer';
+        }
+
+        // Reset to Basic Info tab
+        switchVoterTab('basic');
+
+        // Handle image lookup promise if it exists
+        if (imageLookupPromise) {
+            imageLookupPromise.then(foundUrl => {
+                if (foundUrl) {
+                    const img = detailContent.querySelector('#voter-detail-image');
+                    if (img) {
+                        img.src = foundUrl;
+                        img.style.display = '';
+                        const fallback = detailContent.querySelector('#voter-detail-fallback');
+                        if (fallback) fallback.style.display = 'none';
                     }
+                }
+            }).catch(() => {});
+        }
+
+    } catch (error) {
+        console.error('Error loading voter details:', error);
+        detailContent.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: var(--text-light);">
+                <p>Error loading voter details. Please try again.</p>
+                    </div>
+                `;
+    }
+}
+
+// Close voter detail panel
+function closeVoterDetailPanel() {
+    const detailPanel = document.getElementById('voter-detail-panel');
+    const backdrop = document.getElementById('voter-detail-backdrop');
+    const wrapper = document.getElementById('voters-table-detail-wrapper');
+
+    if (detailPanel) {
+        detailPanel.style.display = 'none';
+    }
+
+    if (backdrop) {
+        backdrop.style.display = 'none';
+    }
+
+    // Reset wrapper layout when detail panel is closed
+    if (wrapper && window.innerWidth >= 1024) {
+        wrapper.style.display = 'block';
+        const tableContainer = wrapper.querySelector('.voters-table-container');
+        if (tableContainer) {
+            tableContainer.style.width = '100%';
+            tableContainer.style.flexShrink = '';
+        }
+    }
+
+    // Remove selected state from rows
+    document.querySelectorAll('.voter-table-row').forEach(row => {
+        row.classList.remove('selected');
+        row.style.backgroundColor = '';
+    });
+}
+
+// Navigate voter detail (previous/next)
+async function navigateVoterDetail(direction) {
+    if (!voterDataCache.data || !voterDataCache.data.filteredDocs) return;
+
+    const allVoters = voterDataCache.data.filteredDocs;
+    const currentIndex = window.currentVoterIndex !== undefined ? window.currentVoterIndex : 0;
+
+    let newIndex = currentIndex;
+    if (direction === 'prev' && currentIndex > 0) {
+        newIndex = currentIndex - 1;
+    } else if (direction === 'next' && currentIndex < allVoters.length - 1) {
+        newIndex = currentIndex + 1;
+    } else {
+        return; // Can't navigate further
+    }
+
+    const nextVoter = allVoters[newIndex];
+    if (nextVoter) {
+        await viewVoterDetails(nextVoter.id, nextVoter.data);
+    }
+}
+
+// Switch voter detail tab
+function switchVoterTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.voter-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.color = 'var(--text-light)';
+        btn.style.borderBottom = 'none';
+        btn.style.marginBottom = '0';
+    });
+
+    const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.style.color = 'var(--primary-color)';
+        activeBtn.style.borderBottom = '2px solid var(--primary-color)';
+        activeBtn.style.marginBottom = '-2px';
+    }
+
+    // Update tab content
+    document.querySelectorAll('.voter-tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+
+    const activeContent = document.getElementById(`voter-tab-${tabName}`);
+    if (activeContent) {
+        activeContent.style.display = 'block';
+    }
+}
+
+// Enable voter edit mode
+function enableVoterEdit() {
+    const editBtn = document.getElementById('voter-enable-edit-btn');
+    const saveBtn = document.getElementById('voter-save-btn');
+    const editInputs = document.querySelectorAll('#voter-detail-content input[readonly], #voter-detail-content textarea[readonly]');
+
+    // Check if already editing (check both basic inputs and pledge/call edit fields)
+    const pledgeEditFields = document.querySelectorAll('.pledge-type-edit, .pledge-date-edit, .pledge-notes-edit');
+    const callEditFields = document.querySelectorAll('.call-caller-edit, .call-date-edit, .call-time-edit, .call-notes-edit');
+    const isEditing = editInputs.length > 0 && editInputs[0].readOnly === false;
+
+    if (isEditing) {
+        // Disable edit mode
+        editInputs.forEach(input => {
+            input.readOnly = true;
+            input.style.background = 'var(--light-color)';
+            input.style.cursor = 'default';
+        });
+
+        // Hide pledge edit fields, show display fields
+        document.querySelectorAll('.pledge-type-edit, .pledge-date-edit, .pledge-notes-edit').forEach(el => {
+            el.style.display = 'none';
+        });
+        document.querySelectorAll('.pledge-type-display, .pledge-date-display, .pledge-notes-display').forEach(el => {
+            el.style.display = '';
+        });
+
+        // Hide voter pledge edit fields (new pledge detail cards), show display fields
+        document.querySelectorAll('.voter-pledge-status-edit, .voter-pledge-date-edit').forEach(el => {
+            el.style.display = 'none';
+        });
+        document.querySelectorAll('.voter-pledge-status-display, .voter-pledge-date-display').forEach(el => {
+            el.style.display = '';
+        });
+
+        // Hide call edit fields, show display fields
+        document.querySelectorAll('.call-caller-edit, .call-date-edit, .call-time-edit, .call-notes-edit').forEach(el => {
+            el.style.display = 'none';
+        });
+        document.querySelectorAll('.call-caller-display, .call-date-display, .call-time-display, .call-notes-display').forEach(el => {
+            el.style.display = '';
+        });
+
+        if (saveBtn) saveBtn.style.display = 'none';
+    } else {
+        // Enable edit mode
+        editInputs.forEach(input => {
+            input.readOnly = false;
+            input.style.background = 'white';
+            input.style.cursor = 'text';
+        });
+
+        // Show pledge edit fields, hide display fields
+        document.querySelectorAll('.pledge-type-display, .pledge-date-display, .pledge-notes-display').forEach(el => {
+            el.style.display = 'none';
+        });
+        document.querySelectorAll('.pledge-type-edit, .pledge-date-edit, .pledge-notes-edit').forEach(el => {
+            el.style.display = 'block';
+        });
+
+        // Show voter pledge edit fields (new pledge detail cards), hide display fields
+        document.querySelectorAll('.voter-pledge-status-display, .voter-pledge-date-display').forEach(el => {
+            el.style.display = 'none';
+        });
+        document.querySelectorAll('.voter-pledge-status-edit').forEach(el => {
+            el.style.display = 'block';
+            el.style.visibility = 'visible';
+        });
+        document.querySelectorAll('.voter-pledge-date-edit').forEach(el => {
+            el.style.display = 'block';
+        });
+
+        // Show call edit fields, hide display fields
+        document.querySelectorAll('.call-caller-display, .call-date-display, .call-time-display, .call-notes-display').forEach(el => {
+            el.style.display = 'none';
+        });
+        document.querySelectorAll('.call-caller-edit, .call-date-edit, .call-time-edit, .call-notes-edit').forEach(el => {
+            el.style.display = 'block';
+        });
+
+        if (saveBtn) saveBtn.style.display = 'block';
+    }
+}
+
+// Save voter changes from detail panel
+async function saveVoterFromDetail() {
+    const detailPanel = document.getElementById('voter-detail-panel');
+    if (!detailPanel || detailPanel.style.display === 'none') return;
+
+    const voterId = detailPanel.dataset.voterId;
+    if (!voterId) return;
+
+    if (!window.db || !window.userEmail) {
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Database not initialized. Please refresh the page.');
+        }
+        return;
+    }
+
+    let existingData = null;
+
+    try {
+        const {
+            doc,
+            getDoc,
+            updateDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // First, fetch the voter document to verify permissions and preserve required fields
+        const voterRef = doc(window.db, 'voters', voterId);
+
+        console.log('[saveVoterFromDetail] Fetching voter document:', voterId);
+        const voterSnap = await getDoc(voterRef);
+
+        if (!voterSnap.exists()) {
+            console.error('[saveVoterFromDetail] Voter document does not exist:', voterId);
+            if (window.showErrorDialog) {
+                window.showErrorDialog('Voter not found. It may have been deleted.', 'Error');
+            }
+            return;
+        }
+
+        existingData = voterSnap.data();
+        console.log('[saveVoterFromDetail] Fetched voter data:', {
+            hasEmail: !!existingData.email,
+            hasCampaignEmail: !!existingData.campaignEmail,
+            email: existingData.email,
+            campaignEmail: existingData.campaignEmail
+        });
+        const isAdmin = window.userEmail === 'rixaski@gmail.com';
+
+        // Verify permissions (unless admin)
+        // Updated Firestore rules now allow updates if:
+        // 1. Existing document has email/campaignEmail matching user's email, OR
+        // 2. New document will have email/campaignEmail matching user's email
+        // So we can proceed with the update even if the voter doesn't have email fields (we'll set them)
+        if (!isAdmin) {
+            const hasEmailFields = existingData.email || existingData.campaignEmail;
+            if (hasEmailFields) {
+                // Voter has email fields - check if they match user's email
+                const emailMatches = existingData.email === window.userEmail;
+                const campaignEmailMatches = existingData.campaignEmail === window.userEmail;
+
+                if (!emailMatches && !campaignEmailMatches) {
+                    // Existing document doesn't match, but we can still update if we set email/campaignEmail
+                    // This will be handled by setting updateData.email below
+                    console.log('[saveVoterFromDetail] Existing email fields do not match, but will set email in update');
+                }
+            } else {
+                // Voter doesn't have email/campaignEmail - we'll set email in the update
+                // Updated Firestore rules will allow this
+                console.log('[saveVoterFromDetail] Voter has no email/campaignEmail fields - will set email in update');
+            }
+        }
+
+        // Collect all input values
+        const updateData = {};
+
+        const nameInput = document.getElementById('voter-edit-name');
+        const dobInput = document.getElementById('voter-edit-dob');
+        const ageInput = document.getElementById('voter-edit-age');
+        const genderInput = document.getElementById('voter-edit-gender');
+        const constituencyInput = document.getElementById('voter-edit-constituency');
+        const islandInput = document.getElementById('voter-edit-island');
+        const ballotInput = document.getElementById('voter-edit-ballot');
+        const permanentAddressInput = document.getElementById('voter-edit-permanent-address');
+        const currentLocationInput = document.getElementById('voter-edit-current-location');
+        const phoneInput = document.getElementById('voter-edit-phone');
+
+        if (nameInput && nameInput.value) updateData.name = nameInput.value.trim();
+        if (dobInput && dobInput.value) {
+            // Parse date of birth
+            const dobValue = dobInput.value.trim();
+            if (dobValue && dobValue !== 'N/A') {
+                try {
+                    updateData.dateOfBirth = new Date(dobValue);
+                } catch (e) {
+                    updateData.dateOfBirth = dobValue;
+                }
+            }
+        }
+        if (ageInput && ageInput.value) {
+            const ageValue = ageInput.value.replace(' years', '').trim();
+            if (ageValue && ageValue !== 'N/A' && !isNaN(ageValue)) {
+                updateData.age = parseInt(ageValue);
+            }
+        }
+        if (genderInput && genderInput.value && genderInput.value !== 'N/A') {
+            updateData.gender = genderInput.value.trim().toLowerCase();
+        }
+        if (constituencyInput && constituencyInput.value && constituencyInput.value !== 'N/A') {
+            updateData.constituency = constituencyInput.value.trim();
+        }
+        if (islandInput && islandInput.value) updateData.island = islandInput.value.trim();
+        if (ballotInput && ballotInput.value) updateData.ballot = ballotInput.value.trim();
+        if (permanentAddressInput && permanentAddressInput.value) updateData.permanentAddress = permanentAddressInput.value.trim();
+        if (currentLocationInput && currentLocationInput.value) updateData.currentLocation = currentLocationInput.value.trim();
+        if (phoneInput && phoneInput.value) updateData.number = phoneInput.value.trim();
+
+        // Set email and campaignEmail fields (required for Firestore rules)
+        // Updated Firestore rules allow updates if:
+        // 1. Existing document has email/campaignEmail matching user's email, OR
+        // 2. New document will have email/campaignEmail matching user's email
+        // We ALWAYS set email to user's email to ensure the update succeeds
+        // This ensures request.resource.data.email matches user's email for Firestore rules
+        updateData.email = window.userEmail;
+        console.log('[saveVoterFromDetail] Set email in updateData:', updateData.email);
+
+        // Preserve campaignEmail if it exists and matches
+        if (existingData.campaignEmail && existingData.campaignEmail === window.userEmail) {
+            updateData.campaignEmail = existingData.campaignEmail;
+            console.log('[saveVoterFromDetail] Preserved campaignEmail:', updateData.campaignEmail);
+        }
+
+        // Also preserve idNumber if it exists (some rules prevent changing it)
+        if (existingData.idNumber && !updateData.idNumber) {
+            updateData.idNumber = existingData.idNumber;
+        }
+
+        // Check if there are any changes to save (excluding preserved fields)
+        const fieldsToCheck = {
+            ...updateData
+        };
+        delete fieldsToCheck.email;
+        delete fieldsToCheck.campaignEmail;
+        delete fieldsToCheck.idNumber;
+
+        if (Object.keys(fieldsToCheck).length === 0) {
+            if (window.showErrorDialog) {
+                window.showErrorDialog('No changes to save.', 'Info');
+            }
+            // Still disable edit mode
+            enableVoterEdit();
+            return;
+        }
+
+        // Debug logging
+        console.log('[saveVoterFromDetail] Update data:', {
+            email: updateData.email,
+            campaignEmail: updateData.campaignEmail,
+            userEmail: window.userEmail,
+            updateDataKeys: Object.keys(updateData)
+        });
+
+        // Update voter in Firestore
+        await updateDoc(voterRef, updateData);
+
+        // Save pledge edits
+        const pledgeEditFields = document.querySelectorAll('.pledge-type-edit, .pledge-date-edit, .pledge-notes-edit');
+        if (pledgeEditFields.length > 0) {
+            const {
+                Timestamp
+            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+            const pledgeRows = document.querySelectorAll('.pledge-row');
+
+            for (const row of pledgeRows) {
+                const pledgeId = row.dataset.pledgeId;
+                if (!pledgeId) continue;
+
+                const typeSelect = row.querySelector('.pledge-type-edit');
+                const dateInput = row.querySelector('.pledge-date-edit');
+                const notesTextarea = row.querySelector('.pledge-notes-edit');
+
+                if (!typeSelect || !dateInput || !notesTextarea) continue;
+
+                const pledgeUpdate = {};
+                const pledgeType = typeSelect.value;
+                // Map yes/no to positive/negative for consistency
+                if (pledgeType === 'yes') pledgeUpdate.pledge = 'yes';
+                else if (pledgeType === 'no') pledgeUpdate.pledge = 'no';
+                else pledgeUpdate.pledge = 'neutral';
+
+                if (dateInput.value) {
+                    const date = new Date(dateInput.value);
+                    pledgeUpdate.date = Timestamp.fromDate(date);
+                    pledgeUpdate.recordedAt = Timestamp.fromDate(date);
+                }
+
+                if (notesTextarea.value !== undefined) {
+                    pledgeUpdate.notes = notesTextarea.value.trim();
+                }
+
+                if (Object.keys(pledgeUpdate).length > 0) {
+                    try {
+                        const pledgeRef = doc(window.db, 'pledges', pledgeId);
+                        await updateDoc(pledgeRef, pledgeUpdate);
+                    } catch (error) {
+                        console.error('Error updating pledge:', error);
+                    }
+                }
+            }
+        }
+
+        // Save call edits
+        const callEditFields = document.querySelectorAll('.call-caller-edit, .call-date-edit, .call-time-edit, .call-notes-edit');
+        if (callEditFields.length > 0) {
+            const {
+                Timestamp
+            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+            const callRows = document.querySelectorAll('.call-row');
+
+            for (const row of callRows) {
+                const callId = row.dataset.callId;
+                if (!callId) continue;
+
+                const callerInput = row.querySelector('.call-caller-edit');
+                const dateInput = row.querySelector('.call-date-edit');
+                const timeInput = row.querySelector('.call-time-edit');
+                const notesTextarea = row.querySelector('.call-notes-edit');
+
+                if (!callerInput || !dateInput || !timeInput || !notesTextarea) continue;
+
+                const callUpdate = {};
+
+                if (callerInput.value !== undefined) {
+                    callUpdate.caller = callerInput.value.trim();
+                    callUpdate.madeBy = callerInput.value.trim();
+                }
+
+                if (dateInput.value) {
+                    const date = new Date(dateInput.value);
+                    if (timeInput.value) {
+                        const [hours, minutes] = timeInput.value.split(':');
+                        date.setHours(parseInt(hours), parseInt(minutes));
+                    }
+                    callUpdate.callDate = Timestamp.fromDate(date);
+                    callUpdate.date = Timestamp.fromDate(date);
+                }
+
+                if (timeInput.value) {
+                    callUpdate.time = timeInput.value;
+                }
+
+                if (notesTextarea.value !== undefined) {
+                    callUpdate.notes = notesTextarea.value.trim();
+                    callUpdate.remark = notesTextarea.value.trim();
+                }
+
+                if (Object.keys(callUpdate).length > 0) {
+                    try {
+                        const callRef = doc(window.db, 'calls', callId);
+                        await updateDoc(callRef, callUpdate);
+                    } catch (error) {
+                        console.error('Error updating call:', error);
+                    }
+                }
+            }
+        }
+
+        // Show success message
+        if (window.showSuccess) {
+            window.showSuccess('Voter information updated successfully!', 'Success');
+        }
+
+        // Disable edit mode
+        enableVoterEdit();
+
+        // Reload voter data
+        if (window.viewVoterDetails) {
+            await window.viewVoterDetails(voterId);
+        }
+
+        // Reload voters table if it exists
+        if (window.renderCachedVotersData) {
+            window.renderCachedVotersData();
+        }
+    } catch (error) {
+        console.error('Error saving voter:', error);
+        console.error('Voter ID:', voterId);
+        console.error('User Email:', window.userEmail);
+        console.error('Existing Data:', existingData ? {
+            email: existingData.email,
+            campaignEmail: existingData.campaignEmail,
+            hasEmail: !!existingData.email,
+            hasCampaignEmail: !!existingData.campaignEmail
+        } : 'Not loaded');
+
+        let errorMessage = 'Failed to save voter information. Please try again.';
+
+        // Provide more specific error messages
+        if (error.code === 'permission-denied') {
+            errorMessage = 'You do not have permission to edit this voter. The voter document must have an email or campaignEmail field matching your email address.';
+        } else if (error.code === 'not-found') {
+            errorMessage = 'Voter not found. It may have been deleted.';
+        } else if (error.message) {
+            errorMessage = `Error: ${error.message}`;
+        }
+
+        if (window.showErrorDialog) {
+            window.showErrorDialog(errorMessage, 'Error');
+        }
+    }
+}
+
+// Delete voter from detail panel
+async function deleteVoterFromDetail() {
+    const detailPanel = document.getElementById('voter-detail-panel');
+    if (!detailPanel || detailPanel.style.display === 'none') return;
+
+    const voterId = detailPanel.dataset.voterId;
+    if (!voterId) return;
+
+    if (window.showConfirm) {
+        const confirmed = await window.showConfirm(
+            'Are you sure you want to delete this voter? This action cannot be undone.',
+            'Delete Voter'
+        );
+        if (!confirmed) return;
+    } else if (!confirm('Are you sure you want to delete this voter? This action cannot be undone.')) {
+        return;
+    }
+
+    // Call the delete voter function
+    if (window.deleteVoter) {
+        await window.deleteVoter(voterId);
+        closeVoterDetailPanel();
+    }
+}
+
+// Fetch candidate names by IDs - returns array of names in same order as input
+async function fetchCandidateNames(candidateIds) {
+    if (!candidateIds || !Array.isArray(candidateIds) || candidateIds.length === 0) return [];
+    if (!window.db || !window.userEmail) return [];
+
+    try {
+        const {
+            doc,
+            getDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Remove duplicates and filter out invalid IDs
+        const uniqueCandidateIds = [...new Set(candidateIds.filter(id => id && typeof id === 'string' && id.trim() !== ''))];
+        if (uniqueCandidateIds.length === 0) return [];
+
+        const candidateMap = {};
+
+        // Fetch each candidate document directly by ID
+        // Use Promise.all for parallel fetching (more efficient)
+        const fetchPromises = uniqueCandidateIds.map(async (candidateId) => {
+            try {
+                const candidateDoc = await getDoc(doc(window.db, 'candidates', candidateId));
+                if (candidateDoc.exists()) {
+                    const candidateData = candidateDoc.data();
+                    // Use candidate name if available
+                    // Log warning if email doesn't match (but still use the candidate)
+                    if (candidateData.email && candidateData.email !== window.userEmail) {
+                        console.warn(`Candidate ${candidateId} (${candidateData.name || 'unnamed'}) email (${candidateData.email}) doesn't match user email (${window.userEmail}) - using anyway`);
+                    }
+                    const candidateName = candidateData.name;
+                    if (candidateName && candidateName.trim() !== '') {
+                        candidateMap[candidateId] = candidateName.trim();
+                    } else {
+                        console.warn(`Candidate ${candidateId} exists but has no name field`);
+                        candidateMap[candidateId] = 'Unknown Candidate';
+                    }
+                } else {
+                    console.warn(`Candidate document ${candidateId} does not exist in Firestore`);
+                }
+            } catch (docError) {
+                console.warn(`Error fetching candidate ${candidateId}:`, docError);
+            }
+        });
+
+        // Wait for all fetches to complete
+        await Promise.all(fetchPromises);
+
+        // Return names in the same order as input candidateIds, using 'Unknown Candidate' for missing ones
+        return candidateIds.map(id => {
+            if (!id || typeof id !== 'string' || id.trim() === '') return 'Unknown Candidate';
+            return candidateMap[id] || 'Unknown Candidate';
+        });
+    } catch (error) {
+        console.error('Error fetching candidate names:', error);
+        return candidateIds.map(() => 'Unknown Candidate');
+    }
+}
+
+// Fetch candidate names and return as a map (ID -> name)
+async function fetchCandidateNamesMap(candidateIds) {
+    if (!candidateIds || !Array.isArray(candidateIds) || candidateIds.length === 0) return {};
+    if (!window.db || !window.userEmail) return {};
+
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Remove duplicates and filter out invalid IDs
+        const uniqueCandidateIds = [...new Set(candidateIds.filter(id => id && typeof id === 'string' && id.trim() !== ''))];
+        if (uniqueCandidateIds.length === 0) return {};
+
+        const candidateMap = {};
+        const fetchedCandidates = {};
+
+        // Query candidates by email first (to ensure we only get candidates we have permission to read)
+        // This avoids permission errors when fetching by document ID
+        try {
+            const emailQuery = query(
+                collection(window.db, 'candidates'),
+                where('email', '==', window.userEmail)
+            );
+            const emailSnapshot = await getDocs(emailQuery);
+
+            console.log(`[fetchCandidateNamesMap] Found ${emailSnapshot.size} candidates with email ${window.userEmail}`);
+            console.log(`[fetchCandidateNamesMap] Looking for candidate IDs:`, uniqueCandidateIds);
+
+            emailSnapshot.forEach(doc => {
+                const candidateData = doc.data();
+                const docId = doc.id;
+                const candidateIdField = candidateData.candidateId || docId; // Use candidateId field if available, fallback to doc.id
+                console.log(`[fetchCandidateNamesMap] Checking candidate docId: ${docId}, candidateId field: ${candidateIdField}, name: ${candidateData.name || 'none'}`);
+
+                // Check if this candidate matches any of our requested IDs (by document ID or candidateId field)
+                const matchingRequestedId = uniqueCandidateIds.find(id => id === docId || id === candidateIdField);
+
+                if (matchingRequestedId) {
+                    const candidateName = candidateData.name;
+                    if (candidateName && candidateName.trim() !== '') {
+                        // Map both the document ID and candidateId field to the same name
+                        fetchedCandidates[docId] = candidateName.trim();
+                        if (candidateIdField !== docId) {
+                            fetchedCandidates[candidateIdField] = candidateName.trim();
+                        }
+                        console.log(`[fetchCandidateNamesMap] ✓ Added candidate ${matchingRequestedId} (docId: ${docId}, candidateId: ${candidateIdField}): ${candidateName.trim()}`);
+                    } else {
+                        console.warn(`Candidate ${docId} exists but has no name field`);
+                        fetchedCandidates[docId] = 'Unknown Candidate';
+                        if (candidateIdField !== docId) {
+                            fetchedCandidates[candidateIdField] = 'Unknown Candidate';
+                        }
+                    }
+                }
+            });
+        } catch (emailQueryError) {
+            console.warn('Error querying candidates by email:', emailQueryError);
+        }
+
+        // Also query by campaignEmail to catch candidates that might only have campaignEmail
+        try {
+            const campaignEmailQuery = query(
+                collection(window.db, 'candidates'),
+                where('campaignEmail', '==', window.userEmail)
+            );
+            const campaignEmailSnapshot = await getDocs(campaignEmailQuery);
+
+            console.log(`[fetchCandidateNamesMap] Found ${campaignEmailSnapshot.size} candidates with campaignEmail ${window.userEmail}`);
+
+            campaignEmailSnapshot.forEach(doc => {
+                const candidateData = doc.data();
+                const docId = doc.id;
+                const candidateIdField = candidateData.candidateId || docId; // Use candidateId field if available, fallback to doc.id
+
+                // Check if this candidate matches any of our requested IDs (by document ID or candidateId field)
+                const matchingRequestedId = uniqueCandidateIds.find(id => id === docId || id === candidateIdField);
+
+                // Only include candidates that are in our requested list and not already fetched
+                if (matchingRequestedId && !fetchedCandidates.hasOwnProperty(matchingRequestedId)) {
+                    const candidateName = candidateData.name;
+                    if (candidateName && candidateName.trim() !== '') {
+                        // Map both the document ID and candidateId field to the same name
+                        fetchedCandidates[docId] = candidateName.trim();
+                        if (candidateIdField !== docId) {
+                            fetchedCandidates[candidateIdField] = candidateName.trim();
+                        }
+                        console.log(`[fetchCandidateNamesMap] ✓ Added candidate ${matchingRequestedId} (from campaignEmail, docId: ${docId}, candidateId: ${candidateIdField}): ${candidateName.trim()}`);
+                    } else {
+                        console.warn(`Candidate ${docId} exists but has no name field`);
+                        fetchedCandidates[docId] = 'Unknown Candidate';
+                        if (candidateIdField !== docId) {
+                            fetchedCandidates[candidateIdField] = 'Unknown Candidate';
+                        }
+                    }
+                }
+            });
+        } catch (campaignEmailQueryError) {
+            console.warn('Error querying candidates by campaignEmail:', campaignEmailQueryError);
+        }
+
+        // For any candidate IDs not found in queries, try fetching directly
+        // This handles cases where the candidate might have the right email but wasn't in query results
+        const missingCandidateIds = uniqueCandidateIds.filter(id => !fetchedCandidates.hasOwnProperty(id));
+
+        if (missingCandidateIds.length > 0) {
+            const {
+                doc,
+                getDoc
+            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+            // Try to fetch missing candidates directly
+            const directFetchPromises = missingCandidateIds.map(async (candidateId) => {
+                try {
+                    const candidateDoc = await getDoc(doc(window.db, 'candidates', candidateId));
+                    if (candidateDoc.exists()) {
+                        const candidateData = candidateDoc.data();
+                        // Check if user has permission (email/campaignEmail matches)
+                        const hasPermission = (candidateData.email === window.userEmail) ||
+                            (candidateData.campaignEmail === window.userEmail);
+
+                        if (hasPermission) {
+                            const candidateName = candidateData.name;
+                            if (candidateName && candidateName.trim() !== '') {
+                                fetchedCandidates[candidateId] = candidateName.trim();
+                            } else {
+                                console.warn(`Candidate ${candidateId} exists but has no name field`);
+                                fetchedCandidates[candidateId] = 'Unknown Candidate';
+                            }
+                        } else {
+                            console.warn(`Candidate ${candidateId} exists but belongs to different campaign (email: ${candidateData.email || 'none'}, campaignEmail: ${candidateData.campaignEmail || 'none'})`);
+                        }
+                    } else {
+                        console.warn(`Candidate document ${candidateId} does not exist in Firestore`);
+                    }
+                } catch (docError) {
+                    // Permission error or other error - candidate might not belong to user's campaign
+                    if (docError.code === 'permission-denied') {
+                        console.warn(`Candidate ${candidateId} access denied - may belong to different campaign`);
+                    } else {
+                        console.warn(`Error fetching candidate ${candidateId} directly:`, docError);
+                    }
+                }
+            });
+
+            await Promise.all(directFetchPromises);
+        }
+
+        // Add all requested candidate IDs to the map
+        // If we found them, use the name; otherwise mark as 'Unknown Candidate'
+        uniqueCandidateIds.forEach(candidateId => {
+            if (fetchedCandidates.hasOwnProperty(candidateId)) {
+                candidateMap[candidateId] = fetchedCandidates[candidateId];
+            } else {
+                console.warn(`[fetchCandidateNamesMap] Candidate ${candidateId} not found in user's campaign or doesn't exist`);
+                candidateMap[candidateId] = 'Unknown Candidate';
+            }
+        });
+
+        console.log(`[fetchCandidateNamesMap] Final candidate map:`, candidateMap);
+        return candidateMap;
+    } catch (error) {
+        console.error('Error fetching candidate names map:', error);
+        // Return map with all IDs marked as unknown
+        const uniqueCandidateIds = [...new Set(candidateIds.filter(id => id && typeof id === 'string' && id.trim() !== ''))];
+        const fallbackMap = {};
+        uniqueCandidateIds.forEach(id => {
+            fallbackMap[id] = 'Unknown Candidate';
+        });
+        return fallbackMap;
+    }
+}
+
+// Fetch voter pledges
+async function fetchVoterPledges(voterId, idNumber) {
+    if (!window.db || !window.userEmail) return [];
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const pledgesQuery = query(
+            collection(window.db, 'pledges'),
+            where('email', '==', window.userEmail)
+        );
+        const snapshot = await getDocs(pledgesQuery);
+        const voterPledges = [];
+        snapshot.forEach(doc => {
+            const pledgeData = doc.data();
+            if (pledgeData.voterId === voterId || pledgeData.idNumber === idNumber || pledgeData.voterId === idNumber) {
+                voterPledges.push({
+                    id: doc.id,
+                    ...pledgeData
+                });
+            }
+        });
+        return voterPledges;
+    } catch (error) {
+        console.error('Error fetching voter pledges:', error);
+        return [];
+    }
+}
+
+// Fetch voter calls
+async function fetchVoterCalls(voterId, idNumber) {
+    if (!window.db || !window.userEmail) return [];
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const callsQuery = query(
+            collection(window.db, 'calls'),
+            where('email', '==', window.userEmail)
+        );
+        const snapshot = await getDocs(callsQuery);
+        const voterCalls = [];
+        snapshot.forEach(doc => {
+            const callData = doc.data();
+            if (callData.voterId === voterId || callData.idNumber === idNumber || callData.voterId === idNumber) {
+                voterCalls.push({
+                    id: doc.id,
+                    ...callData
+                });
+            }
+        });
+        return voterCalls;
+    } catch (error) {
+        console.error('Error fetching voter calls:', error);
+        return [];
+    }
+}
+
+// Fetch voter events (events where voter is registered/attended)
+async function fetchVoterEvents(voterId, idNumber) {
+    if (!window.db || !window.userEmail) return [];
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const eventsQuery = query(
+            collection(window.db, 'events'),
+            where('email', '==', window.userEmail)
+        );
+        const snapshot = await getDocs(eventsQuery);
+        const voterEvents = [];
+        snapshot.forEach(doc => {
+            const eventData = doc.data();
+            const attendees = eventData.attendees || [];
+            if (attendees.some(a => a.voterId === voterId || a.idNumber === idNumber || a.voterId === idNumber)) {
+                voterEvents.push({
+                    id: doc.id,
+                    ...eventData
+                });
+            }
+        });
+        return voterEvents;
+    } catch (error) {
+        console.error('Error fetching voter events:', error);
+        return [];
+    }
+}
+
+// Fetch voter agent assignments
+async function fetchVoterAssignments(voterId, idNumber) {
+    if (!window.db || !window.userEmail) return [];
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const agentsQuery = query(
+            collection(window.db, 'agents'),
+            where('email', '==', window.userEmail)
+        );
+        const snapshot = await getDocs(agentsQuery);
+        const assignments = [];
+        snapshot.forEach(doc => {
+            const agentData = doc.data();
+            const assignedVoters = agentData.assignedVoters || [];
+            const assignment = assignedVoters.find(v => v.voterId === voterId || v.idNumber === idNumber || v.voterId === idNumber);
+            if (assignment) {
+                assignments.push({
+                    agentId: doc.id,
+                    agentName: agentData.name || 'Unknown Agent',
+                    ...assignment
+                });
+            }
+        });
+        return assignments;
+    } catch (error) {
+        console.error('Error fetching voter assignments:', error);
+        return [];
+    }
+}
+
+// Render voter pledges
+function renderVoterPledges(pledges, candidateNamesMap = {}) {
+    try {
+        const container = document.getElementById('voter-pledges-container');
+        if (!container) {
+            console.warn('voter-pledges-container not found');
+            return;
+        }
+
+        if (!pledges || pledges.length === 0) {
+            container.innerHTML = `
+                <div style="text-align:center; padding:40px; color:var(--text-light);">
+                    <p>No pledges recorded</p>
+                </div>
+            `;
+            return;
+        }
+
+        const formatDate = (date) => {
+            if (!date) return 'N/A';
+            try {
+                const dateObj = (date && date.toDate) ? date.toDate() : (date ? new Date(date) : new Date());
+                return dateObj instanceof Date ? dateObj.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                }) : 'N/A';
+            } catch (error) {
+                console.error('Error formatting date:', error, date);
+                return 'N/A';
+            }
+        };
+
+        container.innerHTML = pledges.map((pledge, index) => {
+            if (!pledge) return ''; // Skip invalid pledges
+            const pledgeId = pledge.id || `pledge-${index}`;
+            const pledgeDate = (pledge.date && pledge.date.toDate) ? pledge.date.toDate() : (pledge.date ? new Date(pledge.date) : new Date());
+            const pledgeType = pledge.type || pledge.pledge || 'neutral';
+            const statusText = pledgeType === 'yes' || pledgeType === 'positive' ? 'YES - WILL SUPPORT' :
+                (pledgeType === 'no' || pledgeType === 'negative' ? 'NO - WILL NOT SUPPORT' : 'UNDECIDED');
+            const statusBgColor = pledgeType === 'yes' || pledgeType === 'positive' ? '#10b981' :
+                (pledgeType === 'no' || pledgeType === 'negative' ? '#ef4444' : '#6b7280');
+
+            // Get candidate names for this pledge
+            let candidateNames = [];
+            if (pledge.candidateIds && Array.isArray(pledge.candidateIds) && pledge.candidateIds.length > 0) {
+                candidateNames = pledge.candidateIds
+                    .map(id => {
+                        const name = candidateNamesMap[id];
+                        return name || 'Unknown Candidate';
+                    })
+                    .filter(name => name);
+            } else if (pledge.candidateId) {
+                const name = candidateNamesMap[pledge.candidateId];
+                candidateNames = [name || 'Unknown Candidate'];
+            } else if (pledge.candidate) {
+                const name = candidateNamesMap[pledge.candidate];
+                candidateNames = [name || 'Unknown Candidate'];
+            }
+            const candidateDisplay = candidateNames.length > 0 ? candidateNames.join(', ') : 'N/A';
+
+            return `
+            <div class="voter-pledge-detail-card" data-pledge-id="${pledgeId}" data-pledge-index="${index}" style="display: ${index === 0 ? 'block' : 'none'}; margin-bottom: 16px;">
+                <div>
+                    <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #6FC1DA;">Pledge Info</h3>
+                    <div style="height: 2px; background: #6FC1DA; margin-bottom: 20px; width: 100%;"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <div>
+                            <label style="display: block; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">PLEDGE STATUS</label>
+                            <p class="voter-pledge-status-display" data-pledge-id="${pledgeId}" style="margin: 0;">
+                                <span style="display: inline-block; padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 700; text-transform: uppercase; background: ${statusBgColor}; color: white;">${statusText}</span>
+                            </p>
+                            <select class="voter-pledge-status-edit" data-pledge-id="${pledgeId}" style="display: none; width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; background: white;">
+                                <option value="yes" ${pledgeType === 'yes' || pledgeType === 'positive' ? 'selected' : ''}>Yes - Will Support</option>
+                                <option value="no" ${pledgeType === 'no' || pledgeType === 'negative' ? 'selected' : ''}>No - Will Not Support</option>
+                                <option value="neutral" ${pledgeType === 'neutral' ? 'selected' : ''}>Undecided</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">DATE RECORDED</label>
+                            <p class="voter-pledge-date-display" data-pledge-id="${pledgeId}" style="margin: 0; color: #111827; font-size: 14px; font-weight: 500;">${formatDate(pledgeDate)}</p>
+                            <input type="date" class="voter-pledge-date-edit" data-pledge-id="${pledgeId}" value="${pledgeDate instanceof Date ? pledgeDate.toISOString().split('T')[0] : ''}" style="display: none; width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; background: white;" />
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <label style="display: block; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">CANDIDATE INFORMATION</label>
+                            <p class="voter-pledge-candidate-display" data-pledge-id="${pledgeId}" style="margin: 0; color: #111827; font-size: 14px; font-weight: 500;">${candidateDisplay}</p>
+                        </div>
+                    </div>
+                </div>
+                ${pledges.length > 1 ? `
+                <div style="display: flex; gap: 8px; justify-content: center; align-items: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                    <button class="voter-pledge-prev-btn icon-btn" title="Previous" data-pledge-index="${index}" onclick="navigateVoterPledgeDetail('prev', ${index})" ${index === 0 ? 'disabled' : ''} style="background: var(--light-color); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; ${index === 0 ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <span class="voter-pledge-pagination-info" style="display: flex; align-items: center; padding: 0 12px; color: var(--text-light); font-size: 12px; white-space: nowrap;">${index + 1} of ${pledges.length}</span>
+                    <button class="voter-pledge-next-btn icon-btn" title="Next" data-pledge-index="${index}" onclick="navigateVoterPledgeDetail('next', ${index})" ${index === pledges.length - 1 ? 'disabled' : ''} style="background: var(--light-color); border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; ${index === pledges.length - 1 ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+                ` : ''}
+            </div>
+        `;
+        }).join('');
+    } catch (error) {
+        console.error('Error in renderVoterPledges:', error);
+        const container = document.getElementById('voter-pledges-container');
+        if (container) {
+            container.innerHTML = `
+                <div style="text-align:center; padding:40px; color:var(--danger-color);">
+                    <p>Error rendering pledges</p>
+                </div>
+            `;
+        }
+    }
+}
+
+// Navigate voter pledge detail
+function navigateVoterPledgeDetail(direction, currentIndex) {
+    const container = document.getElementById('voter-pledges-container');
+    if (!container) return;
+
+    const cards = Array.from(container.querySelectorAll('.voter-pledge-detail-card'));
+    if (cards.length === 0) return;
+
+    // Find the currently visible card
+    const currentCard = cards.find(card => card.style.display !== 'none');
+    if (!currentCard) return;
+
+    const currentIdx = parseInt(currentCard.dataset.pledgeIndex || '0');
+
+    let newIndex = currentIdx;
+    if (direction === 'prev' && currentIdx > 0) {
+        newIndex = currentIdx - 1;
+    } else if (direction === 'next' && currentIdx < cards.length - 1) {
+        newIndex = currentIdx + 1;
+    } else {
+        return;
+    }
+
+    // Hide all cards and show the new one
+    cards.forEach((card, idx) => {
+        card.style.display = idx === newIndex ? 'block' : 'none';
+    });
+
+    // Update navigation buttons for all cards
+    cards.forEach((card, idx) => {
+        const prevBtn = card.querySelector('.voter-pledge-prev-btn');
+        const nextBtn = card.querySelector('.voter-pledge-next-btn');
+        const paginationInfo = card.querySelector('.voter-pledge-pagination-info');
+
+        if (prevBtn) {
+            prevBtn.disabled = idx === 0;
+            prevBtn.style.opacity = idx === 0 ? '0.5' : '1';
+            prevBtn.style.cursor = idx === 0 ? 'not-allowed' : 'pointer';
+        }
+        if (nextBtn) {
+            nextBtn.disabled = idx === cards.length - 1;
+            nextBtn.style.opacity = idx === cards.length - 1 ? '0.5' : '1';
+            nextBtn.style.cursor = idx === cards.length - 1 ? 'not-allowed' : 'pointer';
+        }
+        if (paginationInfo) {
+            paginationInfo.textContent = `${idx + 1} of ${cards.length}`;
+        }
+    });
+}
+
+// Switch voter pledge tab
+function switchVoterPledgeTab(tabName, pledgeId) {
+    const card = document.querySelector(`.voter-pledge-detail-card[data-pledge-id="${pledgeId}"]`);
+    if (!card) return;
+
+    // Update tab buttons
+    card.querySelectorAll('.voter-pledge-tab-btn').forEach(btn => {
+        if (btn.dataset.pledgeId === pledgeId) {
+            btn.classList.remove('active');
+            btn.style.borderBottom = '3px solid transparent';
+            btn.style.color = 'var(--text-light)';
+            btn.style.fontWeight = '500';
+        }
+    });
+
+    const activeBtn = card.querySelector(`.voter-pledge-tab-btn[data-tab="${tabName}"][data-pledge-id="${pledgeId}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.style.borderBottom = '3px solid var(--primary-color)';
+        activeBtn.style.color = 'var(--primary-color)';
+        activeBtn.style.fontWeight = '600';
+    }
+
+    // Update tab content
+    card.querySelectorAll('.voter-pledge-tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+
+    const activeContent = card.querySelector(`#voter-pledge-tab-${tabName}-${pledgeId}`);
+    if (activeContent) {
+        activeContent.style.display = 'block';
+    }
+}
+
+// Enable voter pledge edit
+function enableVoterPledgeEdit(pledgeId) {
+    const card = document.querySelector(`.voter-pledge-detail-card[data-pledge-id="${pledgeId}"]`);
+    if (!card) return;
+
+    const editBtn = card.querySelector('.voter-pledge-enable-edit-btn');
+    const saveBtn = card.querySelector('.voter-pledge-save-btn');
+    const statusDisplay = card.querySelector(`.voter-pledge-status-display[data-pledge-id="${pledgeId}"]`);
+    const statusEdit = card.querySelector(`.voter-pledge-status-edit[data-pledge-id="${pledgeId}"]`);
+    const dateDisplay = card.querySelector(`.voter-pledge-date-display[data-pledge-id="${pledgeId}"]`);
+    const dateEdit = card.querySelector(`.voter-pledge-date-edit[data-pledge-id="${pledgeId}"]`);
+
+    const isEditing = card.dataset.editMode === 'true';
+
+    if (isEditing) {
+        // Disable edit mode
+        card.dataset.editMode = 'false';
+        if (statusDisplay) statusDisplay.style.display = '';
+        if (statusEdit) statusEdit.style.display = 'none';
+        if (dateDisplay) dateDisplay.style.display = '';
+        if (dateEdit) dateEdit.style.display = 'none';
+        if (saveBtn) saveBtn.style.display = 'none';
+    } else {
+        // Enable edit mode
+        card.dataset.editMode = 'true';
+        if (statusDisplay) statusDisplay.style.display = 'none';
+        if (statusEdit) {
+            statusEdit.style.display = 'block'; // Keep dropdown visible when editing
+            statusEdit.style.visibility = 'visible';
+        }
+        if (dateDisplay) dateDisplay.style.display = 'none';
+        if (dateEdit) dateEdit.style.display = 'block';
+        if (saveBtn) saveBtn.style.display = 'flex';
+    }
+}
+
+// Save voter pledge from detail
+async function saveVoterPledgeFromDetail(pledgeId) {
+    if (!window.db || !window.userEmail) {
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Database not initialized. Please refresh the page.');
+        }
+        return;
+    }
+
+    const card = document.querySelector(`.voter-pledge-detail-card[data-pledge-id="${pledgeId}"]`);
+    if (!card) return;
+
+    try {
+        const {
+            doc,
+            getDoc,
+            updateDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        const pledgeRef = doc(window.db, 'pledges', pledgeId);
+        const pledgeSnap = await getDoc(pledgeRef);
+
+        if (!pledgeSnap.exists()) {
+            if (window.showErrorDialog) {
+                window.showErrorDialog('Pledge not found.', 'Error');
+            }
+            return;
+        }
+
+        const statusEdit = card.querySelector(`.voter-pledge-status-edit[data-pledge-id="${pledgeId}"]`);
+        const dateEdit = card.querySelector(`.voter-pledge-date-edit[data-pledge-id="${pledgeId}"]`);
+        const notesEdit = card.querySelector(`.voter-pledge-notes-edit[data-pledge-id="${pledgeId}"]`);
+
+        const updateData = {};
+
+        if (statusEdit && statusEdit.value) {
+            updateData.pledge = statusEdit.value;
+        }
+
+        if (dateEdit && dateEdit.value) {
+            updateData.recordedAt = new Date(dateEdit.value);
+        }
+
+        await updateDoc(pledgeRef, updateData);
+
+        // Refresh the voter detail view
+        const detailPanel = document.getElementById('voter-detail-panel');
+        if (detailPanel && detailPanel.dataset.voterId) {
+            const voterId = detailPanel.dataset.voterId;
+            const voterData = window.votersDataCache.find(v => v.id === voterId);
+            if (voterData) {
+                await viewVoterDetails(voterId, voterData.data);
+            }
+        }
+
+        if (window.showSuccessDialog) {
+            window.showSuccessDialog('Pledge updated successfully.');
+        }
+    } catch (error) {
+        console.error('Error saving pledge:', error);
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Failed to save pledge. Please try again.', 'Error');
+        }
+    }
+}
+
+// Delete voter pledge from detail
+async function deleteVoterPledgeFromDetail(pledgeId) {
+    if (!window.db || !window.userEmail) {
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Database not initialized. Please refresh the page.');
+        }
+        return;
+    }
+
+    const confirmed = window.showConfirm ?
+        await window.showConfirm('Are you sure you want to delete this pledge? This action cannot be undone.', 'Delete Pledge') :
+        confirm('Are you sure you want to delete this pledge? This action cannot be undone.');
+
+    if (!confirmed) return;
+
+    try {
+        const {
+            doc,
+            deleteDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        const pledgeRef = doc(window.db, 'pledges', pledgeId);
+        await deleteDoc(pledgeRef);
+
+        // Refresh the voter detail view
+        const detailPanel = document.getElementById('voter-detail-panel');
+        if (detailPanel && detailPanel.dataset.voterId) {
+            const voterId = detailPanel.dataset.voterId;
+            const voterData = window.votersDataCache.find(v => v.id === voterId);
+            if (voterData) {
+                await viewVoterDetails(voterId, voterData.data);
+            }
+        }
+
+        if (window.showSuccessDialog) {
+            window.showSuccessDialog('Pledge deleted successfully.');
+        }
+    } catch (error) {
+        console.error('Error deleting pledge:', error);
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Failed to delete pledge. Please try again.', 'Error');
+        }
+    }
+}
+
+// Create comprehensive voter detail HTML
+async function createVoterDetailHTML(data, {
+    idNumber,
+    imageUrl,
+    initials,
+    dobDisplay,
+    registeredDisplay,
+    pledges,
+    calls,
+    events,
+    assignments,
+    candidateNamesMap = {}
+}, voterId = null) {
+    const voterIdToUse = voterId || data.id || '';
+    const idNumberDisplay = (data.idNumber && data.idNumber.trim()) ? data.idNumber.trim() : (data.voterId ? data.voterId : 'N/A');
+    const currentVoterIndex = window.currentVoterIndex !== undefined ? window.currentVoterIndex : 0;
+    const totalVoters = window.totalVotersCount || 0;
+
+    return `
+        <!-- Basic Info Tab Content -->
+        <div id="voter-tab-basic" class="voter-tab-content" style="display: block;">
+            <div style="margin-bottom: 24px;">
+                <h3 style="margin: 0 0 20px 0; font-size: 14px; font-weight: 700; color: var(--text-color); text-transform: uppercase; letter-spacing: 0.5px;">BASIC INFORMATION</h3>
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+                    ${imageUrl ? 
+                        `<img id="voter-detail-image" src="${imageUrl}" alt="${data.name || 'Voter'}" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);" data-voter-id="${idNumber || ''}" onerror="this.onerror=null; this.style.display='none'; const fallback=this.nextElementSibling; if(fallback) fallback.style.display='flex'; tryLoadImageFromFolder(this, '${idNumber || ''}').then(found => { if(found) { this.src=found; this.style.display=''; if(fallback) fallback.style.display='none'; } });"><div id="voter-detail-fallback" style="width: 64px; height: 64px; border-radius: 50%; display: none; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 24px; border: 2px solid var(--primary-color);">${initials}</div>` :
+                        `<div id="voter-detail-fallback" style="width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 24px; border: 2px solid var(--primary-color);">${initials}</div>`
+                    }
+                </div>
+                <div style="display: grid; gap: 16px;">
                     <div>
-                        <h2 style="margin: 0; color: var(--text-color); font-size: 24px; font-weight: 700;">${(data.name && data.name.trim()) ? data.name.trim() : 'N/A'}</h2>
-                        <p style="margin: 5px 0 0 0; color: var(--text-light); font-size: 14px;">ID: ${(data.idNumber && data.idNumber.trim()) ? data.idNumber.trim() : (data.voterId ? data.voterId : 'N/A')}</p>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">ID NUMBER</label>
+                        <input type="text" id="voter-edit-id" value="${idNumberDisplay}" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color);" />
                     </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-                    <div class="detail-item">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Date of Birth</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${dobDisplay}</p>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">NAME</label>
+                        <input type="text" id="voter-edit-name" value="${(data.name && data.name.trim()) ? data.name.trim() : ''}" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color);" />
                     </div>
-                    <div class="detail-item">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Age</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${(data.age !== undefined && data.age !== null && data.age !== '') ? (data.age + ' years') : 'N/A'}</p>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">DATE OF BIRTH</label>
+                        <input type="text" id="voter-edit-dob" value="${dobDisplay}" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color);" />
                     </div>
-                    <div class="detail-item">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Gender</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${(data.gender && data.gender.trim()) ? (data.gender.charAt(0).toUpperCase() + data.gender.slice(1)) : 'N/A'}</p>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">AGE</label>
+                        <input type="text" id="voter-edit-age" value="${(data.age !== undefined && data.age !== null && data.age !== '') ? (data.age + ' years') : 'N/A'}" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color);" />
                     </div>
-                    <div class="detail-item">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Island</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${(data.island && data.island.trim()) ? data.island.trim() : 'N/A'}</p>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">GENDER</label>
+                        <input type="text" id="voter-edit-gender" value="${(data.gender && data.gender.trim()) ? (data.gender.charAt(0).toUpperCase() + data.gender.slice(1)) : 'N/A'}" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color);" />
                     </div>
-                    <div class="detail-item">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Constituency</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${(window.campaignData && window.campaignData.constituency && window.campaignData.constituency.trim()) ? window.campaignData.constituency.trim() : 'N/A'}</p>
-                    </div>
-                    <div class="detail-item">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Ballot</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${(data.ballot && data.ballot.trim()) ? data.ballot.trim() : 'N/A'}</p>
-                    </div>
-                </div>
-
-                <div class="detail-item" style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Permanent Address</label>
-                    <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500; line-height: 1.6;">${(data.permanentAddress && data.permanentAddress.trim()) ? data.permanentAddress.trim() : 'N/A'}</p>
-                </div>
-
-                <div class="detail-item" style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Current Location</label>
-                    <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500; line-height: 1.6;">${(data.currentLocation && data.currentLocation.trim()) ? data.currentLocation.trim() : 'N/A'}</p>
-                </div>
-
-                <div class="detail-item" style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Phone Number</label>
-                    <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${(data.number && data.number.trim()) ? data.number.trim() : 'N/A'}</p>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; padding-top: 20px; border-top: 2px solid var(--border-color);">
-                    <div class="detail-item">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Status</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">
-                            <span style="display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; background: ${data.verified ? 'var(--success-color)' : 'var(--warning-color)'}; color: white;">
-                                ${data.verified ? 'Verified' : 'Pending'}
-                            </span>
-                        </p>
-                    </div>
-                    <div class="detail-item">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Registered</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${registeredDisplay}</p>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">PHONE NUMBER</label>
+                        <input type="text" id="voter-edit-phone" value="${(data.number && data.number.trim()) ? data.number.trim() : ''}" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color);" />
                     </div>
                 </div>
             </div>
-        `;
+        </div>
 
-        // Use requestAnimationFrame for smooth modal rendering
-        requestAnimationFrame(() => {
-            // Use the modal system to display voter details
-            let modalOverlay = document.getElementById('modal-overlay');
-            if (!modalOverlay) {
-                // Create modal if it doesn't exist
-                const overlay = document.createElement('div');
-                overlay.id = 'modal-overlay';
-                overlay.className = 'modal-overlay';
-                overlay.innerHTML = `
-                    <div class="modal-container" id="modal-container" style="max-width: 700px;">
-                        <div class="modal-header">
-                            <h2 id="modal-title">Voter Details</h2>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <button class="modal-maximize" id="modal-maximize-btn" title="Maximize" onclick="if (typeof toggleModalMaximize === 'function') { const container = this.closest('.modal-container'); toggleModalMaximize(container, this); }">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-                                    </svg>
-                                </button>
-                                <button class="modal-close" id="modal-close-btn">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="modal-body" id="modal-body"></div>
+        <!-- Location Tab Content -->
+        <div id="voter-tab-location" class="voter-tab-content" style="display: none;">
+            <div style="margin-bottom: 24px;">
+                <h3 style="margin: 0 0 20px 0; font-size: 14px; font-weight: 700; color: var(--text-color); text-transform: uppercase; letter-spacing: 0.5px;">LOCATION INFORMATION</h3>
+                <div style="display: grid; gap: 16px;">
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">ISLAND</label>
+                        <input type="text" id="voter-edit-island" value="${(data.island && data.island.trim()) ? data.island.trim() : ''}" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color);" />
                     </div>
-                `;
-                document.body.appendChild(overlay);
-                modalOverlay = overlay;
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">CONSTITUENCY</label>
+                        <input type="text" id="voter-edit-constituency" value="${(window.campaignData && window.campaignData.constituency && window.campaignData.constituency.trim()) ? window.campaignData.constituency.trim() : 'N/A'}" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color);" />
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">PERMANENT ADDRESS</label>
+                        <textarea id="voter-edit-permanent-address" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color); min-height: 80px; resize: vertical; font-family: inherit;">${(data.permanentAddress && data.permanentAddress.trim()) ? data.permanentAddress.trim() : ''}</textarea>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">CURRENT LOCATION</label>
+                        <textarea id="voter-edit-current-location" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color); min-height: 80px; resize: vertical; font-family: inherit;">${(data.currentLocation && data.currentLocation.trim()) ? data.currentLocation.trim() : ''}</textarea>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">BALLOT BOX</label>
+                        <input type="text" id="voter-edit-ballot" value="${(data.ballot && data.ballot.trim()) ? data.ballot.trim() : ''}" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color);" />
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                // Add close handlers (only once)
-                const closeBtn = overlay.querySelector('#modal-close-btn');
-                if (closeBtn && !closeBtn.dataset.listenerAttached) {
-                    closeBtn.dataset.listenerAttached = 'true';
-                    closeBtn.addEventListener('click', () => {
-                        overlay.style.display = 'none';
-                    });
+        <!-- Pledges Tab Content -->
+        <div id="voter-tab-pledges" class="voter-tab-content" style="display: none;">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+                <button onclick="openModal('pledge', '${voterIdToUse}')" class="btn-primary btn-compact" style="display: flex; align-items: center; gap: 6px; background: var(--primary-color); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add Pledge
+                </button>
+                </div>
+            <div id="voter-pledges-container"></div>
+        </div>
+
+        <!-- Calls Tab Content -->
+        <div id="voter-tab-calls" class="voter-tab-content" style="display: none;">
+            <div style="margin-bottom: 24px;">
+                <h3 style="margin: 0 0 20px 0; font-size: 14px; font-weight: 700; color: var(--text-color); text-transform: uppercase; letter-spacing: 0.5px;">CALLS (${calls.length})</h3>
+                ${calls.length > 0 ? `
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" style="font-size: 12px;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 120px;">Who Made Call</th>
+                                    <th style="width: 120px;">Date</th>
+                                    <th style="width: 100px;">Time</th>
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody id="calls-edit-tbody">
+                                ${calls.map(call => {
+                                    const callDateObj = call.callDate?.toDate ? call.callDate.toDate() : (call.date?.toDate ? call.date.toDate() : (call.date ? new Date(call.date) : new Date()));
+                                    const dateValue = callDateObj instanceof Date ? callDateObj.toISOString().split('T')[0] : '';
+                                    const callDate = callDateObj instanceof Date ? callDateObj.toLocaleDateString() : (call.date || 'N/A');
+                                    const callTime = call.time || '';
+                                    const caller = call.caller || call.agentName || call.madeBy || 'N/A';
+                                    const callStatus = call.status || 'Completed';
+                                    return `
+                                        <tr data-call-id="${call.id}" class="call-row">
+                                            <td>
+                                                <span class="call-caller-display" style="font-size: 11px; font-weight: 600; color: var(--text-color);">
+                                                    ${caller}
+                                                </span>
+                                                <input type="text" class="call-caller-edit" data-call-id="${call.id}" value="${caller}" style="display: none; width: 100%; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 11px;" />
+                                            </td>
+                                            <td>
+                                                <span class="call-date-display" style="font-size: 11px; color: var(--text-light);">
+                                                    ${callDate}
+                                                </span>
+                                                <input type="date" class="call-date-edit" data-call-id="${call.id}" value="${dateValue}" style="display: none; width: 100%; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 11px;" />
+                                            </td>
+                                            <td>
+                                                <span class="call-time-display" style="font-size: 11px; color: var(--text-light);">
+                                                    ${callTime || 'N/A'}
+                                                </span>
+                                                <input type="time" class="call-time-edit" data-call-id="${call.id}" value="${callTime}" style="display: none; width: 100%; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 11px;" />
+                                            </td>
+                                            <td>
+                                                <span class="call-notes-display" style="font-size: 11px; color: var(--text-color);">
+                                                    ${call.notes || call.remark || 'N/A'}
+                                                </span>
+                                                <textarea class="call-notes-edit" data-call-id="${call.id}" style="display: none; width: 100%; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 11px; min-height: 40px; resize: vertical;">${call.notes || call.remark || ''}</textarea>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                ` : '<p style="margin: 0; font-size: 12px; color: var(--text-light);">No calls recorded</p>'
                 }
-                if (!overlay.dataset.listenerAttached) {
-                    overlay.dataset.listenerAttached = 'true';
-                    overlay.addEventListener('click', (e) => {
-                        if (e.target === overlay) {
-                            overlay.style.display = 'none';
-                        }
-                    });
-                }
-            }
+            </div>
+        </div>
 
-            // Display the modal content
-            const modalBody = modalOverlay.querySelector('#modal-body');
-            const modalTitle = modalOverlay.querySelector('#modal-title');
-
-            if (modalTitle) modalTitle.textContent = 'Voter Details';
-            if (modalBody) {
-                modalBody.innerHTML = modalHTML;
-
-                // If we started an async image lookup, update the image when found
-                if (imageLookupPromise) {
-                    imageLookupPromise.then(foundUrl => {
-                        if (foundUrl) {
-                            const detailImg = modalBody.querySelector('#voter-detail-image');
-                            const detailFallback = modalBody.querySelector('#voter-detail-fallback');
-
-                            if (detailImg) {
-                                detailImg.src = foundUrl;
-                                detailImg.style.display = '';
-                                if (detailFallback) {
-                                    detailFallback.style.display = 'none';
-                                }
-                            } else if (detailFallback) {
-                                // If no img element exists, create one
-                                const img = document.createElement('img');
-                                img.id = 'voter-detail-image';
-                                img.src = foundUrl;
-                                img.alt = data.name || 'Voter';
-                                img.style.cssText = 'width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-color);';
-                                img.setAttribute('data-voter-id', idNumber);
-                                img.onerror = function() {
-                                    this.style.display = 'none';
-                                    if (detailFallback) {
-                                        detailFallback.style.display = 'flex';
-                                    }
-                                };
-                                detailFallback.parentNode.replaceChild(img, detailFallback);
-                            }
-                        }
-                    }).catch(() => {
-                        // Silently fail - fallback will show
-                    });
-                }
-            }
-            modalOverlay.style.display = 'flex';
-        });
-    } catch (error) {
-        console.error('Error loading voter details:', error);
-        // Hide loading indicator
-        const modalOverlay = document.getElementById('modal-overlay');
-        if (modalOverlay) {
-            modalOverlay.style.display = 'none';
-        }
-        if (window.showErrorDialog) {
-            window.showErrorDialog('Failed to load voter details. Please try again.', 'Error');
-        }
-    }
+        <!-- Assignments Tab Content -->
+        <div id="voter-tab-assignments" class="voter-tab-content" style="display: none;">
+            <div style="margin-bottom: 24px;">
+                <h3 style="margin: 0 0 20px 0; font-size: 14px; font-weight: 700; color: var(--text-color); text-transform: uppercase; letter-spacing: 0.5px;">ASSIGNED AGENTS (${assignments.length})</h3>
+                <div style="margin-bottom: 16px;">
+                    <button onclick="assignAgentToVoter('${data.id || idNumber}')" class="btn-primary btn-compact" style="font-size: 12px; padding: 8px 16px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; vertical-align: middle;">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Assign Agent
+                    </button>
+                </div>
+                ${assignments.length > 0 ? `
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" style="font-size: 12px;">
+                            <thead>
+                                <tr>
+                                    <th>Agent Name</th>
+                                    <th>Notes</th>
+                                    <th style="width: 80px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${assignments.map(assignment => `
+                                    <tr>
+                                        <td style="font-size: 11px; font-weight: 600; color: var(--text-color);">${assignment.agentName}</td>
+                                        <td style="font-size: 11px; color: var(--text-light);">${assignment.notes || 'N/A'}</td>
+                                        <td>
+                                            <button onclick="removeAgentFromVoter('${data.id || idNumber}', '${assignment.agentId}')" class="btn-secondary btn-compact" style="font-size: 11px; padding: 4px 8px;" title="Remove Agent">
+                                                Remove
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                ` : '<p style="margin: 0; font-size: 12px; color: var(--text-light);">Not assigned to any agent</p>'
+    } <
+    /div> < /
+    div >
+    `;
 }
 
 // Edit voter function
@@ -10739,6 +15279,161 @@ async function deleteVoter(voterId) {
     }
 }
 
+// Create Pledge Detail HTML (similar to Call Detail)
+function createPledgeDetailHTML(pledgeData, voterData = null) {
+    const voterName = pledgeData.voterName || (voterData && voterData.name) || 'N/A';
+    const idNumber = pledgeData.voterId || (voterData && (voterData.idNumber || voterData.voterId)) || 'N/A';
+    const permanentAddress = voterData ? (voterData.permanentAddress || voterData.address || 'N/A') : (pledgeData.permanentAddress || 'N/A');
+    const currentLocation = voterData ? (voterData.currentLocation || voterData.location || 'N/A') : (pledgeData.currentLocation || 'N/A');
+    const constituency = pledgeData.constituency || (voterData && voterData.constituency) || (window.campaignData && window.campaignData.constituency) || 'N/A';
+    const island = pledgeData.island || (voterData && voterData.island) || 'N/A';
+    const dobDisplay = voterData && voterData.dateOfBirth ? (voterData.dateOfBirth.toDate ? voterData.dateOfBirth.toDate().toLocaleDateString() : new Date(voterData.dateOfBirth).toLocaleDateString()) : 'N/A';
+    const age = voterData && voterData.age ? `${voterData.age} years` : (pledgeData.age ? `${pledgeData.age} years` : 'N/A');
+    const gender = voterData && voterData.gender ? voterData.gender.charAt(0).toUpperCase() + voterData.gender.slice(1) : 'N/A';
+    const ballot = voterData && voterData.ballot ? voterData.ballot : 'N/A';
+    const phone = voterData && voterData.number ? voterData.number : 'N/A';
+
+    const initials = voterName && voterName !== 'N/A' ? voterName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NA';
+    const imageUrl = getVoterImageUrl(voterData || pledgeData, idNumber !== 'N/A' ? idNumber : null);
+
+    const pledgeDate = pledgeData.recordedAt ? (pledgeData.recordedAt.toDate ? pledgeData.recordedAt.toDate() : new Date(pledgeData.recordedAt)) : new Date();
+    const pledgeDateStr = pledgeDate.toLocaleDateString('default', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    });
+
+    const statusClass = pledgeData.pledge === 'yes' ? 'status-success' :
+        (pledgeData.pledge === 'no' || pledgeData.pledge === 'negative' ? 'status-danger' : 'status-pending');
+    const statusText = pledgeData.pledge === 'yes' ? 'Yes - Will Support' :
+        (pledgeData.pledge === 'no' || pledgeData.pledge === 'negative' ? 'No - Will Not Support' : 'Undecided');
+
+    return `
+        <div class="pledge-detail-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 2px solid var(--border-color); margin-bottom: 16px;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="pledge-prev-btn" class="icon-btn" title="Previous" onclick="navigatePledgeDetail('prev')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <span id="pledge-detail-pagination-info" style="display: flex; align-items: center; padding: 0 8px; color: var(--text-light); font-size: 12px; white-space: nowrap;">1 of 1</span>
+                <button id="pledge-next-btn" class="icon-btn" title="Next" onclick="navigatePledgeDetail('next')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button id="pledge-enable-edit-btn" class="icon-btn" title="Enable Edit" onclick="enablePledgeEdit()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </button>
+                <button id="pledge-save-btn" class="icon-btn" title="Save" onclick="savePledgeFromDetail()" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </button>
+                <button id="pledge-delete-btn" class="icon-btn icon-btn-danger" title="Delete" onclick="deletePledgeFromDetail()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+                <button id="pledge-close-btn" class="icon-btn" title="Close" onclick="closePledgeDetailPanel()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                ${imageUrl ?
+                    `<img id="pledge-detail-image" src="${imageUrl}" alt="${voterName}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);" data-voter-id="${idNumber !== 'N/A' ? idNumber : ''}" onerror="this.onerror=null; this.style.display='none'; const fallback=this.nextElementSibling; if(fallback) fallback.style.display='flex'; tryLoadImageFromFolder(this, '${idNumber !== 'N/A' ? idNumber : ''}').then(found => { if(found) { this.src=found; this.style.display=''; if(fallback) fallback.style.display='none'; } });"><div id="pledge-detail-fallback" style="width: 50px; height: 50px; border-radius: 50%; display: none; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 20px; border: 2px solid var(--primary-color);">${initials}</div>` :
+                    `<div id="pledge-detail-fallback" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 20px; border: 2px solid var(--primary-color);">${initials}</div>`
+                }
+                <div>
+                    <h3 style="margin: 0; color: var(--text-color); font-size: 18px; font-weight: 700;">${voterName}</h3>
+                    <p style="margin: 4px 0 0 0; color: var(--text-light); font-size: 12px;">ID: ${idNumber}</p>
+                </div>
+            </div>
+
+            <div class="pledge-detail-tabs" style="display: flex; gap: 8px; border-bottom: 2px solid var(--border-color); margin-bottom: 16px;">
+                <button class="pledge-tab-btn active" data-tab="pledge" onclick="switchPledgeTab('pledge')" style="padding: 10px 16px; background: none; border: none; border-bottom: 3px solid var(--primary-color); color: var(--primary-color); font-weight: 600; cursor: pointer; font-size: 13px;">Pledge Info</button>
+                <button class="pledge-tab-btn" data-tab="voter" onclick="switchPledgeTab('voter')" style="padding: 10px 16px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-size: 13px;">Voter Info</button>
+            </div>
+
+            <div id="pledge-tab-pledge" class="pledge-tab-content" style="display: block;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Pledge Status</label>
+                        <p id="pledge-detail-status" style="margin: 0;">
+                            <span class="status-badge ${statusClass}" style="padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600;">${statusText}</span>
+                        </p>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Date Recorded</label>
+                        <p id="pledge-detail-date" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${pledgeDateStr}</p>
+                    </div>
+                    ${pledgeData.notes ? `
+                        <div style="grid-column: span 2;">
+                            <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Notes</label>
+                            <p id="pledge-detail-notes" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; line-height: 1.6; white-space: pre-wrap;">${pledgeData.notes}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+
+            <div id="pledge-tab-voter" class="pledge-tab-content" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Date of Birth</label>
+                        <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${dobDisplay}</p>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Age</label>
+                        <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${age}</p>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Gender</label>
+                        <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${gender}</p>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Constituency</label>
+                        <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${constituency}</p>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Island</label>
+                        <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${island}</p>
+                    </div>
+                    ${ballot !== 'N/A' ? `
+                        <div>
+                            <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Ballot</label>
+                            <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${ballot}</p>
+                        </div>
+                    ` : ''}
+                    <div style="grid-column: span 2;">
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Permanent Address</label>
+                        <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; line-height: 1.6;">${permanentAddress}</p>
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Current Location</label>
+                        <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; line-height: 1.6;">${currentLocation}</p>
+                    </div>
+                    ${phone !== 'N/A' ? `
+                        <div>
+                            <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Phone</label>
+                            <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${phone}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+    `;
+}
+
 // View pledge details function
 async function viewPledgeDetails(pledgeId, navigateDirection = null) {
     if (!window.db || !window.userEmail) {
@@ -10746,20 +15441,6 @@ async function viewPledgeDetails(pledgeId, navigateDirection = null) {
             window.showErrorDialog('Database not initialized. Please refresh the page.');
         }
         return;
-    }
-
-    // Show loading indicator immediately
-    const modalOverlay = document.getElementById('modal-overlay');
-    if (modalOverlay) {
-        modalOverlay.style.display = 'flex';
-        const modalBody = document.getElementById('modal-body');
-        if (modalBody) {
-            modalBody.innerHTML = `
-                <div style="display: flex; justify-content: center; align-items: center; padding: 40px;">
-                    <div class="loading-spinner" style="width: 40px; height: 40px; border: 4px solid var(--border-light); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                </div>
-            `;
-        }
     }
 
     try {
@@ -10799,7 +15480,6 @@ async function viewPledgeDetails(pledgeId, navigateDirection = null) {
             if (window.showErrorDialog) {
                 window.showErrorDialog('Pledge not found.', 'Error');
             }
-            if (modalOverlay) modalOverlay.style.display = 'none';
             return;
         }
 
@@ -10909,274 +15589,338 @@ async function viewPledgeDetails(pledgeId, navigateDirection = null) {
             }
         }
 
-        // Pledge status
-        let statusClass = 'status-pending';
-        let statusText = 'Undecided';
-        if (pledgeData.pledge === 'yes') {
-            statusClass = 'status-success';
-            statusText = 'Yes - Will Support';
-        } else if (pledgeData.pledge === 'no' || pledgeData.pledge === 'negative') {
-            statusClass = 'status-danger';
-            statusText = 'No - Will Not Support';
+        // Get detail panel and content
+        const detailPanel = document.getElementById('pledge-detail-panel');
+        const detailContent = document.getElementById('pledge-detail-content');
+        const backdrop = document.getElementById('pledge-detail-backdrop');
+        const wrapper = document.getElementById('pledges-table-detail-wrapper');
+        const tableContainer = wrapper ? wrapper.querySelector('.pledges-table-container') : null;
+
+        if (!detailPanel || !detailContent) {
+            console.error('Pledge detail panel elements not found');
+            return;
         }
 
-        // Create modal HTML
-        const modalHTML = `
-            <div class="pledge-details-modal" style="max-width: 600px; margin: 0 auto;">
-                <!-- Navigation and Actions at top -->
-                <div style="display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color); overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                    <!-- Navigation controls on left -->
-                    <div style="display: flex; gap: 6px; flex-wrap: nowrap; flex-shrink: 0;">
-                        <button 
-                            id="pledge-nav-prev" 
-                            class="btn-secondary btn-compact" 
-                            ${currentIndex === 0 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
-                            onclick="viewPledgeDetails('${pledgeId}', 'prev')"
-                            style="display: flex; align-items: center; gap: 6px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                            Previous
-                        </button>
-                        <span style="color: var(--text-light); font-size: 12px; padding: 8px 8px; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;">
-                            ${currentIndex + 1} of ${allPledges.length}
-                        </span>
-                        <button 
-                            id="pledge-nav-next" 
-                            class="btn-secondary btn-compact" 
-                            ${currentIndex === allPledges.length - 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
-                            onclick="viewPledgeDetails('${pledgeId}', 'next')"
-                            style="display: flex; align-items: center; gap: 6px;">
-                            Next
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </button>
-                    </div>
-                    <!-- CRUD actions on right -->
-                    <div style="display: flex; gap: 8px; flex-wrap: nowrap; flex-shrink: 0;">
-                        <button 
-                            type="button"
-                            title="Edit Pledge"
-                            onclick="editPledge('${pledgeId}')"
-                            onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(111, 193, 218, 0.4)'"
-                            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(111, 193, 218, 0.3)'"
-                            style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: linear-gradient(135deg, #6fc1da 0%, #8dd4e8 100%); color: white; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(111, 193, 218, 0.3);">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                        </button>
-                        <button 
-                            type="button"
-                            title="Delete Pledge"
-                            onclick="deletePledge('${pledgeId}')"
-                            onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(220, 38, 38, 0.4)'"
-                            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(220, 38, 38, 0.3)'"
-                            style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: #dc2626; color: white; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
+        // Store current pledge index for navigation
+        detailPanel.dataset.pledgeId = pledgeId;
+        detailPanel.dataset.currentIndex = currentIndex;
+        detailPanel.dataset.totalPledges = allPledges.length;
 
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid var(--border-color);">
-                    ${imageUrl ? 
-                        `<img id="pledge-detail-image" src="${imageUrl}" alt="${voterName}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-color);" data-voter-id="${idNumber !== 'N/A' ? idNumber : ''}" onerror="this.onerror=null; this.style.display='none'; const fallback=this.nextElementSibling; if(fallback) fallback.style.display='flex'; tryLoadImageFromFolder(this, '${idNumber !== 'N/A' ? idNumber : ''}').then(found => { if(found) { this.src=found; this.style.display=''; if(fallback) fallback.style.display='none'; } });"><div id="pledge-detail-fallback" style="width: 80px; height: 80px; border-radius: 50%; display: none; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 28px; border: 3px solid var(--primary-color);">${initials}</div>` :
-                        `<div id="pledge-detail-fallback" style="width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 28px; border: 3px solid var(--primary-color);">${initials}</div>`
-                    }
-                    <div>
-                        <h2 style="margin: 0; color: var(--text-color); font-size: 24px; font-weight: 700;">${(voterName && voterName.trim()) ? voterName.trim() : 'N/A'}</h2>
-                        <p style="margin: 5px 0 0 0; color: var(--text-light); font-size: 14px;">ID: ${idNumber}</p>
-                    </div>
-                </div>
+        // Show panel immediately
+        detailPanel.style.display = 'flex';
 
-                <!-- Pledge Information Section -->
-                <div style="background: var(--light-color); padding: 20px; border-radius: 12px; margin-bottom: 30px;">
-                    <h3 style="margin: 0 0 15px 0; color: var(--text-color); font-size: 18px; font-weight: 600;">Pledge Information</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div class="detail-item">
-                            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Pledge Status</label>
-                            <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">
-                                <span class="status-badge ${statusClass}" style="display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">${statusText}</span>
-                            </p>
-                        </div>
-                        <div class="detail-item">
-                            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Date Recorded</label>
-                            <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${pledgeDateStr}</p>
-                        </div>
-                    </div>
-                    ${pledgeData.notes ? `
-                        <div class="detail-item" style="margin-top: 15px;">
-                            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Notes</label>
-                            <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500; line-height: 1.6;">${pledgeData.notes}</p>
-                        </div>
-                    ` : ''}
-                </div>
+        // Handle responsive layout
+        const isMobile = window.innerWidth < 1024;
+        if (isMobile) {
+            // Mobile: show as popup with backdrop
+            if (backdrop) backdrop.style.display = 'block';
+            detailPanel.style.position = 'fixed';
+            detailPanel.style.top = '50%';
+            detailPanel.style.left = '50%';
+            detailPanel.style.transform = 'translate(-50%, -50%)';
+            detailPanel.style.width = 'calc(100% - 32px)';
+            detailPanel.style.maxWidth = '500px';
+            detailPanel.style.maxHeight = 'calc(100vh - 40px)';
+            detailPanel.style.height = 'auto';
+            detailPanel.style.zIndex = '1000';
+            detailPanel.style.margin = '20px';
+            detailPanel.style.overflow = 'hidden';
+        } else {
+            // Desktop: show as side panel
+            if (backdrop) backdrop.style.display = 'none';
 
-                <!-- Voter Information Section -->
-                <h3 style="margin: 0 0 20px 0; color: var(--text-color); font-size: 18px; font-weight: 600;">Voter Information</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-                    <div class="detail-item">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Date of Birth</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${dobDisplay}</p>
-                    </div>
-                    <div class="detail-item">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Age</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${(displayData.age !== undefined && displayData.age !== null && displayData.age !== '') ? (displayData.age + ' years') : (pledgeData.age ? pledgeData.age + ' years' : 'N/A')}</p>
-                    </div>
-                    <div class="detail-item">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Gender</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${(displayData.gender && displayData.gender.trim()) ? (displayData.gender.charAt(0).toUpperCase() + displayData.gender.slice(1)) : 'N/A'}</p>
-                    </div>
-                    <div class="detail-item">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Island</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${(displayData.island && displayData.island.trim()) ? displayData.island.trim() : ((pledgeData.island && pledgeData.island.trim()) ? pledgeData.island.trim() : 'N/A')}</p>
-                    </div>
-                    ${displayData.atoll ? `
-                        <div class="detail-item">
-                            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Atoll</label>
-                            <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${displayData.atoll}</p>
-                        </div>
-                    ` : ''}
-                    ${displayData.ballot ? `
-                        <div class="detail-item">
-                            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Ballot</label>
-                            <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${displayData.ballot}</p>
-                        </div>
-                    ` : ''}
-                </div>
-
-                <!-- Always show Permanent Address, Current Location, and Assigned Agent -->
-                <div class="detail-item" style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Permanent Address</label>
-                    <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500; line-height: 1.6;">${permanentAddress}</p>
-                </div>
-                
-                <div class="detail-item" style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Current Location</label>
-                    <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500; line-height: 1.6;">${currentLocation}</p>
-                </div>
-                
-                <div class="detail-item" style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Assigned Agent</label>
-                    <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${assignedAgentName}</p>
-                </div>
-                
-                ${displayData.number ? `
-                    <div class="detail-item" style="margin-bottom: 20px;">
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Phone Number</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${displayData.number}</p>
-                    </div>
-                ` : ''}
-            </div>
-        `;
-
-        // Use requestAnimationFrame for smooth modal rendering
-        requestAnimationFrame(() => {
-            let modalOverlay = document.getElementById('modal-overlay');
-            if (!modalOverlay) {
-                const overlay = document.createElement('div');
-                overlay.id = 'modal-overlay';
-                overlay.className = 'modal-overlay';
-                overlay.innerHTML = `
-                    <div class="modal-container" id="modal-container" style="max-width: 700px;">
-                        <div class="modal-header">
-                            <h2 id="modal-title">Pledge Details</h2>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <button class="modal-maximize" id="modal-maximize-btn" title="Maximize" onclick="if (typeof toggleModalMaximize === 'function') { const container = this.closest('.modal-container'); toggleModalMaximize(container, this); }">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-                                    </svg>
-                                </button>
-                                <button class="modal-close" id="modal-close-btn">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="modal-body" id="modal-body"></div>
-                    </div>
-                `;
-                document.body.appendChild(overlay);
-                modalOverlay = overlay;
-
-                const closeBtn = overlay.querySelector('#modal-close-btn');
-                if (closeBtn && !closeBtn.dataset.listenerAttached) {
-                    closeBtn.dataset.listenerAttached = 'true';
-                    closeBtn.addEventListener('click', () => {
-                        overlay.style.display = 'none';
-                    });
-                }
-                if (!overlay.dataset.listenerAttached) {
-                    overlay.dataset.listenerAttached = 'true';
-                    overlay.addEventListener('click', (e) => {
-                        if (e.target === overlay) {
-                            overlay.style.display = 'none';
-                        }
-                    });
+            // Adjust wrapper layout on desktop when detail panel is shown
+            if (wrapper) {
+                wrapper.style.display = 'flex';
+                wrapper.style.gap = '24px';
+                const tableContainer = wrapper.querySelector('.pledges-table-container');
+                if (tableContainer) {
+                    tableContainer.style.width = 'calc(100% - 524px)';
+                    tableContainer.style.flexShrink = '0';
                 }
             }
 
-            const modalBody = modalOverlay.querySelector('#modal-body');
-            const modalTitle = modalOverlay.querySelector('#modal-title');
+            detailPanel.style.position = 'relative';
+            detailPanel.style.width = '500px';
+            detailPanel.style.flexShrink = '0';
+            detailPanel.style.transform = 'none';
+            detailPanel.style.zIndex = '100';
+            detailPanel.style.maxHeight = 'none';
+        }
 
-            if (modalTitle) modalTitle.textContent = 'Pledge Details';
-            if (modalBody) {
-                modalBody.innerHTML = modalHTML;
+        // Show pledge info immediately
+        detailContent.innerHTML = createPledgeDetailHTML(pledgeData, voterData);
 
-                // If we started an async image lookup, update the image when found
-                if (imageLookupPromise) {
-                    imageLookupPromise.then(foundUrl => {
-                        if (foundUrl) {
-                            const detailImg = modalBody.querySelector('#pledge-detail-image');
-                            const detailFallback = modalBody.querySelector('#pledge-detail-fallback');
+        // Update navigation buttons immediately
+        const prevBtn = detailContent.querySelector('#pledge-prev-btn');
+        const nextBtn = detailContent.querySelector('#pledge-next-btn');
+        const paginationInfo = detailContent.querySelector('#pledge-detail-pagination-info');
 
-                            if (detailImg) {
-                                detailImg.src = foundUrl;
-                                detailImg.style.display = '';
-                                if (detailFallback) {
-                                    detailFallback.style.display = 'none';
-                                }
-                            } else if (detailFallback) {
-                                // If no img element exists, create one
-                                const img = document.createElement('img');
-                                img.id = 'pledge-detail-image';
-                                img.src = foundUrl;
-                                img.alt = voterName || 'Voter';
-                                img.style.cssText = 'width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-color);';
-                                img.setAttribute('data-voter-id', idNumber !== 'N/A' ? idNumber : '');
-                                img.onerror = function() {
-                                    this.style.display = 'none';
-                                    if (detailFallback) {
-                                        detailFallback.style.display = 'flex';
-                                    }
-                                };
-                                detailFallback.parentNode.replaceChild(img, detailFallback);
-                            }
-                        }
-                    }).catch(() => {
-                        // Silently fail - fallback will show
-                    });
-                }
+        if (prevBtn) prevBtn.disabled = currentIndex === 0;
+        if (nextBtn) nextBtn.disabled = currentIndex === allPledges.length - 1;
+        if (paginationInfo) paginationInfo.textContent = `${currentIndex + 1} of ${allPledges.length}`;
+
+        // Highlight selected row immediately
+        const tableRows = document.querySelectorAll('#pledges-table-body tr');
+        tableRows.forEach(row => {
+            row.classList.remove('selected');
+            const rowPledgeId = row.getAttribute('data-pledge-id') || row.dataset.pledgeId;
+            if (rowPledgeId === pledgeId) {
+                row.classList.add('selected');
             }
-            modalOverlay.style.display = 'flex';
         });
+
+        // If no image URL found, try to lookup from images folder asynchronously
+        const voterNameForImage = pledgeData.voterName || (voterData && voterData.name) || 'Voter';
+        if (!getVoterImageUrl(voterData || pledgeData, idNumber !== 'N/A' ? idNumber : null) && idNumber && idNumber !== 'N/A' && idNumber.trim()) {
+            lookupImageFromFolder(idNumber).then(foundUrl => {
+                if (foundUrl) {
+                    const detailImg = detailContent.querySelector('#pledge-detail-image');
+                    const detailFallback = detailContent.querySelector('#pledge-detail-fallback');
+
+                    if (detailImg) {
+                        detailImg.src = foundUrl;
+                        detailImg.style.display = '';
+                        if (detailFallback) {
+                            detailFallback.style.display = 'none';
+                        }
+                    } else if (detailFallback) {
+                        // Create image element
+                        const img = document.createElement('img');
+                        img.id = 'pledge-detail-image';
+                        img.src = foundUrl;
+                        img.alt = voterNameForImage;
+                        img.style.cssText = 'width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);';
+                        img.setAttribute('data-voter-id', idNumber);
+                        img.onerror = function() {
+                            this.style.display = 'none';
+                            if (detailFallback) {
+                                detailFallback.style.display = 'flex';
+                            }
+                        };
+                        detailFallback.parentNode.replaceChild(img, detailFallback);
+                    }
+                }
+            }).catch(() => {
+                // Silently fail
+            });
+        }
     } catch (error) {
         console.error('Error loading pledge details:', error);
-        const modalOverlay = document.getElementById('modal-overlay');
-        if (modalOverlay) {
-            modalOverlay.style.display = 'none';
-        }
         if (window.showErrorDialog) {
             window.showErrorDialog('Failed to load pledge details. Please try again.', 'Error');
         }
+        const detailContent = document.getElementById('pledge-detail-content');
+        if (detailContent) {
+            detailContent.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--danger-color);">Failed to load pledge details. Please try again.</div>';
+        }
     }
 }
+
+// Switch pledge tab
+function switchPledgeTab(tabName) {
+    // Update tab buttons
+    const tabButtons = document.querySelectorAll('.pledge-tab-btn');
+    tabButtons.forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+            btn.style.borderBottomColor = 'var(--primary-color)';
+            btn.style.color = 'var(--primary-color)';
+            btn.style.fontWeight = '600';
+        } else {
+            btn.classList.remove('active');
+            btn.style.borderBottomColor = 'transparent';
+            btn.style.color = 'var(--text-light)';
+            btn.style.fontWeight = '500';
+        }
+    });
+
+    // Update tab content
+    const tabContents = document.querySelectorAll('.pledge-tab-content');
+    tabContents.forEach(content => {
+        if (content.id === `
+pledge - tab - $ {
+    tabName
+}
+`) {
+            content.style.display = 'block';
+        } else {
+            content.style.display = 'none';
+        }
+    });
+}
+
+// Enable pledge edit mode
+function enablePledgeEdit() {
+    const detailPanel = document.getElementById('pledge-detail-panel');
+    if (!detailPanel || detailPanel.style.display === 'none') return;
+
+    const isEditMode = detailPanel.dataset.editMode === 'true';
+
+    if (isEditMode) {
+        // Disable edit mode
+        detailPanel.dataset.editMode = 'false';
+        const saveBtn = document.getElementById('pledge-save-btn');
+        if (saveBtn) saveBtn.style.display = 'none';
+
+        // Convert inputs back to paragraphs
+        const statusEl = document.getElementById('pledge-detail-status');
+        const notesEl = document.getElementById('pledge-detail-notes');
+
+        if (statusEl && statusEl.tagName === 'SELECT') {
+            const statusValue = statusEl.value;
+            const statusClass = statusValue === 'yes' ? 'status-success' :
+                (statusValue === 'no' || statusValue === 'negative' ? 'status-danger' : 'status-pending');
+            const statusText = statusValue === 'yes' ? 'Yes - Will Support' :
+                (statusValue === 'no' || statusValue === 'negative' ? 'No - Will Not Support' : 'Undecided');
+            const p = document.createElement('p');
+            p.id = 'pledge-detail-status';
+            p.style.cssText = 'margin: 0;';
+            p.innerHTML = ` < span class = "status-badge ${statusClass}"
+style = "padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600;" > $ {
+    statusText
+} < /span>`;
+            statusEl.parentNode.replaceChild(p, statusEl);
+        }
+
+        if (notesEl && notesEl.tagName === 'TEXTAREA') {
+            const p = document.createElement('p');
+            p.id = 'pledge-detail-notes';
+            p.style.cssText = 'margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; line-height: 1.6; white-space: pre-wrap;';
+            p.textContent = notesEl.value || '';
+            notesEl.parentNode.replaceChild(p, notesEl);
+        }
+    } else {
+        // Enable edit mode
+        detailPanel.dataset.editMode = 'true';
+        const saveBtn = document.getElementById('pledge-save-btn');
+        if (saveBtn) saveBtn.style.display = 'flex';
+
+        // Convert paragraphs to inputs
+        const statusEl = document.getElementById('pledge-detail-status');
+        const notesEl = document.getElementById('pledge-detail-notes');
+
+        if (statusEl && statusEl.tagName === 'P') {
+            const select = document.createElement('select');
+            select.id = 'pledge-detail-status';
+            select.style.cssText = 'margin: 0; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; width: 100%; font-size: 14px;';
+            const currentStatus = statusEl.textContent.trim().toLowerCase();
+            const statuses = [{
+                    value: 'yes',
+                    text: 'Yes - Will Support'
+                },
+                {
+                    value: 'no',
+                    text: 'No - Will Not Support'
+                },
+                {
+                    value: 'undecided',
+                    text: 'Undecided'
+                }
+            ];
+            statuses.forEach(status => {
+                const option = document.createElement('option');
+                option.value = status.value;
+                option.textContent = status.text;
+                if (currentStatus.includes(status.value) || (status.value === 'undecided' && !currentStatus.includes('yes') && !currentStatus.includes('no'))) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+            statusEl.parentNode.replaceChild(select, statusEl);
+        }
+
+        if (notesEl && notesEl.tagName === 'P') {
+            const textarea = document.createElement('textarea');
+            textarea.id = 'pledge-detail-notes';
+            textarea.value = notesEl.textContent || '';
+            textarea.rows = 4;
+            textarea.style.cssText = 'margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; width: 100%; resize: vertical;';
+            notesEl.parentNode.replaceChild(textarea, notesEl);
+        }
+    }
+}
+
+// Save pledge from detail
+async function savePledgeFromDetail() {
+    const detailPanel = document.getElementById('pledge-detail-panel');
+    if (!detailPanel || detailPanel.style.display === 'none') return;
+
+    const pledgeId = detailPanel.dataset.pledgeId;
+    if (!pledgeId) return;
+
+    try {
+        const {
+            doc,
+            updateDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        const statusEl = document.getElementById('pledge-detail-status');
+        const notesEl = document.getElementById('pledge-detail-notes');
+
+        const updateData = {};
+        if (statusEl && statusEl.tagName === 'SELECT') {
+            updateData.pledge = statusEl.value;
+        }
+        if (notesEl && notesEl.tagName === 'TEXTAREA') {
+            updateData.notes = notesEl.value.trim();
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            return;
+        }
+
+        const pledgeRef = doc(window.db, 'pledges', pledgeId);
+        await updateDoc(pledgeRef, updateData);
+
+        // Disable edit mode and refresh
+        enablePledgeEdit();
+
+        // Reload pledge details
+        viewPledgeDetails(pledgeId);
+
+        if (window.showSuccessDialog) {
+            window.showSuccessDialog('Pledge updated successfully!', 'Success');
+        }
+
+        // Clear cache and reload
+        if (window.clearCache) {
+            window.clearCache('pledges');
+        }
+        if (window.loadPledgesData) {
+            window.loadPledgesData();
+        }
+    } catch (error) {
+        console.error('Error saving pledge:', error);
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Failed to save pledge. Please try again.', 'Error');
+        }
+    }
+}
+
+// Delete pledge from detail
+async function deletePledgeFromDetail() {
+    const detailPanel = document.getElementById('pledge-detail-panel');
+    if (!detailPanel || detailPanel.style.display === 'none') return;
+
+    const pledgeId = detailPanel.dataset.pledgeId;
+    if (!pledgeId) return;
+
+    // Close detail panel first
+    closePledgeDetailPanel();
+
+    // Call delete function (it will handle the confirmation)
+    if (window.deletePledge) {
+        await window.deletePledge(pledgeId);
+    }
+}
+
+// Make functions globally accessible
+window.switchPledgeTab = switchPledgeTab;
+window.enablePledgeEdit = enablePledgeEdit;
+window.savePledgeFromDetail = savePledgeFromDetail;
+window.deletePledgeFromDetail = deletePledgeFromDetail;
+
 
 // Edit pledge function
 async function editPledge(pledgeId) {
@@ -11435,6 +16179,436 @@ async function deletePledge(pledgeId) {
 }
 
 // View candidate details function
+// Fetch candidate pledges
+async function fetchCandidatePledges(candidateId) {
+    if (!window.db || !window.userEmail) return [];
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Get candidate's candidateId field (not document ID)
+        const {
+            doc,
+            getDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const candidateRef = doc(window.db, 'candidates', candidateId);
+        const candidateSnap = await getDoc(candidateRef);
+        if (!candidateSnap.exists()) return [];
+
+        const candidateData = candidateSnap.data();
+        const candidateIdValue = candidateData.candidateId || candidateId;
+
+        // Query pledges where candidateId matches or candidateIds array contains the candidate ID
+        const pledgesQuery = query(
+            collection(window.db, 'pledges'),
+            where('email', '==', window.userEmail)
+        );
+        const snapshot = await getDocs(pledgesQuery);
+        const candidatePledges = [];
+
+        snapshot.forEach(doc => {
+            const pledgeData = doc.data();
+            // Check if pledge is related to this candidate
+            if (pledgeData.candidateId === candidateIdValue ||
+                (pledgeData.candidateIds && Array.isArray(pledgeData.candidateIds) && pledgeData.candidateIds.includes(candidateIdValue)) ||
+                (pledgeData.candidates && Array.isArray(pledgeData.candidates) && pledgeData.candidates.includes(candidateIdValue))) {
+                candidatePledges.push({
+                    id: doc.id,
+                    ...pledgeData
+                });
+            }
+        });
+
+        return candidatePledges;
+    } catch (error) {
+        console.error('Error fetching candidate pledges:', error);
+        return [];
+    }
+}
+
+// Fetch candidate call remarks
+async function fetchCandidateCallRemarks(candidateId) {
+    if (!window.db || !window.userEmail) return [];
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Get candidate's candidateId field (not document ID)
+        const {
+            doc,
+            getDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const candidateRef = doc(window.db, 'candidates', candidateId);
+        const candidateSnap = await getDoc(candidateRef);
+        if (!candidateSnap.exists()) return [];
+
+        const candidateData = candidateSnap.data();
+        const candidateIdValue = candidateData.candidateId || candidateId;
+
+        // Query calls where candidateId matches or candidateIds array contains the candidate ID
+        // Also check remarks collection if it exists
+        const callsQuery = query(
+            collection(window.db, 'calls'),
+            where('email', '==', window.userEmail)
+        );
+        const snapshot = await getDocs(callsQuery);
+        const candidateCalls = [];
+
+        snapshot.forEach(doc => {
+            const callData = doc.data();
+            // Check if call is related to this candidate
+            if (callData.candidateId === candidateIdValue ||
+                (callData.candidateIds && Array.isArray(callData.candidateIds) && callData.candidateIds.includes(candidateIdValue)) ||
+                (callData.candidates && Array.isArray(callData.candidates) && callData.candidates.includes(candidateIdValue))) {
+                candidateCalls.push({
+                    id: doc.id,
+                    ...callData
+                });
+            }
+        });
+
+        // Also check remarks collection if it exists
+        try {
+            const remarksQuery = query(
+                collection(window.db, 'remarks'),
+                where('email', '==', window.userEmail)
+            );
+            const remarksSnapshot = await getDocs(remarksQuery);
+            remarksSnapshot.forEach(doc => {
+                const remarkData = doc.data();
+                if (remarkData.candidateId === candidateIdValue ||
+                    (remarkData.candidateIds && Array.isArray(remarkData.candidateIds) && remarkData.candidateIds.includes(candidateIdValue))) {
+                    candidateCalls.push({
+                        id: doc.id,
+                        type: 'remark',
+                        ...remarkData
+                    });
+                }
+            });
+        } catch (remarksError) {
+            // Remarks collection might not exist, ignore
+            console.log('Remarks collection not found or not accessible');
+        }
+
+        return candidateCalls;
+    } catch (error) {
+        console.error('Error fetching candidate call remarks:', error);
+        return [];
+    }
+}
+
+// Update candidate detail tabs with pledges and calls data
+// Calculate candidate statistics from pledges
+function calculateCandidateStatistics(pledges) {
+    if (!pledges || !Array.isArray(pledges)) {
+        return {
+            yes: 0,
+            no: 0,
+            undecided: 0,
+            total: 0
+        };
+    }
+
+    let yes = 0;
+    let no = 0;
+    let undecided = 0;
+
+    pledges.forEach(pledge => {
+        if (!pledge) return;
+
+        const pledgeType = pledge.pledge || pledge.type || 'neutral';
+        if (pledgeType === 'yes' || pledgeType === 'positive') {
+            yes++;
+        } else if (pledgeType === 'no' || pledgeType === 'negative') {
+            no++;
+        } else {
+            undecided++;
+        }
+    });
+
+    return {
+        yes,
+        no,
+        undecided,
+        total: yes + no + undecided
+    };
+}
+
+// Render candidate statistics
+function renderCandidateStatistics(pledges) {
+    const container = document.getElementById('candidate-statistics-container');
+    if (!container) return;
+
+    const stats = calculateCandidateStatistics(pledges);
+
+    container.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px;">
+            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 10px; border-radius: 6px; color: white; text-align: center;">
+                <div style="font-size: 18px; font-weight: 700; margin-bottom: 2px;">${stats.yes}</div>
+                <div style="font-size: 10px; font-weight: 600; opacity: 0.9;">YES</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 10px; border-radius: 6px; color: white; text-align: center;">
+                <div style="font-size: 18px; font-weight: 700; margin-bottom: 2px;">${stats.no}</div>
+                <div style="font-size: 10px; font-weight: 600; opacity: 0.9;">NO</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); padding: 10px; border-radius: 6px; color: white; text-align: center;">
+                <div style="font-size: 18px; font-weight: 700; margin-bottom: 2px;">${stats.undecided}</div>
+                <div style="font-size: 10px; font-weight: 600; opacity: 0.9;">UNDECIDED</div>
+            </div>
+        </div>
+        <div style="text-align: center; color: var(--text-light); font-size: 11px; margin-top: 4px;">
+            Total Pledges: <strong style="color: var(--text-color);">${stats.total}</strong>
+        </div>
+    `;
+}
+
+// Render candidate pledges into container
+function renderCandidatePledges(pledges) {
+    const container = document.getElementById('candidate-pledges-container');
+    if (!container) return;
+
+    if (!pledges || pledges.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-light); font-size: 13px;">No pledges recorded for this candidate.</p>';
+        return;
+    }
+
+    const formatDate = (date) => {
+        if (!date) return 'N/A';
+        try {
+            const dateObj = (date && date.toDate) ? date.toDate() : (date ? new Date(date) : new Date());
+            return dateObj instanceof Date ? dateObj.toLocaleDateString('default', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            }) : 'N/A';
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return 'N/A';
+        }
+    };
+
+    container.innerHTML = `
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color);">
+                    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Voter</th>
+                    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Status</th>
+                    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${pledges.map(pledge => {
+                    if (!pledge) return '';
+                    const pledgeDate = pledge.recordedAt ? (pledge.recordedAt.toDate ? pledge.recordedAt.toDate() : new Date(pledge.recordedAt)) : new Date();
+                    const dateStr = formatDate(pledgeDate);
+                    const statusClass = pledge.pledge === 'yes' ? 'status-success' : pledge.pledge === 'no' ? 'status-danger' : 'status-pending';
+                    const statusText = pledge.pledge === 'yes' ? 'Yes' : pledge.pledge === 'no' ? 'No' : 'Undecided';
+                    return `<tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 8px;">${pledge.voterName || 'N/A'}</td>
+                        <td style="padding: 8px;"><span class="status-badge ${statusClass}" style="padding: 4px 8px; border-radius: 12px; font-size: 11px;">${statusText}</span></td>
+                        <td style="padding: 8px; color: var(--text-light);">${dateStr}</td>
+                    </tr>`;
+                }).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+// Render candidate calls into container
+function renderCandidateCalls(calls) {
+    const container = document.getElementById('candidate-calls-container');
+    if (!container) return;
+
+    if (!calls || calls.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-light); font-size: 13px;">No call remarks recorded for this candidate.</p>';
+        return;
+    }
+
+    const formatDate = (date) => {
+        if (!date) return 'N/A';
+        try {
+            const dateObj = (date && date.toDate) ? date.toDate() : (date ? new Date(date) : new Date());
+            return dateObj instanceof Date ? dateObj.toLocaleDateString('default', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            }) : 'N/A';
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return 'N/A';
+        }
+    };
+
+    container.innerHTML = `
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color);">
+                    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Voter</th>
+                    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Status</th>
+                    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Notes</th>
+                    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${calls.map(call => {
+                    if (!call) return '';
+                    const callDate = call.callDate || call.createdAt;
+                    const date = callDate ? (callDate.toDate ? callDate.toDate() : new Date(callDate)) : new Date();
+                    const dateStr = formatDate(date);
+                    const statusClass = call.status === 'positive' ? 'status-success' : call.status === 'negative' ? 'status-danger' : 'status-pending';
+                    const statusText = call.status ? call.status.charAt(0).toUpperCase() + call.status.slice(1) : 'N/A';
+                    const notes = call.notes || call.remark || 'N/A';
+                    const voterName = call.voterName || 'N/A';
+                    return `<tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 8px;">${voterName}</td>
+                        <td style="padding: 8px;"><span class="status-badge ${statusClass}" style="padding: 4px 8px; border-radius: 12px; font-size: 11px;">${statusText}</span></td>
+                        <td style="padding: 8px; color: var(--text-light); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${notes.replace(/"/g, '&quot;')}">${notes}</td>
+                        <td style="padding: 8px; color: var(--text-light);">${dateStr}</td>
+                    </tr>`;
+                }).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function updateCandidateDetailTabs(pledges, calls) {
+    // Render statistics, pledges and calls into their containers
+    renderCandidateStatistics(pledges);
+    renderCandidatePledges(pledges);
+    renderCandidateCalls(calls);
+
+    // Update tab button counts
+    const pledgesTabBtn = document.querySelector('.candidate-tab-btn[data-tab="pledges"]');
+    const callsTabBtn = document.querySelector('.candidate-tab-btn[data-tab="calls"]');
+
+    if (pledgesTabBtn) {
+        pledgesTabBtn.textContent = `Pledges (${pledges ? pledges.length : 0})`;
+    }
+    if (callsTabBtn) {
+        callsTabBtn.textContent = `Call Remarks (${calls ? calls.length : 0})`;
+    }
+}
+
+// Create candidate detail HTML
+function createCandidateDetailHTML(candidateData, pledges, calls) {
+    const initials = candidateData.name ? candidateData.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NA';
+    const statusClass = candidateData.status === 'active' ? 'status-success' : candidateData.status === 'inactive' ? 'status-danger' : 'status-pending';
+    const statusText = candidateData.status ? candidateData.status.charAt(0).toUpperCase() + candidateData.status.slice(1) : 'Pending';
+
+    // Format created date
+    let createdDateStr = 'N/A';
+    if (candidateData.createdAt) {
+        const createdDate = candidateData.createdAt.toDate ? candidateData.createdAt.toDate() : new Date(candidateData.createdAt);
+        createdDateStr = createdDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+
+    // Note: pledges and calls parameters are kept for tab button counts but not used for HTML generation
+    // Dynamic content is rendered into containers by renderCandidatePledges() and renderCandidateCalls()
+
+    return `
+        <div class="candidate-detail-header" style="display: flex; justify-content: flex-end; align-items: center; padding-bottom: 16px; border-bottom: 2px solid var(--border-color); margin-bottom: 16px;">
+            <div style="display: flex; gap: 8px;">
+                <button id="candidate-prev-btn" class="icon-btn" title="Previous" onclick="navigateCandidateDetail('prev')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <span id="candidate-detail-pagination-info" style="display: flex; align-items: center; padding: 0 8px; color: var(--text-light); font-size: 12px; white-space: nowrap;">1 of 1</span>
+                <button id="candidate-next-btn" class="icon-btn" title="Next" onclick="navigateCandidateDetail('next')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+                <button id="candidate-enable-edit-btn" class="icon-btn" title="Enable Edit" onclick="enableCandidateEdit()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </button>
+                <button id="candidate-save-btn" class="icon-btn" title="Save" onclick="saveCandidateFromDetail()" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </button>
+                <button id="candidate-delete-btn" class="icon-btn icon-btn-danger" title="Delete" onclick="deleteCandidateFromDetail()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+                <button id="candidate-close-btn" class="icon-btn" title="Close" onclick="closeCandidateDetailPanel()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 20px;">${initials}</div>
+            <div>
+                <h3 style="margin: 0; color: var(--text-color); font-size: 18px; font-weight: 700;">${candidateData.name || 'N/A'}</h3>
+                <p style="margin: 4px 0 0 0; color: var(--text-light); font-size: 12px;">ID: ${candidateData.candidateId || 'N/A'}</p>
+            </div>
+        </div>
+
+        <div class="candidate-detail-tabs" style="display: flex; gap: 8px; border-bottom: 2px solid var(--border-color); margin-bottom: 16px;">
+            <button class="candidate-tab-btn active" data-tab="info" onclick="switchCandidateTab('info')" style="padding: 10px 16px; background: none; border: none; border-bottom: 3px solid var(--primary-color); color: var(--primary-color); font-weight: 600; cursor: pointer; font-size: 13px;">Candidate Info</button>
+            <button class="candidate-tab-btn" data-tab="pledges" onclick="switchCandidateTab('pledges')" style="padding: 10px 16px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-size: 13px;">Pledges (${pledges ? pledges.length : 0})</button>
+            <button class="candidate-tab-btn" data-tab="calls" onclick="switchCandidateTab('calls')" style="padding: 10px 16px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-size: 13px;">Call Remarks (${calls ? calls.length : 0})</button>
+        </div>
+
+        <div id="candidate-tab-info" class="candidate-tab-content" style="display: block;">
+            <div id="candidate-statistics-container" style="margin-bottom: 24px;"></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Position</label>
+                    <p id="candidate-detail-position" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${candidateData.position || 'N/A'}</p>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Status</label>
+                    <p id="candidate-detail-status" style="margin: 0;">
+                        <span class="status-badge ${statusClass}" style="padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600;">${statusText}</span>
+                    </p>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Constituency</label>
+                    <p id="candidate-detail-constituency" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${candidateData.constituency || 'N/A'}</p>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Island</label>
+                    <p id="candidate-detail-island" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${candidateData.island || 'N/A'}</p>
+                </div>
+                <div style="grid-column: span 2;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Created At</label>
+                    <p id="candidate-detail-created" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${createdDateStr}</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="candidate-tab-pledges" class="candidate-tab-content" style="display: none;">
+            <div id="candidate-pledges-container"></div>
+        </div>
+
+        <div id="candidate-tab-calls" class="candidate-tab-content" style="display: none;">
+            <div id="candidate-calls-container"></div>
+        </div>
+    `;
+}
+
 async function viewCandidateDetails(candidateId, navigateDirection = null) {
     if (!window.db || !window.userEmail) {
         if (window.showErrorDialog) {
@@ -11493,174 +16667,102 @@ async function viewCandidateDetails(candidateId, navigateDirection = null) {
             return;
         }
 
-        const initials = candidateData.name ? candidateData.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NA';
-        const statusClass = candidateData.status === 'active' ? 'status-success' : candidateData.status === 'inactive' ? 'status-danger' : 'status-pending';
-        const statusText = candidateData.status ? candidateData.status.charAt(0).toUpperCase() + candidateData.status.slice(1) : 'Pending';
+        // Get detail panel and content
+        const detailPanel = document.getElementById('candidate-detail-panel');
+        const detailContent = document.getElementById('candidate-detail-content');
+        const backdrop = document.getElementById('candidate-detail-backdrop');
+        const wrapper = document.getElementById('candidates-table-detail-wrapper');
+        const tableContainer = wrapper ? wrapper.querySelector('.candidates-table-container') : null;
 
-        // Format created date
-        let createdDateStr = 'N/A';
-        if (candidateData.createdAt) {
-            const createdDate = candidateData.createdAt.toDate ? candidateData.createdAt.toDate() : new Date(candidateData.createdAt);
-            createdDateStr = createdDate.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
+        if (!detailPanel || !detailContent) {
+            console.error('Candidate detail panel elements not found');
+            return;
         }
 
-        // Create modal HTML
-        const modalHTML = `
-            <div class="candidate-details-modal" style="max-width: 600px; margin: 0 auto;">
-                <!-- Actions at top -->
-                <div style="display: flex; flex-wrap: nowrap; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color); overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                    <div style="display: flex; gap: 6px; flex-wrap: nowrap; flex-shrink: 0;">
-                        <button 
-                            class="btn-primary btn-compact" 
-                            onclick="editCandidate('${candidateId}')"
-                            style="white-space: nowrap; display: flex; align-items: center; gap: 6px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                            Edit
-                        </button>
-                        <button 
-                            class="btn-secondary btn-compact" 
-                            onclick="deleteCandidate('${candidateId}')"
-                            style="display: flex; align-items: center; gap: 6px; background: var(--danger-color); color: white; border-color: var(--danger-color); white-space: nowrap;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                            Delete
-                        </button>
-                    </div>
-                </div>
+        // Store current candidate index for navigation
+        detailPanel.dataset.candidateId = candidateId;
+        detailPanel.dataset.currentIndex = currentIndex;
+        detailPanel.dataset.totalCandidates = allCandidates.length;
 
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid var(--border-color);">
-                    <div style="width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 28px; border: 3px solid var(--primary-color);">${initials}</div>
-                    <div>
-                        <h2 style="margin: 0; color: var(--text-color); font-size: 24px; font-weight: 700;">${candidateData.name || 'N/A'}</h2>
-                        <p style="margin: 5px 0 0 0; color: var(--text-light); font-size: 14px;">ID: ${candidateData.candidateId || 'N/A'}</p>
-                    </div>
-                </div>
+        // Show panel immediately with candidate data (empty pledges/calls for now)
+        detailPanel.style.display = 'flex';
 
-                <!-- Candidate Information Section -->
-                <div style="background: var(--light-color); padding: 20px; border-radius: 12px; margin-bottom: 30px;">
-                    <h3 style="margin: 0 0 15px 0; color: var(--text-color); font-size: 18px; font-weight: 600;">Candidate Information</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div class="detail-item">
-                            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Position</label>
-                            <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${candidateData.position || 'N/A'}</p>
-                        </div>
-                        <div class="detail-item">
-                            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Status</label>
-                            <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">
-                                <span class="status-badge ${statusClass}" style="display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">${statusText}</span>
-                            </p>
-                        </div>
-                        <div class="detail-item" style="grid-column: span 2;">
-                            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Constituency</label>
-                            <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${candidateData.constituency || 'N/A'}</p>
-                        </div>
-                        ${candidateData.createdAt ? `
-                        <div class="detail-item" style="grid-column: span 2;">
-                            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Created At</label>
-                            <p style="margin: 0; color: var(--text-color); font-size: 15px; font-weight: 500;">${createdDateStr}</p>
-                        </div>
-                        ` : ''}
-                    </div>
-                </div>
+        // Handle responsive layout
+        const isMobile = window.innerWidth < 1024;
+        if (isMobile) {
+            // Mobile: show as popup with backdrop
+            if (backdrop) backdrop.style.display = 'block';
+            detailPanel.style.position = 'fixed';
+            detailPanel.style.top = '50%';
+            detailPanel.style.left = '50%';
+            detailPanel.style.transform = 'translate(-50%, -50%)';
+            detailPanel.style.width = 'calc(100% - 32px)';
+            detailPanel.style.maxWidth = '500px';
+            detailPanel.style.maxHeight = 'calc(100vh - 40px)';
+            detailPanel.style.height = 'auto';
+            detailPanel.style.zIndex = '1000';
+            detailPanel.style.margin = '20px';
+            detailPanel.style.overflow = 'hidden';
+        } else {
+            // Desktop: show as side panel
+            if (backdrop) backdrop.style.display = 'none';
 
-                <!-- Navigation at bottom -->
-                ${allCandidates.length > 1 ? `
-                <div style="display: flex; flex-wrap: nowrap; justify-content: center; align-items: center; gap: 8px; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--border-color); overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                    <div style="display: flex; gap: 6px; flex-wrap: nowrap; flex-shrink: 0;">
-                        <button 
-                            class="btn-secondary btn-compact" 
-                            ${currentIndex === 0 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
-                            onclick="viewCandidateDetails('${candidateId}', 'prev')"
-                            style="display: flex; align-items: center; gap: 6px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                            Previous
-                        </button>
-                        <span style="color: var(--text-light); font-size: 12px; padding: 8px 8px; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;">
-                            ${currentIndex + 1} of ${allCandidates.length}
-                        </span>
-                        <button 
-                            class="btn-secondary btn-compact" 
-                            ${currentIndex === allCandidates.length - 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
-                            onclick="viewCandidateDetails('${candidateId}', 'next')"
-                            style="display: flex; align-items: center; gap: 6px;">
-                            Next
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                ` : ''}
-            </div>
-        `;
-
-        // Use requestAnimationFrame for smooth modal rendering
-        requestAnimationFrame(() => {
-            let modalOverlay = document.getElementById('modal-overlay');
-            if (!modalOverlay) {
-                const overlay = document.createElement('div');
-                overlay.id = 'modal-overlay';
-                overlay.className = 'modal-overlay';
-                overlay.innerHTML = `
-                    <div class="modal-container" id="modal-container" style="max-width: 700px;">
-                        <div class="modal-header">
-                            <h2 id="modal-title">Candidate Details</h2>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <button class="modal-maximize" id="modal-maximize-btn" title="Maximize" onclick="if (typeof toggleModalMaximize === 'function') { const container = this.closest('.modal-container'); toggleModalMaximize(container, this); }">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-                                    </svg>
-                                </button>
-                                <button class="modal-close" id="modal-close-btn">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="modal-body" id="modal-body"></div>
-                    </div>
-                `;
-                document.body.appendChild(overlay);
-                modalOverlay = overlay;
-
-                const closeBtn = overlay.querySelector('#modal-close-btn');
-                if (closeBtn && !closeBtn.dataset.listenerAttached) {
-                    closeBtn.dataset.listenerAttached = 'true';
-                    closeBtn.addEventListener('click', () => {
-                        overlay.style.display = 'none';
-                    });
-                }
-                if (!overlay.dataset.listenerAttached) {
-                    overlay.dataset.listenerAttached = 'true';
-                    overlay.addEventListener('click', (e) => {
-                        if (e.target === overlay) {
-                            overlay.style.display = 'none';
-                        }
-                    });
+            // Adjust wrapper layout on desktop when detail panel is shown
+            if (wrapper) {
+                wrapper.style.display = 'flex';
+                wrapper.style.gap = '24px';
+                const tableContainer = wrapper.querySelector('.candidates-table-container');
+                if (tableContainer) {
+                    tableContainer.style.width = 'calc(100% - 524px)';
+                    tableContainer.style.flexShrink = '0';
                 }
             }
 
-            const modalBody = modalOverlay.querySelector('#modal-body');
-            const modalTitle = modalOverlay.querySelector('#modal-title');
+            detailPanel.style.position = 'relative';
+            detailPanel.style.width = '500px';
+            detailPanel.style.flexShrink = '0';
+            detailPanel.style.transform = 'none';
+            detailPanel.style.zIndex = '100';
+            detailPanel.style.maxHeight = 'none';
+        }
 
-            if (modalTitle) modalTitle.textContent = 'Candidate Details';
-            if (modalBody) {
-                modalBody.innerHTML = modalHTML;
+        // Show candidate info immediately with loading placeholders for pledges/calls
+        detailContent.innerHTML = createCandidateDetailHTML(candidateData, [], []);
+
+        // Initialize empty containers immediately
+        renderCandidateStatistics([]);
+        renderCandidatePledges([]);
+        renderCandidateCalls([]);
+
+        // Update navigation buttons immediately
+        const prevBtn = detailContent.querySelector('#candidate-prev-btn');
+        const nextBtn = detailContent.querySelector('#candidate-next-btn');
+        const paginationInfo = detailContent.querySelector('#candidate-detail-pagination-info');
+
+        if (prevBtn) prevBtn.disabled = currentIndex === 0;
+        if (nextBtn) nextBtn.disabled = currentIndex === allCandidates.length - 1;
+        if (paginationInfo) paginationInfo.textContent = `${currentIndex + 1} of ${allCandidates.length}`;
+
+        // Highlight selected row immediately
+        const tableRows = document.querySelectorAll('#candidates-table-body tr');
+        tableRows.forEach(row => {
+            row.classList.remove('selected');
+            if (row.dataset.candidateId === candidateId) {
+                row.classList.add('selected');
             }
-            modalOverlay.style.display = 'flex';
+        });
+
+        // Fetch pledges and calls asynchronously and update UI when ready
+        Promise.all([
+            fetchCandidatePledges(candidateId),
+            fetchCandidateCallRemarks(candidateId)
+        ]).then(([pledges, calls]) => {
+            // Update the pledges and calls tabs with actual data
+            updateCandidateDetailTabs(pledges, calls);
+        }).catch(error => {
+            console.error('Error loading candidate pledges/calls:', error);
+            // Still show empty state if there's an error
+            updateCandidateDetailTabs([], []);
         });
     } catch (error) {
         console.error('Error loading candidate details:', error);
@@ -11669,6 +16771,277 @@ async function viewCandidateDetails(candidateId, navigateDirection = null) {
         }
     }
 }
+
+// Navigate candidate detail
+function navigateCandidateDetail(direction) {
+    const detailPanel = document.getElementById('candidate-detail-panel');
+    if (!detailPanel || detailPanel.style.display === 'none') return;
+
+    const candidateId = detailPanel.dataset.candidateId;
+    if (!candidateId) return;
+
+    viewCandidateDetails(candidateId, direction);
+}
+
+// Switch candidate tab
+function switchCandidateTab(tabName) {
+    // Update tab buttons
+    const tabButtons = document.querySelectorAll('.candidate-tab-btn');
+    tabButtons.forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+            btn.style.borderBottomColor = 'var(--primary-color)';
+            btn.style.color = 'var(--primary-color)';
+            btn.style.fontWeight = '600';
+        } else {
+            btn.classList.remove('active');
+            btn.style.borderBottomColor = 'transparent';
+            btn.style.color = 'var(--text-light)';
+            btn.style.fontWeight = '500';
+        }
+    });
+
+    // Update tab content
+    const tabContents = document.querySelectorAll('.candidate-tab-content');
+    tabContents.forEach(content => {
+        if (content.id === `candidate-tab-${tabName}`) {
+            content.style.display = 'block';
+        } else {
+            content.style.display = 'none';
+        }
+    });
+}
+
+// Enable candidate edit mode
+function enableCandidateEdit() {
+    const detailPanel = document.getElementById('candidate-detail-panel');
+    if (!detailPanel || detailPanel.style.display === 'none') return;
+
+    const isEditMode = detailPanel.dataset.editMode === 'true';
+
+    if (isEditMode) {
+        // Disable edit mode
+        detailPanel.dataset.editMode = 'false';
+        const saveBtn = document.getElementById('candidate-save-btn');
+        if (saveBtn) saveBtn.style.display = 'none';
+
+        // Convert inputs back to paragraphs
+        const positionEl = document.getElementById('candidate-detail-position');
+        const statusEl = document.getElementById('candidate-detail-status');
+        const constituencyEl = document.getElementById('candidate-detail-constituency');
+        const islandEl = document.getElementById('candidate-detail-island');
+
+        if (positionEl && positionEl.tagName === 'INPUT') {
+            const p = document.createElement('p');
+            p.id = 'candidate-detail-position';
+            p.style.cssText = 'margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;';
+            p.textContent = positionEl.value || 'N/A';
+            positionEl.parentNode.replaceChild(p, positionEl);
+        }
+
+        if (statusEl && statusEl.tagName === 'SELECT') {
+            const statusValue = statusEl.value;
+            const statusClass = statusValue === 'active' ? 'status-success' : statusValue === 'inactive' ? 'status-danger' : 'status-pending';
+            const statusText = statusValue ? statusValue.charAt(0).toUpperCase() + statusValue.slice(1) : 'Pending';
+            const p = document.createElement('p');
+            p.id = 'candidate-detail-status';
+            p.style.cssText = 'margin: 0;';
+            p.innerHTML = ` < span class = "status-badge ${statusClass}"
+style = "padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600;" > $ {
+    statusText
+} < /span>`;
+            statusEl.parentNode.replaceChild(p, statusEl);
+        }
+
+        if (constituencyEl && constituencyEl.tagName === 'INPUT') {
+            const p = document.createElement('p');
+            p.id = 'candidate-detail-constituency';
+            p.style.cssText = 'margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;';
+            p.textContent = constituencyEl.value || 'N/A';
+            constituencyEl.parentNode.replaceChild(p, constituencyEl);
+        }
+
+        if (islandEl && islandEl.tagName === 'INPUT') {
+            const p = document.createElement('p');
+            p.id = 'candidate-detail-island';
+            p.style.cssText = 'margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;';
+            p.textContent = islandEl.value || 'N/A';
+            islandEl.parentNode.replaceChild(islandEl, islandEl);
+        }
+    } else {
+        // Enable edit mode
+        detailPanel.dataset.editMode = 'true';
+        const saveBtn = document.getElementById('candidate-save-btn');
+        if (saveBtn) saveBtn.style.display = 'flex';
+
+        // Convert paragraphs to inputs
+        const positionEl = document.getElementById('candidate-detail-position');
+        const statusEl = document.getElementById('candidate-detail-status');
+        const constituencyEl = document.getElementById('candidate-detail-constituency');
+        const islandEl = document.getElementById('candidate-detail-island');
+
+        if (positionEl && positionEl.tagName === 'P') {
+            const input = document.createElement('input');
+            input.id = 'candidate-detail-position';
+            input.type = 'text';
+            input.value = positionEl.textContent.trim() === 'N/A' ? '' : positionEl.textContent.trim();
+            input.style.cssText = 'width: 100%; padding: 8px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 14px;';
+            positionEl.parentNode.replaceChild(input, positionEl);
+        }
+
+        if (statusEl && statusEl.tagName === 'P') {
+            const select = document.createElement('select');
+            select.id = 'candidate-detail-status';
+            select.style.cssText = 'width: 100%; padding: 8px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 14px;';
+            const statusText = statusEl.textContent.trim().toLowerCase();
+            select.innerHTML = `
+                <option value="pending" ${statusText === 'pending' ? 'selected' : ''}>Pending</option>
+                <option value="active" ${statusText === 'active' ? 'selected' : ''}>Active</option>
+                <option value="inactive" ${statusText === 'inactive' ? 'selected' : ''}>Inactive</option>
+            `;
+            statusEl.parentNode.replaceChild(select, statusEl);
+        }
+
+        if (constituencyEl && constituencyEl.tagName === 'P') {
+            const input = document.createElement('input');
+            input.id = 'candidate-detail-constituency';
+            input.type = 'text';
+            input.value = constituencyEl.textContent.trim() === 'N/A' ? '' : constituencyEl.textContent.trim();
+            input.readOnly = true; // Constituency is readonly
+            input.style.cssText = 'width: 100%; padding: 8px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 14px; background: var(--light-color);';
+            constituencyEl.parentNode.replaceChild(input, constituencyEl);
+        }
+
+        if (islandEl && islandEl.tagName === 'P') {
+            const input = document.createElement('input');
+            input.id = 'candidate-detail-island';
+            input.type = 'text';
+            input.value = islandEl.textContent.trim() === 'N/A' ? '' : islandEl.textContent.trim();
+            input.style.cssText = 'width: 100%; padding: 8px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 14px;';
+            islandEl.parentNode.replaceChild(input, islandEl);
+        }
+    }
+}
+
+// Save candidate from detail
+async function saveCandidateFromDetail() {
+    const detailPanel = document.getElementById('candidate-detail-panel');
+    if (!detailPanel || detailPanel.style.display === 'none') return;
+
+    const candidateId = detailPanel.dataset.candidateId;
+    if (!candidateId) return;
+
+    try {
+        const {
+            doc,
+            updateDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        const positionEl = document.getElementById('candidate-detail-position');
+        const statusEl = document.getElementById('candidate-detail-status');
+        const islandEl = document.getElementById('candidate-detail-island');
+
+        const updateData = {};
+        if (positionEl && positionEl.tagName === 'INPUT') {
+            updateData.position = positionEl.value.trim();
+        }
+        if (statusEl && statusEl.tagName === 'SELECT') {
+            updateData.status = statusEl.value;
+        }
+        if (islandEl && islandEl.tagName === 'INPUT') {
+            updateData.island = islandEl.value.trim();
+        }
+
+        const candidateRef = doc(window.db, 'candidates', candidateId);
+        await updateDoc(candidateRef, updateData);
+
+        if (window.showSuccess) {
+            window.showSuccess('Candidate updated successfully!', 'Success');
+        }
+
+        // Disable edit mode and reload
+        enableCandidateEdit();
+        clearCache('candidates');
+        if (window.loadCandidatesData) {
+            window.loadCandidatesData(true);
+        }
+
+        // Refresh detail view
+        setTimeout(() => {
+            viewCandidateDetails(candidateId);
+        }, 500);
+    } catch (error) {
+        console.error('Error saving candidate:', error);
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Failed to save candidate. Please try again.', 'Error');
+        }
+    }
+}
+
+// Delete candidate from detail
+async function deleteCandidateFromDetail() {
+    const detailPanel = document.getElementById('candidate-detail-panel');
+    if (!detailPanel || detailPanel.style.display === 'none') return;
+
+    const candidateId = detailPanel.dataset.candidateId;
+    if (!candidateId) return;
+
+    if (window.showConfirm) {
+        const confirmed = await window.showConfirm(
+            'Are you sure you want to delete this candidate? This action cannot be undone.',
+            'Delete Candidate'
+        );
+        if (!confirmed) return;
+    } else if (!confirm('Are you sure you want to delete this candidate? This action cannot be undone.')) {
+        return;
+    }
+
+    // Close detail panel
+    closeCandidateDetailPanel();
+
+    // Call delete function
+    if (window.deleteCandidate) {
+        await window.deleteCandidate(candidateId);
+    }
+}
+
+// Close candidate detail panel
+function closeCandidateDetailPanel() {
+    const detailPanel = document.getElementById('candidate-detail-panel');
+    const backdrop = document.getElementById('candidate-detail-backdrop');
+    const wrapper = document.getElementById('candidates-table-detail-wrapper');
+
+    if (detailPanel) {
+        detailPanel.style.display = 'none';
+        detailPanel.dataset.editMode = 'false';
+    }
+
+    if (backdrop) {
+        backdrop.style.display = 'none';
+    }
+
+    // Reset wrapper layout when detail panel is closed
+    if (wrapper && window.innerWidth >= 1024) {
+        wrapper.style.display = 'block';
+        const tableContainer = wrapper.querySelector('.candidates-table-container');
+        if (tableContainer) {
+            tableContainer.style.width = '100%';
+            tableContainer.style.flexShrink = '';
+        }
+    }
+
+    // Remove selected class from table rows
+    const tableRows = document.querySelectorAll('#candidates-table-body tr');
+    tableRows.forEach(row => row.classList.remove('selected'));
+}
+
+// Make functions globally accessible
+window.navigateCandidateDetail = navigateCandidateDetail;
+window.switchCandidateTab = switchCandidateTab;
+window.enableCandidateEdit = enableCandidateEdit;
+window.saveCandidateFromDetail = saveCandidateFromDetail;
+window.deleteCandidateFromDetail = deleteCandidateFromDetail;
+window.closeCandidateDetailPanel = closeCandidateDetailPanel;
 
 // Edit candidate function
 async function editCandidate(candidateId) {
@@ -11749,9 +17122,19 @@ function populateCandidateEditForm(candidateData, candidateId) {
     }
 
     // Set constituency
-    const constituencySelect = document.getElementById('candidate-constituency');
-    if (constituencySelect) {
-        constituencySelect.value = candidateData.constituency || '';
+    const constituencyInput = document.getElementById('candidate-constituency');
+    if (constituencyInput) {
+        constituencyInput.value = candidateData.constituency || '';
+    }
+
+    // Set island
+    const islandSelect = document.getElementById('candidate-island');
+    if (islandSelect) {
+        islandSelect.value = candidateData.island || '';
+        // Also trigger the dropdown setup to ensure islands are loaded
+        if (window.setupCandidateIslandDropdown) {
+            window.setupCandidateIslandDropdown(candidateData.island || '');
+        }
     }
 
     // Set status
@@ -12930,6 +18313,299 @@ async function deleteEvent(eventId) {
 // Make function globally available
 window.deleteEvent = deleteEvent;
 
+// Make voter detail functions globally available
+window.navigateVoterDetail = navigateVoterDetail;
+window.switchVoterTab = switchVoterTab;
+window.enableVoterEdit = enableVoterEdit;
+window.saveVoterFromDetail = saveVoterFromDetail;
+window.deleteVoterFromDetail = deleteVoterFromDetail;
+window.viewVoterDetails = viewVoterDetails;
+window.closeVoterDetailPanel = closeVoterDetailPanel;
+window.renderVoterPledges = renderVoterPledges;
+window.navigateVoterPledgeDetail = navigateVoterPledgeDetail;
+
+// Close Call Detail Panel
+function closeCallDetailPanel() {
+    const detailPanel = document.getElementById('call-detail-panel');
+    const backdrop = document.getElementById('call-detail-backdrop');
+    const wrapper = document.getElementById('calls-table-detail-wrapper');
+
+    if (detailPanel) {
+        detailPanel.style.display = 'none';
+        detailPanel.dataset.editMode = 'false';
+    }
+
+    if (backdrop) {
+        backdrop.style.display = 'none';
+    }
+
+    // Reset wrapper layout when detail panel is closed
+    if (wrapper && window.innerWidth >= 1024) {
+        wrapper.style.display = 'block';
+        const tableContainer = wrapper.querySelector('.calls-table-container');
+        if (tableContainer) {
+            tableContainer.style.width = '100%';
+            tableContainer.style.flexShrink = '';
+        }
+    }
+
+    // Remove selected class from table rows
+    const tableRows = document.querySelectorAll('#calls-table-body tr');
+    tableRows.forEach(row => row.classList.remove('selected'));
+}
+
+// Navigate Call Detail (previous/next)
+async function navigateCallDetail(direction) {
+    const detailContent = document.getElementById('call-detail-content');
+    if (!detailContent) return;
+
+    const currentCallId = detailContent.dataset.callId;
+    if (!currentCallId) return;
+
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const callsQuery = query(collection(window.db, 'calls'), where('campaignEmail', '==', window.userEmail));
+        const snapshot = await getDocs(callsQuery);
+        const allCalls = snapshot.docs.map(d => ({
+            id: d.id,
+            ...d.data()
+        }));
+
+        const currentIndex = allCalls.findIndex(c => c.id === currentCallId);
+        if (currentIndex === -1) return;
+
+        let newIndex = currentIndex;
+        if (direction === 'prev' && currentIndex > 0) {
+            newIndex = currentIndex - 1;
+        } else if (direction === 'next' && currentIndex < allCalls.length - 1) {
+            newIndex = currentIndex + 1;
+        } else {
+            return;
+        }
+
+        viewCallDetails(allCalls[newIndex].id);
+    } catch (error) {
+        console.error('Error navigating call detail:', error);
+    }
+}
+
+// Close Pledge Detail Panel
+function closePledgeDetailPanel() {
+    const detailPanel = document.getElementById('pledge-detail-panel');
+    const backdrop = document.getElementById('pledge-detail-backdrop');
+    const wrapper = document.getElementById('pledges-table-detail-wrapper');
+
+    if (detailPanel) {
+        detailPanel.style.display = 'none';
+        detailPanel.dataset.editMode = 'false';
+    }
+
+    if (backdrop) {
+        backdrop.style.display = 'none';
+    }
+
+    // Reset wrapper layout when detail panel is closed
+    if (wrapper && window.innerWidth >= 1024) {
+        wrapper.style.display = 'block';
+        const tableContainer = wrapper.querySelector('.pledges-table-container');
+        if (tableContainer) {
+            tableContainer.style.width = '100%';
+            tableContainer.style.flexShrink = '';
+        }
+    }
+
+    // Remove selected class from table rows
+    const tableRows = document.querySelectorAll('#pledges-table-body tr');
+    tableRows.forEach(row => row.classList.remove('selected'));
+}
+
+// Navigate Pledge Detail (previous/next)
+async function navigatePledgeDetail(direction) {
+    const detailContent = document.getElementById('pledge-detail-content');
+    if (!detailContent) return;
+
+    const currentPledgeId = detailContent.dataset.pledgeId;
+    if (!currentPledgeId) return;
+
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const pledgesQuery = query(collection(window.db, 'pledges'), where('email', '==', window.userEmail));
+        const snapshot = await getDocs(pledgesQuery);
+        const allPledges = snapshot.docs.map(d => ({
+            id: d.id,
+            ...d.data()
+        }));
+
+        const currentIndex = allPledges.findIndex(p => p.id === currentPledgeId);
+        if (currentIndex === -1) return;
+
+        let newIndex = currentIndex;
+        if (direction === 'prev' && currentIndex > 0) {
+            newIndex = currentIndex - 1;
+        } else if (direction === 'next' && currentIndex < allPledges.length - 1) {
+            newIndex = currentIndex + 1;
+        } else {
+            return;
+        }
+
+        viewPledgeDetails(allPledges[newIndex].id);
+    } catch (error) {
+        console.error('Error navigating pledge detail:', error);
+    }
+}
+
+window.closeCallDetailPanel = closeCallDetailPanel;
+window.navigateCallDetail = navigateCallDetail;
+window.closePledgeDetailPanel = closePledgeDetailPanel;
+window.navigatePledgeDetail = navigatePledgeDetail;
+
+// Create Call Detail HTML (similar to Candidate Detail)
+function createCallDetailHTML(callData, voterData = null) {
+    const voterName = callData.voterName || (voterData && voterData.name) || 'N/A';
+    const voterIdNumber = callData.voterId || (voterData && (voterData.idNumber || voterData.voterId)) || 'N/A';
+    const phone = callData.phone || callData.number || (voterData && voterData.number) || 'N/A';
+    const constituency = callData.constituency || (voterData && voterData.constituency) || (window.campaignData && window.campaignData.constituency) || 'N/A';
+    const island = callData.island || (voterData && voterData.island) || 'N/A';
+    const permanentAddress = voterData ? (voterData.permanentAddress || voterData.address || 'N/A') : (callData.permanentAddress || 'N/A');
+    const currentLocation = voterData ? (voterData.currentLocation || voterData.location || 'N/A') : (callData.currentLocation || 'N/A');
+
+    const initials = voterName && voterName !== 'N/A' ? voterName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NA';
+    const imageUrl = getVoterImageUrl(voterData || callData, voterIdNumber !== 'N/A' ? voterIdNumber : null);
+
+    const callDate = callData.callDate ? (callData.callDate.toDate ? callData.callDate.toDate() : new Date(callData.callDate)) : new Date();
+    const dateStr = callDate.toLocaleString('default', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    const statusClass = callData.status === 'answered' ? 'status-success' :
+        (callData.status === 'no-answer' ? 'status-warning' :
+            (callData.status === 'busy' ? 'status-info' : 'status-danger'));
+    const statusText = callData.status === 'answered' ? 'Answered' :
+        (callData.status === 'no-answer' ? 'No Answer' :
+            (callData.status === 'busy' ? 'Busy' : 'Failed'));
+
+    return `
+        <div class="call-detail-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 2px solid var(--border-color); margin-bottom: 16px;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="call-prev-btn" class="icon-btn" title="Previous" onclick="navigateCallDetail('prev')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <span id="call-detail-pagination-info" style="display: flex; align-items: center; padding: 0 8px; color: var(--text-light); font-size: 12px; white-space: nowrap;">1 of 1</span>
+                <button id="call-next-btn" class="icon-btn" title="Next" onclick="navigateCallDetail('next')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button id="call-enable-edit-btn" class="icon-btn" title="Enable Edit" onclick="enableCallEdit()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </button>
+                <button id="call-save-btn" class="icon-btn" title="Save" onclick="saveCallFromDetail()" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </button>
+                <button id="call-delete-btn" class="icon-btn icon-btn-danger" title="Delete" onclick="deleteCallFromDetail()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+                <button id="call-close-btn" class="icon-btn" title="Close" onclick="closeCallDetailPanel()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            ${imageUrl ? 
+                `<img id="call-detail-image" src="${imageUrl}" alt="${voterName}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);" data-voter-id="${voterIdNumber !== 'N/A' ? voterIdNumber : ''}" onerror="this.onerror=null; this.style.display='none'; const fallback=this.nextElementSibling; if(fallback) fallback.style.display='flex'; tryLoadImageFromFolder(this, '${voterIdNumber !== 'N/A' ? voterIdNumber : ''}').then(found => { if(found) { this.src=found; this.style.display=''; if(fallback) fallback.style.display='none'; } });"><div id="call-detail-fallback" style="width: 50px; height: 50px; border-radius: 50%; display: none; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 20px; border: 2px solid var(--primary-color);">${initials}</div>` :
+                `<div id="call-detail-fallback" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 20px; border: 2px solid var(--primary-color);">${initials}</div>`
+            }
+            <div>
+                <h3 style="margin: 0; color: var(--text-color); font-size: 18px; font-weight: 700;">${voterName}</h3>
+                <p style="margin: 4px 0 0 0; color: var(--text-light); font-size: 12px;">ID: ${voterIdNumber}</p>
+            </div>
+        </div>
+        
+        <div class="call-detail-tabs" style="display: flex; gap: 8px; border-bottom: 2px solid var(--border-color); margin-bottom: 16px;">
+            <button class="call-tab-btn active" data-tab="info" onclick="switchCallTab('info')" style="padding: 10px 16px; background: none; border: none; border-bottom: 3px solid var(--primary-color); color: var(--primary-color); font-weight: 600; cursor: pointer; font-size: 13px;">Call Info</button>
+            <button class="call-tab-btn" data-tab="voter" onclick="switchCallTab('voter')" style="padding: 10px 16px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-size: 13px;">Voter Info</button>
+        </div>
+        
+        <div id="call-tab-info" class="call-tab-content" style="display: block;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Caller</label>
+                    <p id="call-detail-caller" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${callData.caller || callData.agentName || 'N/A'}</p>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Status</label>
+                    <p id="call-detail-status" style="margin: 0;"><span class="status-badge ${statusClass}" style="padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600;">${statusText}</span></p>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Phone</label>
+                    <p id="call-detail-phone" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${phone}</p>
+                </div>
+                <div style="grid-column: span 2;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Date & Time</label>
+                    <p id="call-detail-date" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${dateStr}</p>
+                </div>
+                ${callData.notes ? `
+                <div style="grid-column: span 2;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Notes</label>
+                    <p id="call-detail-notes" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; line-height: 1.6; white-space: pre-wrap;">${callData.notes}</p>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+        
+        <div id="call-tab-voter" class="call-tab-content" style="display: none;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Constituency</label>
+                    <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${constituency}</p>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Island</label>
+                    <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${island}</p>
+                </div>
+                <div style="grid-column: span 2;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Permanent Address</label>
+                    <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; line-height: 1.6;">${permanentAddress}</p>
+                </div>
+                <div style="grid-column: span 2;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Current Location</label>
+                    <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; line-height: 1.6;">${currentLocation}</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 // View Call Details Function
 async function viewCallDetails(callId, navigateDirection = null) {
     if (!window.db || !window.userEmail) {
@@ -13010,254 +18686,408 @@ async function viewCallDetails(callId, navigateDirection = null) {
             return;
         }
 
-        const callDate = callData.callDate ? (callData.callDate.toDate ? callData.callDate.toDate() : new Date(callData.callDate)) : new Date();
-        const dateStr = callDate.toLocaleString('default', {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+        // Get detail panel and content
+        const detailPanel = document.getElementById('call-detail-panel');
+        const detailContent = document.getElementById('call-detail-content');
+        const backdrop = document.getElementById('call-detail-backdrop');
+        const wrapper = document.getElementById('calls-table-detail-wrapper');
+        const tableContainer = wrapper ? wrapper.querySelector('.calls-table-container') : null;
+
+        if (!detailPanel || !detailContent) {
+            console.error('Call detail panel elements not found');
+            return;
+        }
+
+        // Store current call index for navigation
+        detailPanel.dataset.callId = callId;
+        detailPanel.dataset.currentIndex = currentIndex;
+        detailPanel.dataset.totalCalls = allCalls.length;
+
+        // Show panel immediately
+        detailPanel.style.display = 'flex';
+
+        // Handle responsive layout
+        const isMobile = window.innerWidth < 1024;
+        if (isMobile) {
+            // Mobile: show as popup with backdrop
+            if (backdrop) backdrop.style.display = 'block';
+            detailPanel.style.position = 'fixed';
+            detailPanel.style.top = '50%';
+            detailPanel.style.left = '50%';
+            detailPanel.style.transform = 'translate(-50%, -50%)';
+            detailPanel.style.width = 'calc(100% - 32px)';
+            detailPanel.style.maxWidth = '500px';
+            detailPanel.style.maxHeight = 'calc(100vh - 40px)';
+            detailPanel.style.height = 'auto';
+            detailPanel.style.zIndex = '1000';
+            detailPanel.style.margin = '20px';
+            detailPanel.style.overflow = 'hidden';
+        } else {
+            // Desktop: show as side panel
+            if (backdrop) backdrop.style.display = 'none';
+
+            // Adjust wrapper layout on desktop when detail panel is shown
+            if (wrapper) {
+                wrapper.style.display = 'flex';
+                wrapper.style.gap = '24px';
+                const tableContainer = wrapper.querySelector('.calls-table-container');
+                if (tableContainer) {
+                    tableContainer.style.width = 'calc(100% - 524px)';
+                    tableContainer.style.flexShrink = '0';
+                }
+            }
+
+            detailPanel.style.position = 'relative';
+            detailPanel.style.width = '500px';
+            detailPanel.style.flexShrink = '0';
+            detailPanel.style.transform = 'none';
+            detailPanel.style.zIndex = '100';
+            detailPanel.style.maxHeight = 'none';
+        }
+
+        // Fetch voter data if available
+        let voterData = null;
+        if (callData.voterDocumentId) {
+            try {
+                const voterRef = doc(window.db, 'voters', callData.voterDocumentId);
+                const voterSnap = await getDoc(voterRef);
+                if (voterSnap.exists()) {
+                    voterData = voterSnap.data();
+                }
+            } catch (error) {
+                console.warn('Could not fetch voter data for call:', error);
+            }
+        }
+
+        // Show call info immediately
+        detailContent.innerHTML = createCallDetailHTML(callData, voterData);
+
+        // Update navigation buttons immediately
+        const prevBtn = detailContent.querySelector('#call-prev-btn');
+        const nextBtn = detailContent.querySelector('#call-next-btn');
+        const paginationInfo = detailContent.querySelector('#call-detail-pagination-info');
+
+        if (prevBtn) prevBtn.disabled = currentIndex === 0;
+        if (nextBtn) nextBtn.disabled = currentIndex === allCalls.length - 1;
+        if (paginationInfo) paginationInfo.textContent = `${currentIndex + 1} of ${allCalls.length}`;
+
+        // Highlight selected row immediately
+        const tableRows = document.querySelectorAll('#calls-table-body tr');
+        tableRows.forEach(row => {
+            row.classList.remove('selected');
+            if (row.dataset.callId === callId) {
+                row.classList.add('selected');
+            }
         });
 
-        const statusClass = callData.status === 'answered' ? 'status-success' :
-            (callData.status === 'no-answer' ? 'status-warning' :
-                (callData.status === 'busy' ? 'status-info' : 'status-danger'));
-        const statusText = callData.status === 'answered' ? 'Answered' :
-            (callData.status === 'no-answer' ? 'No Answer' :
-                (callData.status === 'busy' ? 'Busy' : 'Failed'));
+        // If no image URL found, try to lookup from images folder asynchronously
+        const voterIdNumber = callData.voterId || (voterData && (voterData.idNumber || voterData.voterId)) || 'N/A';
+        const voterName = callData.voterName || (voterData && voterData.name) || 'Voter';
+        if (!getVoterImageUrl(voterData || callData, voterIdNumber !== 'N/A' ? voterIdNumber : null) && voterIdNumber && voterIdNumber !== 'N/A' && voterIdNumber.trim()) {
+            lookupImageFromFolder(voterIdNumber).then(foundUrl => {
+                if (foundUrl) {
+                    const detailImg = detailContent.querySelector('#call-detail-image');
+                    const detailFallback = detailContent.querySelector('#call-detail-fallback');
 
-        const modalContent = `
-            <div style="padding: 1.5rem;">
-                <!-- Actions at top -->
-                <div style="display: flex; flex-wrap: nowrap; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color); overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                    <div style="display: flex; gap: 6px; flex-wrap: nowrap; flex-shrink: 0;">
-                        <button class="btn-secondary btn-compact" onclick="closeModal()" style="white-space: nowrap;">Close</button>
-                        <button class="btn-primary btn-compact" onclick="closeModal(); setTimeout(() => { if (window.openModal) window.openModal('call', '${callId}'); }, 100);" style="white-space: nowrap;">Edit Call</button>
-                        <button class="btn-danger btn-compact" onclick="window.deleteCall('${callId}')" style="display: flex; align-items: center; gap: 6px; white-space: nowrap;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                            Delete Call
-                        </button>
-                    </div>
-                </div>
-
-                <div style="display: grid; gap: 1.5rem;">
-                    <div style="background: var(--light-color); padding: 1.25rem; border-radius: 12px;">
-                        <div style="font-size: 0.875rem; color: var(--text-light); margin-bottom: 0.5rem;">Voter Information</div>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            ${(() => {
-                                const voterIdNumber = callData.voterId || '';
-                                const voterName = callData.voterName || 'N/A';
-                                const initials = voterName && voterName !== 'N/A' ? voterName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NA';
-                                const imageUrl = voterIdNumber ? getVoterImageUrl({}, voterIdNumber) : '';
-                                return imageUrl ? 
-                                    ` < img id = "call-detail-image"
-        src = "${imageUrl}"
-        alt = "${voterName}"
-        style = "width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);"
-        data - voter - id = "${voterIdNumber}"
-        onerror = "this.onerror=null; this.style.display='none'; const fallback=this.nextElementSibling; if(fallback) fallback.style.display='flex'; tryLoadImageFromFolder(this, '${voterIdNumber}').then(found => { if(found) { this.src=found; this.style.display=''; if(fallback) fallback.style.display='none'; } });" > < div id = "call-detail-fallback"
-        style = "width: 60px; height: 60px; border-radius: 50%; display: none; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 20px; border: 2px solid var(--primary-color);" > $ {
-            initials
-        } < /div>` :
-        `<div id="call-detail-fallback" style="width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 20px; border: 2px solid var(--primary-color);">${initials}</div>`;
-    })()
-} <
-div >
-    <
-    div style = "font-size: 1.125rem; font-weight: 600; color: var(--text-color); margin-bottom: 0.25rem;" > $ {
-        callData.voterName || 'N/A'
-    } < /div> <
-div style = "font-size: 0.875rem; color: var(--text-light);" > ID: $ {
-    callData.voterId || 'N/A'
-} < /div>
-$ {
-    callData.phone ?
-        <
-        div style = "font-size: 0.875rem; color: var(--text-light); margin-top: 0.25rem;" > Phone : $ {
-            callData.phone
-        } < /div>
-} <
-/div> < /
-div > <
-    /div>
-
-    <
-    div style = "background: var(--light-color); padding: 1.25rem; border-radius: 12px;" >
-    <
-    div style = "font-size: 0.875rem; color: var(--text-light); margin-bottom: 0.5rem;" > Call Information < /div> <
-div style = "display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" >
-    <
-    div >
-    <
-    div style = "font-size: 0.75rem; color: var(--text-light); margin-bottom: 0.25rem;" > Caller < /div> <
-div style = "font-size: 0.9375rem; font-weight: 600; color: var(--text-color);" > $ {
-    callData.caller || 'N/A'
-} < /div> < /
-div > <
-    div >
-    <
-    div style = "font-size: 0.75rem; color: var(--text-light); margin-bottom: 0.25rem;" > Date & Time < /div> <
-div style = "font-size: 0.9375rem; font-weight: 600; color: var(--text-color);" > $ {
-    dateStr
-} < /div> < /
-div > <
-    div >
-    <
-    div style = "font-size: 0.75rem; color: var(--text-light); margin-bottom: 0.25rem;" > Status < /div> <
-div > < span class = "status-badge ${statusClass}" > $ {
-        statusText
-    } < /span></div >
-    <
-    /div> < /
-div > <
-    /div>
-
-$ {
-    callData.notes ?
-        <
-        div style = "background: var(--light-color); padding: 1.25rem; border-radius: 12px;" >
-        <
-        div style = "font-size: 0.875rem; color: var(--text-light); margin-bottom: 0.5rem;" > Notes < /div> <
-    div style = "font-size: 0.9375rem; color: var(--text-color); line-height: 1.6; white-space: pre-wrap;" > $ {
-        callData.notes
-    } < /div> < /
-    div >
-}
-
-$ {
-    allCalls.length > 1 ?
-        <
-        div style = "display: flex; flex-wrap: nowrap; justify-content: center; align-items: center; gap: 8px; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid var(--border-color); overflow-x: auto; -webkit-overflow-scrolling: touch;" >
-        <
-        div style = "display: flex; gap: 6px; flex-wrap: nowrap; flex-shrink: 0;" >
-        <
-        button
-    class = "btn-secondary btn-compact"
-    $ {
-        currentIndex === 0 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''
-    }
-    onclick = "viewCallDetails('${callId}', 'prev')"
-    style = "display: flex; align-items: center; gap: 6px;" >
-        <
-        svg xmlns = "http://www.w3.org/2000/svg"
-    width = "16"
-    height = "16"
-    viewBox = "0 0 24 24"
-    fill = "none"
-    stroke = "currentColor"
-    stroke - width = "2"
-    stroke - linecap = "round"
-    stroke - linejoin = "round" >
-        <
-        polyline points = "15 18 9 12 15 6" > < /polyline> < /
-    svg >
-        Previous <
-        /button> <
-    span style = "color: var(--text-light); font-size: 12px; padding: 8px 8px; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;" >
-        $ {
-            currentIndex + 1
-        } of $ {
-            allCalls.length
-        } <
-        /span> <
-    button
-    class = "btn-secondary btn-compact"
-    $ {
-        currentIndex === allCalls.length - 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''
-    }
-    onclick = "viewCallDetails('${callId}', 'next')"
-    style = "display: flex; align-items: center; gap: 6px;" >
-        Next <
-        svg xmlns = "http://www.w3.org/2000/svg"
-    width = "16"
-    height = "16"
-    viewBox = "0 0 24 24"
-    fill = "none"
-    stroke = "currentColor"
-    stroke - width = "2"
-    stroke - linecap = "round"
-    stroke - linejoin = "round" >
-        <
-        polyline points = "9 18 15 12 9 6" > < /polyline> < /
-    svg > <
-        /button> < /
-    div > <
-        /div>
-} <
-/div> < /
-div >
-    `;
-
-        // Open modal using the existing modal system
-        if (window.openModal) {
-            window.openModal('call', callId);
-            // Update modal content with details view
-            setTimeout(() => {
-                modalTitle = document.getElementById('modal-title');
-                modalBody = document.getElementById('modal-body');
-                if (modalTitle && modalBody) {
-                    modalTitle.textContent = 'Call Details';
-                    modalBody.innerHTML = modalContent;
-                    
-                    // If voterId exists, try to lookup image from images folder asynchronously
-                    const voterIdNumber = callData.voterId || '';
-                    if (voterIdNumber && voterIdNumber.trim()) {
-                        const currentImageUrl = getVoterImageUrl({}, voterIdNumber);
-                        if (!currentImageUrl) {
-                            lookupImageFromFolder(voterIdNumber).then(foundUrl => {
-                                if (foundUrl) {
-                                    const detailImg = modalBody.querySelector('#call-detail-image');
-                                    const detailFallback = modalBody.querySelector('#call-detail-fallback');
-                                    
-                                    if (detailImg) {
-                                        detailImg.src = foundUrl;
-                                        detailImg.style.display = '';
-                                        if (detailFallback) {
-                                            detailFallback.style.display = 'none';
-                                        }
-                                    } else if (detailFallback) {
-                                        // If no img element exists, create one
-                                        const voterName = callData.voterName || 'Voter';
-                                        const img = document.createElement('img');
-                                        img.id = 'call-detail-image';
-                                        img.src = foundUrl;
-                                        img.alt = voterName;
-                                        img.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);';
-                                        img.setAttribute('data-voter-id', voterIdNumber);
-                                        img.onerror = function() {
-                                            this.style.display = 'none';
-                                            if (detailFallback) {
-                                                detailFallback.style.display = 'flex';
-                                            }
-                                        };
-                                        detailFallback.parentNode.replaceChild(img, detailFallback);
-                                    }
-                                }
-                            }).catch(() => {
-                                // Silently fail - fallback will show
-                            });
+                    if (detailImg) {
+                        detailImg.src = foundUrl;
+                        detailImg.style.display = '';
+                        if (detailFallback) {
+                            detailFallback.style.display = 'none';
                         }
+                    } else if (detailFallback) {
+                        // Create image element
+                        const img = document.createElement('img');
+                        img.id = 'call-detail-image';
+                        img.src = foundUrl;
+                        img.alt = voterName;
+                        img.style.cssText = 'width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);';
+                        img.setAttribute('data-voter-id', voterIdNumber);
+                        img.onerror = function() {
+                            this.style.display = 'none';
+                            if (detailFallback) {
+                                detailFallback.style.display = 'flex';
+                            }
+                        };
+                        detailFallback.parentNode.replaceChild(img, detailFallback);
                     }
                 }
-            }, 100);
-        } else {
-            // Fallback: use showDialog if openModal not available
-            window.showDialog('Call Details', modalContent);
+            }).catch(() => {
+                // Silently fail
+            });
         }
     } catch (error) {
         console.error('Error loading call details:', error);
-        if (!modalTitle || !modalBody) {
+        if (window.showErrorDialog) {
             window.showErrorDialog('Failed to load call details. Please try again.', 'Error');
-        } else {
-            modalTitle.textContent = 'Error';
-            modalBody.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--danger-color);">Failed to load call details. Please try again.</div>';
+        }
+        const detailContent = document.getElementById('call-detail-content');
+        if (detailContent) {
+            detailContent.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--danger-color);">Failed to load call details. Please try again.</div>';
         }
     }
 }
+
 window.viewCallDetails = viewCallDetails;
+
+// Switch call tab
+function switchCallTab(tabName) {
+    // Update tab buttons
+    const tabButtons = document.querySelectorAll('.call-tab-btn');
+    tabButtons.forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+            btn.classList.add('active');
+            btn.style.borderBottomColor = 'var(--primary-color)';
+            btn.style.color = 'var(--primary-color)';
+            btn.style.fontWeight = '600';
+        } else {
+            btn.classList.remove('active');
+            btn.style.borderBottomColor = 'transparent';
+            btn.style.color = 'var(--text-light)';
+            btn.style.fontWeight = '500';
+        }
+    });
+
+    // Update tab content
+    const tabContents = document.querySelectorAll('.call-tab-content');
+    tabContents.forEach(content => {
+        if (content.id === `call-tab-${tabName}`) {
+            content.style.display = 'block';
+        } else {
+            content.style.display = 'none';
+        }
+    });
+}
+
+// Enable call edit mode
+function enableCallEdit() {
+    const detailPanel = document.getElementById('call-detail-panel');
+    if (!detailPanel || detailPanel.style.display === 'none') return;
+
+    const isEditMode = detailPanel.dataset.editMode === 'true';
+
+    if (isEditMode) {
+        // Disable edit mode
+        detailPanel.dataset.editMode = 'false';
+        const saveBtn = document.getElementById('call-save-btn');
+        if (saveBtn) saveBtn.style.display = 'none';
+
+        // Convert inputs back to paragraphs
+        const callerEl = document.getElementById('call-detail-caller');
+        const statusEl = document.getElementById('call-detail-status');
+        const phoneEl = document.getElementById('call-detail-phone');
+        const notesEl = document.getElementById('call-detail-notes');
+
+        if (callerEl && callerEl.tagName === 'INPUT') {
+            const p = document.createElement('p');
+            p.id = 'call-detail-caller';
+            p.style.cssText = 'margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;';
+            p.textContent = callerEl.value || 'N/A';
+            callerEl.parentNode.replaceChild(p, callerEl);
+        }
+
+        if (statusEl && statusEl.tagName === 'SELECT') {
+            const statusValue = statusEl.value;
+            const statusClass = statusValue === 'answered' ? 'status-success' :
+                (statusValue === 'no-answer' ? 'status-warning' :
+                    (statusValue === 'busy' ? 'status-info' : 'status-danger'));
+            const statusText = statusValue === 'answered' ? 'Answered' :
+                (statusValue === 'no-answer' ? 'No Answer' :
+                    (statusValue === 'busy' ? 'Busy' : 'Failed'));
+            const p = document.createElement('p');
+            p.id = 'call-detail-status';
+            p.style.cssText = 'margin: 0;';
+            p.innerHTML = `<span class="status-badge ${statusClass}" style="padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600;">${statusText}</span>`;
+            statusEl.parentNode.replaceChild(p, statusEl);
+        }
+
+        if (phoneEl && phoneEl.tagName === 'INPUT') {
+            const p = document.createElement('p');
+            p.id = 'call-detail-phone';
+            p.style.cssText = 'margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;';
+            p.textContent = phoneEl.value || 'N/A';
+            phoneEl.parentNode.replaceChild(p, phoneEl);
+        }
+
+        if (notesEl && notesEl.tagName === 'TEXTAREA') {
+            const p = document.createElement('p');
+            p.id = 'call-detail-notes';
+            p.style.cssText = 'margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; line-height: 1.6; white-space: pre-wrap;';
+            p.textContent = notesEl.value || '';
+            notesEl.parentNode.replaceChild(p, notesEl);
+        }
+    } else {
+        // Enable edit mode
+        detailPanel.dataset.editMode = 'true';
+        const saveBtn = document.getElementById('call-save-btn');
+        if (saveBtn) saveBtn.style.display = 'flex';
+
+        // Convert paragraphs to inputs
+        const callerEl = document.getElementById('call-detail-caller');
+        const statusEl = document.getElementById('call-detail-status');
+        const phoneEl = document.getElementById('call-detail-phone');
+        const notesEl = document.getElementById('call-detail-notes');
+
+        if (callerEl && callerEl.tagName === 'P') {
+            const input = document.createElement('input');
+            input.id = 'call-detail-caller';
+            input.type = 'text';
+            input.value = callerEl.textContent || '';
+            input.style.cssText = 'margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; width: 100%;';
+            callerEl.parentNode.replaceChild(input, callerEl);
+        }
+
+        if (statusEl && statusEl.tagName === 'P') {
+            const select = document.createElement('select');
+            select.id = 'call-detail-status';
+            select.style.cssText = 'margin: 0; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; width: 100%; font-size: 14px;';
+            const currentStatus = statusEl.textContent.trim().toLowerCase();
+            const statuses = [{
+                    value: 'answered',
+                    text: 'Answered'
+                },
+                {
+                    value: 'no-answer',
+                    text: 'No Answer'
+                },
+                {
+                    value: 'busy',
+                    text: 'Busy'
+                },
+                {
+                    value: 'failed',
+                    text: 'Failed'
+                }
+            ];
+            statuses.forEach(status => {
+                const option = document.createElement('option');
+                option.value = status.value;
+                option.textContent = status.text;
+                if (currentStatus.includes(status.value) || (status.value === 'failed' && currentStatus === 'failed')) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+            statusEl.parentNode.replaceChild(select, statusEl);
+        }
+
+        if (phoneEl && phoneEl.tagName === 'P') {
+            const input = document.createElement('input');
+            input.id = 'call-detail-phone';
+            input.type = 'text';
+            input.value = phoneEl.textContent || '';
+            input.style.cssText = 'margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; width: 100%;';
+            phoneEl.parentNode.replaceChild(input, phoneEl);
+        }
+
+        if (notesEl && notesEl.tagName === 'P') {
+            const textarea = document.createElement('textarea');
+            textarea.id = 'call-detail-notes';
+            textarea.value = notesEl.textContent || '';
+            textarea.rows = 4;
+            textarea.style.cssText = 'margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; width: 100%; resize: vertical;';
+            notesEl.parentNode.replaceChild(textarea, notesEl);
+        }
+    }
+}
+
+// Save call from detail
+async function saveCallFromDetail() {
+    const detailPanel = document.getElementById('call-detail-panel');
+    if (!detailPanel || detailPanel.style.display === 'none') return;
+
+    const callId = detailPanel.dataset.callId;
+    if (!callId) return;
+
+    try {
+        const {
+            doc,
+            updateDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        const callerEl = document.getElementById('call-detail-caller');
+        const statusEl = document.getElementById('call-detail-status');
+        const phoneEl = document.getElementById('call-detail-phone');
+        const notesEl = document.getElementById('call-detail-notes');
+
+        const updateData = {};
+        if (callerEl && callerEl.tagName === 'INPUT') {
+            updateData.caller = callerEl.value.trim();
+        }
+        if (statusEl && statusEl.tagName === 'SELECT') {
+            updateData.status = statusEl.value;
+        }
+        if (phoneEl && phoneEl.tagName === 'INPUT') {
+            updateData.phone = phoneEl.value.trim();
+        }
+        if (notesEl && notesEl.tagName === 'TEXTAREA') {
+            updateData.notes = notesEl.value.trim();
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            return;
+        }
+
+        const callRef = doc(window.db, 'calls', callId);
+        await updateDoc(callRef, updateData);
+
+        // Disable edit mode and refresh
+        enableCallEdit();
+
+        // Reload call details
+        viewCallDetails(callId);
+
+        if (window.showSuccessDialog) {
+            window.showSuccessDialog('Call updated successfully!', 'Success');
+        }
+
+        // Clear cache and reload
+        if (window.clearCache) {
+            window.clearCache('calls');
+        }
+        if (window.loadCallsData) {
+            window.loadCallsData();
+        }
+    } catch (error) {
+        console.error('Error saving call:', error);
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Failed to save call. Please try again.', 'Error');
+        }
+    }
+}
+
+// Delete call from detail
+async function deleteCallFromDetail() {
+    const detailPanel = document.getElementById('call-detail-panel');
+    if (!detailPanel || detailPanel.style.display === 'none') return;
+
+    const callId = detailPanel.dataset.callId;
+    if (!callId) return;
+
+    if (window.showConfirm) {
+        const confirmed = await window.showConfirm(
+            'Are you sure you want to delete this call record? This action cannot be undone.',
+            'Delete Call'
+        );
+        if (!confirmed) return;
+    } else if (!confirm('Are you sure you want to delete this call record? This action cannot be undone.')) {
+        return;
+    }
+
+    // Close detail panel
+    closeCallDetailPanel();
+
+    // Call delete function
+    if (window.deleteCall) {
+        await window.deleteCall(callId);
+    }
+}
+
+// Make functions globally accessible
+window.switchCallTab = switchCallTab;
+window.enableCallEdit = enableCallEdit;
+window.saveCallFromDetail = saveCallFromDetail;
+window.deleteCallFromDetail = deleteCallFromDetail;
 
 // Delete Call Function
 async function deleteCall(callId) {
@@ -13683,7 +19513,6 @@ async function showAgentSelectionForVoterAssignment() {
                 name: voterData.name || 'N/A',
                 idNumber: voterData.idNumber || voterData.voterId || 'N/A',
                 island: voterData.island || 'Unknown',
-                atoll: voterData.atoll || 'Unknown',
                 constituency: voterData.constituency || 'Unknown',
                 permanentAddress: voterData.permanentAddress || voterData.address || 'Unknown',
                 ballotBox: voterData.ballotBox || voterData.ballotNumber || 'Unknown',
@@ -13800,15 +19629,6 @@ select id = "filter-island"
 style = "width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 12px; background: white; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none;" >
     <
     option value = "" > All Islands < /option> < /
-select > <
-    /div> <
-div style = "position: relative;" >
-    <
-    label style = "display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 4px; text-transform: uppercase;" > Filter by Atoll < /label> <
-select id = "filter-atoll"
-style = "width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 12px; background: white; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none;" >
-    <
-    option value = "" > All Atolls < /option> < /
 select > <
     /div> <
 div style = "position: relative;" >
@@ -13960,7 +19780,6 @@ div >
 
         // Add filter functionality - all filter dropdowns
         const filterIsland = document.getElementById('filter-island');
-        const filterAtoll = document.getElementById('filter-atoll');
         const filterConstituency = document.getElementById('filter-constituency');
         const filterAddress = document.getElementById('filter-address');
         const filterBallot = document.getElementById('filter-ballot');
@@ -13978,9 +19797,6 @@ div >
 
         if (filterIsland) {
             filterIsland.addEventListener('change', handleFilterChange);
-        }
-        if (filterAtoll) {
-            filterAtoll.addEventListener('change', handleFilterChange);
         }
         if (filterConstituency) {
             filterConstituency.addEventListener('change', handleFilterChange);
@@ -14079,7 +19895,6 @@ function renderVotersForAssignment(agentId) {
 
     // Get current filter settings
     const filterIsland = document.getElementById('filter-island').value || '';
-    const filterAtoll = document.getElementById('filter-atoll').value || '';
     const filterConstituency = document.getElementById('filter-constituency').value || '';
     const filterAddress = document.getElementById('filter-address').value || '';
     const filterBallot = document.getElementById('filter-ballot').value || '';
@@ -14089,83 +19904,79 @@ function renderVotersForAssignment(agentId) {
     const treeViewEnabled = window.assignmentData.treeViewEnabled || false;
 
     // Check cache first (if filters haven't changed)x`
-const cacheKey = `${filterIsland}-${filterAtoll}-${filterConstituency}-${filterAddress}-${filterBallot}-${filterGender}-${filterStatus}-${searchTerm}`;
-let filteredVoters;
+    const cacheKey = `${filterIsland}-${filterConstituency}-${filterAddress}-${filterBallot}-${filterGender}-${filterStatus}-${searchTerm}`;
+    let filteredVoters;
 
-if (window.assignmentData.cachedResults && window.assignmentData.cachedResults.key === cacheKey) {
-    filteredVoters = window.assignmentData.cachedResults.data;
-} else {
-    // Filter voters
-    filteredVoters = [...window.assignmentData.voters];
+    if (window.assignmentData.cachedResults && window.assignmentData.cachedResults.key === cacheKey) {
+        filteredVoters = window.assignmentData.cachedResults.data;
+    } else {
+        // Filter voters
+        filteredVoters = [...window.assignmentData.voters];
 
-    // Apply search filter first (most selective)
-    if (searchTerm) {
-        filteredVoters = filteredVoters.filter(v => {
-            const name = (v.name || '').toLowerCase();
-            const id = (v.idNumber || '').toLowerCase();
-            const island = (v.island || '').toLowerCase();
-            const address = (v.permanentAddress || '').toLowerCase();
-            const atoll = (v.atoll || '').toLowerCase();
-            const constituency = (v.constituency || '').toLowerCase();
-            const ballot = (v.ballotBox || '').toLowerCase();
-            return name.includes(searchTerm) || id.includes(searchTerm) ||
-                island.includes(searchTerm) || address.includes(searchTerm) ||
-                atoll.includes(searchTerm) || constituency.includes(searchTerm) ||
-                ballot.includes(searchTerm);
-        });
-    }
-
-    // Apply filters
-    if (filterIsland) {
-        filteredVoters = filteredVoters.filter(v => v.island === filterIsland);
-    }
-    if (filterAtoll) {
-        filteredVoters = filteredVoters.filter(v => v.atoll === filterAtoll);
-    }
-    if (filterConstituency) {
-        filteredVoters = filteredVoters.filter(v => v.constituency === filterConstituency);
-    }
-    if (filterAddress) {
-        filteredVoters = filteredVoters.filter(v => v.permanentAddress === filterAddress);
-    }
-    if (filterBallot) {
-        filteredVoters = filteredVoters.filter(v => v.ballotBox === filterBallot);
-    }
-    if (filterGender) {
-        filteredVoters = filteredVoters.filter(v => v.gender === filterGender);
-    }
-    if (filterStatus) {
-        if (filterStatus === 'unassigned') {
-            filteredVoters = filteredVoters.filter(v => !v.currentAgent);
-        } else if (filterStatus === 'assigned') {
-            filteredVoters = filteredVoters.filter(v => v.currentAgent === agentId);
-        } else if (filterStatus === 'assigned-other') {
-            filteredVoters = filteredVoters.filter(v => v.currentAgent && v.currentAgent !== agentId);
+        // Apply search filter first (most selective)
+        if (searchTerm) {
+            filteredVoters = filteredVoters.filter(v => {
+                const name = (v.name || '').toLowerCase();
+                const id = (v.idNumber || '').toLowerCase();
+                const island = (v.island || '').toLowerCase();
+                const address = (v.permanentAddress || '').toLowerCase();
+                const constituency = (v.constituency || '').toLowerCase();
+                const ballot = (v.ballotBox || '').toLowerCase();
+                return name.includes(searchTerm) || id.includes(searchTerm) ||
+                    island.includes(searchTerm) || address.includes(searchTerm) ||
+                    constituency.includes(searchTerm) ||
+                    ballot.includes(searchTerm);
+            });
         }
+
+        // Apply filters
+        if (filterIsland) {
+            filteredVoters = filteredVoters.filter(v => v.island === filterIsland);
+        }
+        if (filterConstituency) {
+            filteredVoters = filteredVoters.filter(v => v.constituency === filterConstituency);
+        }
+        if (filterAddress) {
+            filteredVoters = filteredVoters.filter(v => v.permanentAddress === filterAddress);
+        }
+        if (filterBallot) {
+            filteredVoters = filteredVoters.filter(v => v.ballotBox === filterBallot);
+        }
+        if (filterGender) {
+            filteredVoters = filteredVoters.filter(v => v.gender === filterGender);
+        }
+        if (filterStatus) {
+            if (filterStatus === 'unassigned') {
+                filteredVoters = filteredVoters.filter(v => !v.currentAgent);
+            } else if (filterStatus === 'assigned') {
+                filteredVoters = filteredVoters.filter(v => v.currentAgent === agentId);
+            } else if (filterStatus === 'assigned-other') {
+                filteredVoters = filteredVoters.filter(v => v.currentAgent && v.currentAgent !== agentId);
+            }
+        }
+
+        // Sort by name by default (no sort dropdown needed)
+        filteredVoters.sort((a, b) => {
+            return (a.name || '').localeCompare(b.name || '');
+        });
+
+        // Cache results
+        window.assignmentData.cachedResults = {
+            key: cacheKey,
+            data: filteredVoters
+        };
     }
 
-    // Sort by name by default (no sort dropdown needed)
-    filteredVoters.sort((a, b) => {
-        return (a.name || '').localeCompare(b.name || '');
-    });
+    // Store filtered voters for pagination
+    window.assignmentData.filteredVoters = filteredVoters;
 
-    // Cache results
-    window.assignmentData.cachedResults = {
-        key: cacheKey,
-        data: filteredVoters
-    };
-}
+    // Update filter dropdowns with available options (only if not cached)
+    if (!window.assignmentData.cachedResults || window.assignmentData.cachedResults.key !== cacheKey) {
+        updateFilterDropdowns(filteredVoters, filterIsland);
+    }
 
-// Store filtered voters for pagination
-window.assignmentData.filteredVoters = filteredVoters;
-
-// Update filter dropdowns with available options (only if not cached)
-if (!window.assignmentData.cachedResults || window.assignmentData.cachedResults.key !== cacheKey) {
-    updateFilterDropdowns(filteredVoters, filterIsland, filterAtoll);
-}
-
-// Always render list view (tree view removed for new design)
-renderListView(filteredVoters, agentId, votersContainer);
+    // Always render list view (tree view removed for new design)
+    renderListView(filteredVoters, agentId, votersContainer);
 }
 
 // Render list view (flat list) with pagination
@@ -14395,7 +20206,7 @@ function renderListView(voters, agentId, container) {
     container.appendChild(fragment);
 }
 
-// Render tree view (grouped by atoll/island)
+// Render tree view (grouped by constituency/island)
 function renderTreeView(voters, agentId, container) {
     if (!window.assignmentData) return;
 
@@ -14404,51 +20215,51 @@ function renderTreeView(voters, agentId, container) {
         return;
     }
 
-    // Group voters by atoll, then by island
+    // Group voters by constituency, then by island
     const tree = {};
     voters.forEach(voter => {
-        const atoll = voter.atoll || 'Unknown';
+        const constituency = voter.constituency || 'Unknown';
         const island = voter.island || 'Unknown';
 
-        if (!tree[atoll]) {
-            tree[atoll] = {};
+        if (!tree[constituency]) {
+            tree[constituency] = {};
         }
-        if (!tree[atoll][island]) {
-            tree[atoll][island] = [];
+        if (!tree[constituency][island]) {
+            tree[constituency][island] = [];
         }
-        tree[atoll][island].push(voter);
+        tree[constituency][island].push(voter);
     });
 
-    // Sort atolls and islands
-    const sortedAtolls = Object.keys(tree).sort();
+    // Sort constituencies and islands
+    const sortedConstituencies = Object.keys(tree).sort();
 
     let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
 
-    sortedAtolls.forEach(atoll => {
-        const islands = Object.keys(tree[atoll]).sort();
-        const atollId = `atoll-${atoll.replace(/\s+/g, '-').toLowerCase()}`;
-        const atollVoterCount = Object.values(tree[atoll]).reduce((sum, islandVoters) => sum + islandVoters.length, 0);
+    sortedConstituencies.forEach(constituency => {
+        const islands = Object.keys(tree[constituency]).sort();
+        const constituencyId = `constituency-${constituency.replace(/\s+/g, '-').toLowerCase()}`;
+        const constituencyVoterCount = Object.values(tree[constituency]).reduce((sum, islandVoters) => sum + islandVoters.length, 0);
 
         html += `
             <div style="border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
-                <div class="tree-node-header" onclick="toggleTreeNode('${atollId}')" 
+                <div class="tree-node-header" onclick="toggleTreeNode('${constituencyId}')" 
                      style="background: var(--light-color); padding: 12px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background 0.2s;"
                      onmouseover="this.style.background='var(--border-light)'"
                      onmouseout="this.style.background='var(--light-color)'">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <svg class="tree-chevron" data-target="${atollId}" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.2s; transform: rotate(0deg);">
+                        <svg class="tree-chevron" data-target="${constituencyId}" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.2s; transform: rotate(0deg);">
                             <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
-                        <strong style="font-size: 14px; color: var(--text-color);">${atoll}</strong>
-                        <span style="font-size: 12px; color: var(--text-light);">(${atollVoterCount} voters)</span>
+                        <strong style="font-size: 14px; color: var(--text-color);">${constituency}</strong>
+                        <span style="font-size: 12px; color: var(--text-light);">(${constituencyVoterCount} voters)</span>
                     </div>
                 </div>
-                <div id="${atollId}" class="tree-node-content" style="display: block; padding: 8px;">
+                <div id="${constituencyId}" class="tree-node-content" style="display: block; padding: 8px;">
         `;
 
         islands.forEach(island => {
-            const islandVoters = tree[atoll][island];
-            const islandId = `island-${atoll.replace(/\s+/g, '-').toLowerCase()}-${island.replace(/\s+/g, '-').toLowerCase()}`;
+            const islandVoters = tree[constituency][island];
+            const islandId = `island-${constituency.replace(/\s+/g, '-').toLowerCase()}-${island.replace(/\s+/g, '-').toLowerCase()}`;
 
             html += `
                 <div style="margin-bottom: 8px; border-left: 2px solid var(--border-color); padding-left: 12px;">
@@ -14531,11 +20342,10 @@ function renderTreeView(voters, agentId, container) {
 }
 
 // Update filter dropdowns with available options
-function updateFilterDropdowns(voters, selectedIsland, selectedAtoll) {
+function updateFilterDropdowns(voters, selectedIsland) {
     // Get unique values from all voters (not just filtered)
     const allVoters = window.assignmentData ? window.assignmentData.voters : voters;
     const islands = [...new Set(allVoters.map(v => v.island).filter(v => v && v !== 'Unknown'))].sort();
-    const atolls = [...new Set(allVoters.map(v => v.atoll).filter(v => v && v !== 'Unknown'))].sort();
     const constituencies = [...new Set(allVoters.map(v => v.constituency).filter(v => v && v !== 'Unknown'))].sort();
     const ballotBoxes = [...new Set(allVoters.map(v => v.ballotBox).filter(v => v && v !== 'Unknown'))].sort();
 
@@ -14544,8 +20354,6 @@ function updateFilterDropdowns(voters, selectedIsland, selectedAtoll) {
     let addresses;
     if (selectedIsland) {
         addresses = [...new Set(allVoters.filter(v => v.island === selectedIsland).map(v => v.permanentAddress).filter(v => v && v !== 'Unknown'))].sort();
-    } else if (selectedAtoll) {
-        addresses = [...new Set(allVoters.filter(v => v.atoll === selectedAtoll).map(v => v.permanentAddress).filter(v => v && v !== 'Unknown'))].sort();
     } else {
         addresses = [...new Set(allVoters.map(v => v.permanentAddress).filter(v => v && v !== 'Unknown'))].sort();
     }
@@ -14561,20 +20369,6 @@ function updateFilterDropdowns(voters, selectedIsland, selectedAtoll) {
             option.textContent = island;
             if (island === currentValue) option.selected = true;
             islandSelect.appendChild(option);
-        });
-    }
-
-    // Update atoll dropdown
-    const atollSelect = document.getElementById('filter-atoll');
-    if (atollSelect) {
-        const currentValue = atollSelect.value;
-        atollSelect.innerHTML = '<option value="">All Atolls</option>';
-        atolls.forEach(atoll => {
-            const option = document.createElement('option');
-            option.value = atoll;
-            option.textContent = atoll;
-            if (atoll === currentValue) option.selected = true;
-            atollSelect.appendChild(option);
         });
     }
 
@@ -15032,10 +20826,6 @@ function showVoterDetailsForAssignment(voter) {
         {
             label: 'Island',
             value: fullVoter.island
-        },
-        {
-            label: 'Atoll',
-            value: fullVoter.atoll
         },
         {
             label: 'Constituency',
@@ -15710,6 +21500,288 @@ async function deleteCallLink(linkId) {
     }
 }
 
+// Assign agent to voter
+window.assignAgentToVoter = async function assignAgentToVoter(voterId) {
+    if (!window.db || !window.userEmail) {
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Database not initialized. Please refresh the page.');
+        }
+        return;
+    }
+
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs,
+            doc,
+            getDoc,
+            updateDoc,
+            arrayUnion
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Fetch all agents
+        const agentsQuery = query(
+            collection(window.db, 'agents'),
+            where('email', '==', window.userEmail)
+        );
+        const agentsSnapshot = await getDocs(agentsQuery);
+
+        if (agentsSnapshot.empty) {
+            if (window.showErrorDialog) {
+                window.showErrorDialog('No agents found. Please create an agent first.', 'No Agents');
+            }
+            return;
+        }
+
+        const agents = [];
+        agentsSnapshot.forEach(doc => {
+            agents.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+
+        // Show agent selection modal
+        const modalOverlay = window.ensureModalExists ? window.ensureModalExists() : null;
+        if (!modalOverlay) {
+            if (window.showErrorDialog) {
+                window.showErrorDialog('Modal system not available.');
+            }
+            return;
+        }
+
+        const modalBody = document.getElementById('modal-body');
+        const modalTitle = document.getElementById('modal-title');
+        if (!modalBody || !modalTitle) {
+            if (window.showErrorDialog) {
+                window.showErrorDialog('Modal elements not found.');
+            }
+            return;
+        }
+
+        modalTitle.textContent = 'Assign Agent to Voter';
+        modalBody.innerHTML = `
+            <div style="padding: 20px 0;">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="agent-select" style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-color);">Select Agent</label>
+                    <select id="agent-select" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px;">
+                        <option value="">-- Select an agent --</option>
+                        ${agents.map(agent => `
+                            <option value="${agent.id}">${agent.name || 'Unknown'} ${agent.phone ? `(${agent.phone})` : ''}</option>
+                        `).join('')}
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="agent-notes" style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-color);">Notes (Optional)</label>
+                    <textarea id="agent-notes" rows="3" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; resize: vertical;" placeholder="Add any notes about this assignment..."></textarea>
+                </div>
+                <div class="modal-footer" style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn-secondary btn-compact" onclick="closeModal()">Cancel</button>
+                    <button type="button" class="btn-primary btn-compact" onclick="confirmAssignAgent('${voterId}')">Assign Agent</button>
+                </div>
+            </div>
+        `;
+
+        modalOverlay.style.display = 'flex';
+    } catch (error) {
+        console.error('Error assigning agent:', error);
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Failed to load agents. Please try again.', 'Error');
+        }
+    }
+}
+
+// Confirm and assign agent to voter
+window.confirmAssignAgent = async function confirmAssignAgent(voterId) {
+    if (!window.db || !window.userEmail) {
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Database not initialized. Please refresh the page.');
+        }
+        return;
+    }
+
+    try {
+        const agentSelect = document.getElementById('agent-select');
+        const agentNotes = document.getElementById('agent-notes');
+
+        if (!agentSelect || !agentSelect.value) {
+            if (window.showErrorDialog) {
+                window.showErrorDialog('Please select an agent.', 'Validation Error');
+            }
+            return;
+        }
+
+        const {
+            doc,
+            getDoc,
+            updateDoc,
+            Timestamp,
+            arrayUnion
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Get agent data
+        const agentRef = doc(window.db, 'agents', agentSelect.value);
+        const agentSnap = await getDoc(agentRef);
+
+        if (!agentSnap.exists()) {
+            if (window.showErrorDialog) {
+                window.showErrorDialog('Agent not found.', 'Error');
+            }
+            return;
+        }
+
+        const agentData = agentSnap.data();
+
+        // Verify the agent belongs to the current user
+        if (agentData.email !== window.userEmail) {
+            if (window.showErrorDialog) {
+                window.showErrorDialog('You do not have permission to use this agent.', 'Access Denied');
+            }
+            return;
+        }
+
+        // Get voter data
+        const voterRef = doc(window.db, 'voters', voterId);
+        const voterSnap = await getDoc(voterRef);
+
+        if (!voterSnap.exists()) {
+            if (window.showErrorDialog) {
+                window.showErrorDialog('Voter not found.', 'Error');
+            }
+            return;
+        }
+
+        const voterData = voterSnap.data();
+
+        // Verify the voter belongs to the current user
+        if (voterData.email !== window.userEmail && voterData.campaignEmail !== window.userEmail) {
+            if (window.showErrorDialog) {
+                window.showErrorDialog('You do not have permission to assign agents to this voter.', 'Access Denied');
+            }
+            return;
+        }
+
+        const idNumber = voterData.idNumber || voterData.voterId || voterId;
+
+        // Update voter with assignedAgentId
+        await updateDoc(voterRef, {
+            assignedAgentId: agentSelect.value,
+            assignedAgentName: agentData.name || 'Unknown',
+            assignedAt: Timestamp.now()
+        });
+
+        // Update agent's assignedVoters array
+        const agentUpdate = {
+            assignedVoters: arrayUnion({
+                voterId: voterId,
+                idNumber: idNumber,
+                voterName: voterData.name || 'Unknown',
+                notes: agentNotes ? agentNotes.value.trim() : '',
+                assignedAt: Timestamp.now()
+            })
+        };
+
+        await updateDoc(agentRef, agentUpdate);
+
+        // Close modal
+        closeModal();
+
+        // Show success message
+        if (window.showSuccess) {
+            window.showSuccess('Agent assigned successfully!', 'Success');
+        }
+
+        // Reload voter details
+        if (window.viewVoterDetails) {
+            await window.viewVoterDetails(voterId);
+        }
+    } catch (error) {
+        console.error('Error confirming agent assignment:', error);
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Failed to assign agent. Please try again.', 'Error');
+        }
+    }
+}
+
+// Remove agent from voter
+window.removeAgentFromVoter = async function removeAgentFromVoter(voterId, agentId) {
+    if (!window.db || !window.userEmail) {
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Database not initialized. Please refresh the page.');
+        }
+        return;
+    }
+
+    if (!confirm('Are you sure you want to remove this agent assignment?')) {
+        return;
+    }
+
+    try {
+        const {
+            doc,
+            getDoc,
+            updateDoc,
+            arrayRemove
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Get voter data
+        const voterRef = doc(window.db, 'voters', voterId);
+        const voterSnap = await getDoc(voterRef);
+
+        if (!voterSnap.exists()) {
+            if (window.showErrorDialog) {
+                window.showErrorDialog('Voter not found.', 'Error');
+            }
+            return;
+        }
+
+        const voterData = voterSnap.data();
+        const idNumber = voterData.idNumber || voterData.voterId || voterId;
+
+        // Remove assignedAgentId from voter
+        await updateDoc(voterRef, {
+            assignedAgentId: null,
+            assignedAgentName: null,
+            assignedAt: null
+        });
+
+        // Remove voter from agent's assignedVoters array
+        const agentRef = doc(window.db, 'agents', agentId);
+        const agentSnap = await getDoc(agentRef);
+
+        if (agentSnap.exists()) {
+            const agentData = agentSnap.data();
+            const assignedVoters = agentData.assignedVoters || [];
+
+            // Find and remove the voter from the array
+            const updatedVoters = assignedVoters.filter(v =>
+                v.voterId !== voterId && v.idNumber !== idNumber
+            );
+
+            await updateDoc(agentRef, {
+                assignedVoters: updatedVoters
+            });
+        }
+
+        // Show success message
+        if (window.showSuccess) {
+            window.showSuccess('Agent assignment removed successfully!', 'Success');
+        }
+
+        // Reload voter details
+        if (window.viewVoterDetails) {
+            await window.viewVoterDetails(voterId);
+        }
+    } catch (error) {
+        console.error('Error removing agent assignment:', error);
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Failed to remove agent assignment. Please try again.', 'Error');
+        }
+    }
+}
+
 // Show call link results modal
 function showCallLinkResultsModal(linkUrl, tempPassword) {
     const modalOverlay = window.ensureModalExists ? window.ensureModalExists() : null;
@@ -15860,4 +21932,158 @@ window.removeCallerName = removeCallerName;
 window.copyCallPasswordFromModal = copyCallPasswordFromModal;
 window.deleteCallLink = deleteCallLink;
 window.copyCallLinkFromModal = copyCallLinkFromModal;
-window.copyCallCodeFromModal = copyCallCodeFromModal
+window.copyCallCodeFromModal = copyCallCodeFromModal;
+
+// Initialize Settings Page
+function initializeSettingsPage() {
+    // Setup settings tabs
+    setupSettingsTabs();
+
+    // Check if user is campaign manager and show/hide Manage Users tab
+    checkAndShowManageUsersTab();
+
+    // Populate Campaign Information
+    populateCampaignInformation();
+
+    // Populate Account Settings
+    populateAccountSettings();
+
+    // Load island users if on Manage Users tab
+    const usersTab = document.querySelector('[data-settings-tab="users"]');
+    if (usersTab && usersTab.classList.contains('active')) {
+        if (window.loadIslandUsers) {
+            window.loadIslandUsers();
+        }
+    }
+}
+
+// Populate Campaign Information section
+function populateCampaignInformation() {
+    const campaignNameEl = document.getElementById('setting-campaign-name');
+    const campaignTypeEl = document.getElementById('setting-campaign-type');
+    const locationEl = document.getElementById('setting-location');
+
+    if (window.campaignData) {
+        // Campaign Name
+        if (campaignNameEl) {
+            campaignNameEl.textContent = window.campaignData.campaignName || 'Not set';
+        }
+
+        // Campaign Type
+        if (campaignTypeEl) {
+            campaignTypeEl.textContent = window.campaignData.campaignType || 'Not set';
+        }
+
+        // Location (Constituency and Island)
+        if (locationEl) {
+            const constituency = window.campaignData.constituency || 'Not set';
+            const island = window.campaignData.island || 'Not set';
+            locationEl.textContent = `${constituency}, ${island}`;
+        }
+    } else {
+        // If campaignData is not available, show error message
+        if (campaignNameEl) campaignNameEl.textContent = 'Not available';
+        if (campaignTypeEl) campaignTypeEl.textContent = 'Not available';
+        if (locationEl) locationEl.textContent = 'Not available';
+    }
+}
+
+// Populate Account Settings section
+function populateAccountSettings() {
+    const emailEl = document.getElementById('setting-email');
+
+    if (window.userEmail) {
+        if (emailEl) {
+            emailEl.textContent = window.userEmail;
+        }
+    } else {
+        if (emailEl) {
+            emailEl.textContent = 'Not available';
+        }
+    }
+}
+
+// Setup settings tabs
+function setupSettingsTabs() {
+    const tabButtons = document.querySelectorAll('.settings-tab-btn');
+    const tabContents = document.querySelectorAll('.settings-tab-content');
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.dataset.settingsTab;
+
+            // Remove active class from all tabs
+            tabButtons.forEach(b => {
+                b.classList.remove('active');
+                b.style.borderBottomColor = 'transparent';
+                b.style.color = 'var(--text-light)';
+                b.style.fontWeight = '500';
+            });
+
+            // Add active class to clicked tab
+            btn.classList.add('active');
+            btn.style.borderBottomColor = 'var(--primary-color)';
+            btn.style.color = 'var(--primary-color)';
+            btn.style.fontWeight = '600';
+
+            // Hide all tab contents
+            tabContents.forEach(content => {
+                content.style.display = 'none';
+                content.classList.remove('active');
+            });
+
+            // Show selected tab content
+            const activeContent = document.querySelector(`[data-settings-tab-content="${targetTab}"]`);
+            if (activeContent) {
+                activeContent.style.display = 'block';
+                activeContent.classList.add('active');
+            }
+
+            // Load island users if switching to users tab
+            if (targetTab === 'users' && window.loadIslandUsers) {
+                window.loadIslandUsers();
+            }
+        });
+    });
+}
+
+// Check if user is campaign manager and show Manage Users tab
+async function checkAndShowManageUsersTab() {
+    const usersTab = document.getElementById('settings-tab-users');
+    if (!usersTab) return;
+
+    // Check if current user is a campaign manager (not an island user)
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Check if current email is an island user
+        const islandUserQuery = query(
+            collection(window.db, 'islandUsers'),
+            where('email', '==', window.userEmail)
+        );
+        const islandUserSnap = await getDocs(islandUserQuery);
+
+        // If user is an island user, hide the tab
+        if (!islandUserSnap.empty) {
+            usersTab.style.display = 'none';
+        } else {
+            // User is a campaign manager, show the tab
+            usersTab.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error checking user type:', error);
+        // On error, hide the tab for safety
+        usersTab.style.display = 'none';
+    }
+}
+
+window.initializeSettingsPage = initializeSettingsPage;
+window.setupSettingsTabs = setupSettingsTabs;
+window.checkAndShowManageUsersTab = checkAndShowManageUsersTab;
+window.populateCampaignInformation = populateCampaignInformation;
+window.populateAccountSettings = populateAccountSettings;
