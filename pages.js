@@ -791,7 +791,7 @@ const pageTemplates = {
                     </div>
                 </div>
             </div>
-            </div>
+        </div>
         <div id="voters-pagination" class="table-pagination" style="display: none;"></div>
     `,
 
@@ -2243,6 +2243,12 @@ async function setupPledgeStatsListener() {
 
         const unsubPledges = onSnapshot(pledgesQuery,
             async (snapshot) => {
+                    // Validate snapshot
+                    if (!snapshot || typeof snapshot.forEach !== 'function') {
+                        console.warn('[setupPledgeStatsListener] Invalid snapshot received:', snapshot);
+                        return;
+                    }
+
                     const globalFilter = window.globalFilterState || {
                         constituency: null,
                         island: null
@@ -5104,6 +5110,16 @@ function renderCachedVotersData() {
         return false;
     }
 
+    // Validate cache structure more thoroughly
+    if (typeof voterDataCache.data !== 'object' || voterDataCache.data === null) {
+        console.warn('[renderCachedVotersData] Cache data is not an object, clearing cache...');
+        clearVoterCache();
+        if (typeof loadVotersData === 'function') {
+            loadVotersData(true);
+        }
+        return false;
+    }
+
     const {
         filteredDocs: allDocs,
         stats
@@ -5115,13 +5131,33 @@ function renderCachedVotersData() {
             hasData: !!voterDataCache.data,
             dataType: typeof voterDataCache.data,
             filteredDocsType: typeof allDocs,
-            filteredDocsValue: allDocs
+            filteredDocsValue: allDocs,
+            cacheKeys: voterDataCache.data ? Object.keys(voterDataCache.data) : []
         });
         clearVoterCache();
         if (typeof loadVotersData === 'function') {
             loadVotersData(true);
         }
         return false;
+    }
+
+    // Additional validation: ensure each item in allDocs has the expected structure
+    if (allDocs.length > 0) {
+        const firstItem = allDocs[0];
+        if (!firstItem || typeof firstItem !== 'object' || !firstItem.hasOwnProperty('id') || !firstItem.hasOwnProperty('data')) {
+            console.warn('[renderCachedVotersData] Cache items have invalid structure, clearing cache...', {
+                firstItem: firstItem,
+                expectedStructure: {
+                    id: 'string',
+                    data: 'object'
+                }
+            });
+            clearVoterCache();
+            if (typeof loadVotersData === 'function') {
+                loadVotersData(true);
+            }
+            return false;
+        }
     }
 
     // Safety check: if stats is missing, calculate it from the data
@@ -5940,24 +5976,59 @@ async function loadVotersData(forceRefresh = false) {
         if (!Array.isArray(filteredDocs)) {
             console.error('[loadVotersData] filteredDocs is not an array, cannot cache data', {
                 filteredDocsType: typeof filteredDocs,
-                filteredDocsValue: filteredDocs
+                filteredDocsValue: filteredDocs,
+                filteredDocsIsNull: filteredDocs === null,
+                filteredDocsIsUndefined: filteredDocs === undefined
             });
+            // Clear any existing invalid cache
+            clearVoterCache();
         } else {
-            voterDataCache.data = {
-                filteredDocs: filteredDocs.map(doc => ({
-                    id: doc.id,
-                    data: doc.data()
-                })),
-                stats: {
-                    total,
-                    todayCount,
-                    verified,
-                    pending
+            try {
+                // Validate each doc has the expected structure before caching
+                const validDocs = filteredDocs.filter(doc => {
+                    if (!doc || typeof doc !== 'object') return false;
+                    if (!doc.id || typeof doc.id !== 'string') return false;
+                    if (!doc.data || typeof doc.data !== 'function') return false;
+                    return true;
+                });
+
+                if (validDocs.length !== filteredDocs.length) {
+                    console.warn('[loadVotersData] Some documents have invalid structure, filtering them out', {
+                        total: filteredDocs.length,
+                        valid: validDocs.length,
+                        invalid: filteredDocs.length - validDocs.length
+                    });
                 }
-            };
-            voterDataCache.timestamp = Date.now();
-            voterDataCache.userEmail = window.userEmail;
-            console.log('[loadVotersData] Data cached for future use');
+
+                voterDataCache.data = {
+                    filteredDocs: validDocs.map(doc => {
+                        try {
+                            return {
+                                id: doc.id,
+                                data: doc.data()
+                            };
+                        } catch (error) {
+                            console.error('[loadVotersData] Error extracting data from doc:', error, doc);
+                            return null;
+                        }
+                    }).filter(item => item !== null), // Remove any null entries
+                    stats: {
+                        total: typeof total === 'number' ? total : 0,
+                        todayCount: typeof todayCount === 'number' ? todayCount : 0,
+                        verified: typeof verified === 'number' ? verified : 0,
+                        pending: typeof pending === 'number' ? pending : 0
+                    }
+                };
+                voterDataCache.timestamp = Date.now();
+                voterDataCache.userEmail = window.userEmail;
+                console.log('[loadVotersData] Data cached for future use', {
+                    cachedCount: voterDataCache.data.filteredDocs.length,
+                    stats: voterDataCache.data.stats
+                });
+            } catch (error) {
+                console.error('[loadVotersData] Error caching data:', error);
+                clearVoterCache();
+            }
         }
 
         // Populate filter dropdowns after data is loaded
@@ -7194,6 +7265,12 @@ async function setupPledgeStatisticsListener() {
 
 // Helper function to update pledge statistics
 function updatePledgeStatistics(snapshot) {
+    // Validate snapshot
+    if (!snapshot || typeof snapshot.forEach !== 'function') {
+        console.warn('[updatePledgeStatistics] Invalid snapshot provided:', snapshot);
+        return;
+    }
+
     const yesEl = document.getElementById('stat-pledges-yes');
     const noEl = document.getElementById('stat-pledges-no');
     const undecidedEl = document.getElementById('stat-pledges-undecided');
@@ -14397,27 +14474,109 @@ async function fetchVoterCalls(voterId, idNumber) {
             collection,
             query,
             where,
+            or,
             getDocs
         } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Query for calls with either email or campaignEmail matching userEmail
         const callsQuery = query(
             collection(window.db, 'calls'),
-            where('email', '==', window.userEmail)
+            or(
+                where('email', '==', window.userEmail),
+                where('campaignEmail', '==', window.userEmail)
+            )
         );
         const snapshot = await getDocs(callsQuery);
         const voterCalls = [];
         snapshot.forEach(doc => {
             const callData = doc.data();
-            if (callData.voterId === voterId || callData.idNumber === idNumber || callData.voterId === idNumber) {
+            // Match by voterDocumentId (primary), voterId, or idNumber
+            const matchesVoter =
+                callData.voterDocumentId === voterId ||
+                callData.voterId === voterId ||
+                callData.idNumber === idNumber ||
+                callData.voterId === idNumber ||
+                callData.voterDocumentId === idNumber;
+
+            if (matchesVoter) {
                 voterCalls.push({
                     id: doc.id,
                     ...callData
                 });
             }
         });
+        // Sort by callDate descending (most recent first)
+        voterCalls.sort((a, b) => {
+            const dateA = a.callDate.toDate ? a.callDate.toDate() : (a.date.toDate ? a.date.toDate() : (a.date ? new Date(a.date) : new Date(0)));
+            const dateB = b.callDate.toDate ? b.callDate.toDate() : (b.date.toDate ? b.date.toDate() : (b.date ? new Date(b.date) : new Date(0)));
+            return dateB - dateA;
+        });
         return voterCalls;
     } catch (error) {
         console.error('Error fetching voter calls:', error);
-        return [];
+        // Fallback: try querying without or() if it fails (older Firebase versions)
+        try {
+            const {
+                collection,
+                query,
+                where,
+                getDocs
+            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+            const callsQuery = query(
+                collection(window.db, 'calls'),
+                where('email', '==', window.userEmail)
+            );
+            const snapshot = await getDocs(callsQuery);
+            const voterCalls = [];
+            snapshot.forEach(doc => {
+                const callData = doc.data();
+                const matchesVoter =
+                    callData.voterDocumentId === voterId ||
+                    callData.voterId === voterId ||
+                    callData.idNumber === idNumber ||
+                    callData.voterId === idNumber ||
+                    callData.voterDocumentId === idNumber;
+
+                if (matchesVoter) {
+                    voterCalls.push({
+                        id: doc.id,
+                        ...callData
+                    });
+                }
+            });
+            // Also try campaignEmail query
+            const campaignEmailQuery = query(
+                collection(window.db, 'calls'),
+                where('campaignEmail', '==', window.userEmail)
+            );
+            const campaignSnapshot = await getDocs(campaignEmailQuery);
+            campaignSnapshot.forEach(doc => {
+                const callData = doc.data();
+                const matchesVoter =
+                    callData.voterDocumentId === voterId ||
+                    callData.voterId === voterId ||
+                    callData.idNumber === idNumber ||
+                    callData.voterId === idNumber ||
+                    callData.voterDocumentId === idNumber;
+
+                if (matchesVoter && !voterCalls.find(c => c.id === doc.id)) {
+                    voterCalls.push({
+                        id: doc.id,
+                        ...callData
+                    });
+                }
+            });
+            // Sort by callDate descending
+            voterCalls.sort((a, b) => {
+                const dateA = a.callDate.toDate ? a.callDate.toDate() : (a.date.toDate ? a.date.toDate() : (a.date ? new Date(a.date) : new Date(0)));
+                const dateB = b.callDate.toDate ? b.callDate.toDate() : (b.date.toDate ? b.date.toDate() : (b.date ? new Date(b.date) : new Date(0)));
+                return dateB - dateA;
+            });
+            return voterCalls;
+        } catch (fallbackError) {
+            console.error('Error in fallback query:', fallbackError);
+            return [];
+        }
     }
 }
 
@@ -14937,7 +15096,7 @@ async function createVoterDetailHTML(data, {
                     </svg>
                     Add Pledge
                 </button>
-                </div>
+            </div>
             <div id="voter-pledges-container"></div>
         </div>
 
@@ -14985,10 +15144,10 @@ async function createVoterDetailHTML(data, {
                                                 <input type="time" class="call-time-edit" data-call-id="${call.id}" value="${callTime}" style="display: none; width: 100%; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 11px;" />
                                             </td>
                                             <td>
-                                                <span class="call-notes-display" style="font-size: 11px; color: var(--text-color);">
-                                                    ${call.notes || call.remark || 'N/A'}
+                                                <span class="call-notes-display" style="font-size: 11px; color: var(--text-color); white-space: pre-wrap; word-wrap: break-word;">
+                                                    ${(call.notes && call.notes.trim()) || (call.remark && call.remark.trim()) || 'N/A'}
                                                 </span>
-                                                <textarea class="call-notes-edit" data-call-id="${call.id}" style="display: none; width: 100%; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 11px; min-height: 40px; resize: vertical;">${call.notes || call.remark || ''}</textarea>
+                                                <textarea class="call-notes-edit" data-call-id="${call.id}" style="display: none; width: 100%; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 11px; min-height: 40px; resize: vertical;">${(call.notes && call.notes.trim()) || (call.remark && call.remark.trim()) || ''}</textarea>
                                             </td>
                                         </tr>
                                     `;
@@ -15261,9 +15420,48 @@ function populateVoterEditForm(data, voterId) {
         if (imageUrl) {
             const preview = document.getElementById('voter-image-preview');
             const previewImg = document.getElementById('voter-image-preview-img');
+            const uploadArea = document.getElementById('voter-image-upload-area');
             if (preview && previewImg) {
                 previewImg.src = imageUrl;
                 preview.style.display = 'block';
+                // In edit mode, keep upload area visible so user can change the image
+                if (uploadArea) {
+                    uploadArea.style.display = 'block';
+                    // Update the upload area text to indicate user can change image
+                    const uploadTexts = uploadArea.querySelectorAll('p');
+                    if (uploadTexts.length > 0) {
+                        // Update the first paragraph (main text)
+                        uploadTexts[0].textContent = 'Change voter photo';
+                        // Update the second paragraph (subtitle) if it exists
+                        if (uploadTexts.length > 1) {
+                            uploadTexts[1].textContent = 'Click to browse or drag and drop a new image';
+                        }
+                    }
+                    // Ensure the file input is still functional
+                    const fileInput = document.getElementById('voter-image');
+                    if (fileInput) {
+                        fileInput.style.pointerEvents = 'auto';
+                        fileInput.style.cursor = 'pointer';
+                    }
+                }
+                // Update remove button title
+                const removeBtn = preview.querySelector('button[onclick="removeImagePreview()"]');
+                if (removeBtn) {
+                    removeBtn.title = 'Remove current image';
+                }
+            }
+        } else {
+            // If no image URL, ensure upload area is visible
+            const uploadArea = document.getElementById('voter-image-upload-area');
+            if (uploadArea) {
+                uploadArea.style.display = 'block';
+                const uploadTexts = uploadArea.querySelectorAll('p');
+                if (uploadTexts.length > 0) {
+                    uploadTexts[0].textContent = 'Upload voter photo';
+                    if (uploadTexts.length > 1) {
+                        uploadTexts[1].textContent = 'Click to browse or drag and drop';
+                    }
+                }
             }
         }
     };
@@ -15455,88 +15653,88 @@ function createPledgeDetailHTML(pledgeData, voterData = null) {
                 </button>
             </div>
         </div>
-
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                ${imageUrl ?
-                    `<img id="pledge-detail-image" src="${imageUrl}" alt="${voterName}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);" data-voter-id="${idNumber !== 'N/A' ? idNumber : ''}" onerror="this.onerror=null; this.style.display='none'; const fallback=this.nextElementSibling; if(fallback) fallback.style.display='flex'; tryLoadImageFromFolder(this, '${idNumber !== 'N/A' ? idNumber : ''}').then(found => { if(found) { this.src=found; this.style.display=''; if(fallback) fallback.style.display='none'; } });"><div id="pledge-detail-fallback" style="width: 50px; height: 50px; border-radius: 50%; display: none; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 20px; border: 2px solid var(--primary-color);">${initials}</div>` :
-                    `<div id="pledge-detail-fallback" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 20px; border: 2px solid var(--primary-color);">${initials}</div>`
-                }
+        
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            ${imageUrl ? 
+                `<img id="pledge-detail-image" src="${imageUrl}" alt="${voterName}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);" data-voter-id="${idNumber !== 'N/A' ? idNumber : ''}" onerror="this.onerror=null; this.style.display='none'; const fallback=this.nextElementSibling; if(fallback) fallback.style.display='flex'; tryLoadImageFromFolder(this, '${idNumber !== 'N/A' ? idNumber : ''}').then(found => { if(found) { this.src=found; this.style.display=''; if(fallback) fallback.style.display='none'; } });"><div id="pledge-detail-fallback" style="width: 50px; height: 50px; border-radius: 50%; display: none; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 20px; border: 2px solid var(--primary-color);">${initials}</div>` :
+                `<div id="pledge-detail-fallback" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 700; font-size: 20px; border: 2px solid var(--primary-color);">${initials}</div>`
+            }
+            <div>
+                <h3 style="margin: 0; color: var(--text-color); font-size: 18px; font-weight: 700;">${voterName}</h3>
+                <p style="margin: 4px 0 0 0; color: var(--text-light); font-size: 12px;">ID: ${idNumber}</p>
+            </div>
+        </div>
+        
+        <div class="pledge-detail-tabs" style="display: flex; gap: 8px; border-bottom: 2px solid var(--border-color); margin-bottom: 16px;">
+            <button class="pledge-tab-btn active" data-tab="pledge" onclick="switchPledgeTab('pledge')" style="padding: 10px 16px; background: none; border: none; border-bottom: 3px solid var(--primary-color); color: var(--primary-color); font-weight: 600; cursor: pointer; font-size: 13px;">Pledge Info</button>
+            <button class="pledge-tab-btn" data-tab="voter" onclick="switchPledgeTab('voter')" style="padding: 10px 16px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-size: 13px;">Voter Info</button>
+        </div>
+        
+        <div id="pledge-tab-pledge" class="pledge-tab-content" style="display: block;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                 <div>
-                    <h3 style="margin: 0; color: var(--text-color); font-size: 18px; font-weight: 700;">${voterName}</h3>
-                    <p style="margin: 4px 0 0 0; color: var(--text-light); font-size: 12px;">ID: ${idNumber}</p>
-                </div>
-            </div>
-
-            <div class="pledge-detail-tabs" style="display: flex; gap: 8px; border-bottom: 2px solid var(--border-color); margin-bottom: 16px;">
-                <button class="pledge-tab-btn active" data-tab="pledge" onclick="switchPledgeTab('pledge')" style="padding: 10px 16px; background: none; border: none; border-bottom: 3px solid var(--primary-color); color: var(--primary-color); font-weight: 600; cursor: pointer; font-size: 13px;">Pledge Info</button>
-                <button class="pledge-tab-btn" data-tab="voter" onclick="switchPledgeTab('voter')" style="padding: 10px 16px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-size: 13px;">Voter Info</button>
-            </div>
-
-            <div id="pledge-tab-pledge" class="pledge-tab-content" style="display: block;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                    <div>
-                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Pledge Status</label>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Pledge Status</label>
                         <p id="pledge-detail-status" style="margin: 0;">
                             <span class="status-badge ${statusClass}" style="padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600;">${statusText}</span>
                         </p>
-                    </div>
-                    <div>
-                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Date Recorded</label>
-                        <p id="pledge-detail-date" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${pledgeDateStr}</p>
-                    </div>
-                    ${pledgeData.notes ? `
-                        <div style="grid-column: span 2;">
-                            <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Notes</label>
-                            <p id="pledge-detail-notes" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; line-height: 1.6; white-space: pre-wrap;">${pledgeData.notes}</p>
-                        </div>
-                    ` : ''}
                 </div>
-            </div>
-
-            <div id="pledge-tab-voter" class="pledge-tab-content" style="display: none;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                    <div>
-                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Date of Birth</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${dobDisplay}</p>
-                    </div>
-                    <div>
-                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Age</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${age}</p>
-                    </div>
-                    <div>
-                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Gender</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${gender}</p>
-                    </div>
-                    <div>
-                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Constituency</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${constituency}</p>
-                    </div>
-                    <div>
-                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Island</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${island}</p>
-                    </div>
-                    ${ballot !== 'N/A' ? `
-                        <div>
-                            <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Ballot</label>
-                            <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${ballot}</p>
-                        </div>
-                    ` : ''}
-                    <div style="grid-column: span 2;">
-                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Permanent Address</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; line-height: 1.6;">${permanentAddress}</p>
-                    </div>
-                    <div style="grid-column: span 2;">
-                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Current Location</label>
-                        <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; line-height: 1.6;">${currentLocation}</p>
-                    </div>
-                    ${phone !== 'N/A' ? `
-                        <div>
-                            <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Phone</label>
-                            <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${phone}</p>
-                        </div>
-                    ` : ''}
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Date Recorded</label>
+                    <p id="pledge-detail-date" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${pledgeDateStr}</p>
                 </div>
+                ${pledgeData.notes ? `
+                <div style="grid-column: span 2;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Notes</label>
+                    <p id="pledge-detail-notes" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; line-height: 1.6; white-space: pre-wrap;">${pledgeData.notes}</p>
+                </div>
+                ` : ''}
             </div>
+        </div>
+        
+        <div id="pledge-tab-voter" class="pledge-tab-content" style="display: none;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Date of Birth</label>
+                    <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${dobDisplay}</p>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Age</label>
+                    <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${age}</p>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Gender</label>
+                    <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${gender}</p>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Constituency</label>
+                    <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${constituency}</p>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Island</label>
+                    <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${island}</p>
+                </div>
+                ${ballot !== 'N/A' ? `
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Ballot</label>
+                    <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${ballot}</p>
+                </div>
+                ` : ''}
+                <div style="grid-column: span 2;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Permanent Address</label>
+                    <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; line-height: 1.6;">${permanentAddress}</p>
+                </div>
+                <div style="grid-column: span 2;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Current Location</label>
+                    <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500; line-height: 1.6;">${currentLocation}</p>
+                </div>
+                ${phone !== 'N/A' ? `
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Phone</label>
+                    <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${phone}</p>
+                </div>
+                ` : ''}
+            </div>
+        </div>
     `;
 }
 
@@ -15882,10 +16080,7 @@ function enablePledgeEdit() {
             const p = document.createElement('p');
             p.id = 'pledge-detail-status';
             p.style.cssText = 'margin: 0;';
-            p.innerHTML = ` < span class = "status-badge ${statusClass}"
-style = "padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600;" > $ {
-    statusText
-} < /span>`;
+            p.innerHTML = `<span class="status-badge ${statusClass}" style="padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600;">${statusText}</span>`;
             statusEl.parentNode.replaceChild(p, statusEl);
         }
 
@@ -16511,21 +16706,21 @@ function renderCandidatePledges(pledges) {
     };
 
     container.innerHTML = `
-        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-            <thead>
-                <tr style="border-bottom: 2px solid var(--border-color);">
-                    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Voter</th>
-                    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Status</th>
-                    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${pledges.map(pledge => {
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border-color);">
+                            <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Voter</th>
+                            <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Status</th>
+                            <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${pledges.map(pledge => {
                     if (!pledge) return '';
-                    const pledgeDate = pledge.recordedAt ? (pledge.recordedAt.toDate ? pledge.recordedAt.toDate() : new Date(pledge.recordedAt)) : new Date();
+                            const pledgeDate = pledge.recordedAt ? (pledge.recordedAt.toDate ? pledge.recordedAt.toDate() : new Date(pledge.recordedAt)) : new Date();
                     const dateStr = formatDate(pledgeDate);
-                    const statusClass = pledge.pledge === 'yes' ? 'status-success' : pledge.pledge === 'no' ? 'status-danger' : 'status-pending';
-                    const statusText = pledge.pledge === 'yes' ? 'Yes' : pledge.pledge === 'no' ? 'No' : 'Undecided';
+                            const statusClass = pledge.pledge === 'yes' ? 'status-success' : pledge.pledge === 'no' ? 'status-danger' : 'status-pending';
+                            const statusText = pledge.pledge === 'yes' ? 'Yes' : pledge.pledge === 'no' ? 'No' : 'Undecided';
                     return `<tr style="border-bottom: 1px solid var(--border-color);">
                         <td style="padding: 8px;">${pledge.voterName || 'N/A'}</td>
                         <td style="padding: 8px;"><span class="status-badge ${statusClass}" style="padding: 4px 8px; border-radius: 12px; font-size: 11px;">${statusText}</span></td>
@@ -16564,24 +16759,24 @@ function renderCandidateCalls(calls) {
 
     container.innerHTML = `
         <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-            <thead>
-                <tr style="border-bottom: 2px solid var(--border-color);">
-                    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Voter</th>
-                    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Status</th>
-                    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Notes</th>
-                    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${calls.map(call => {
+    <thead>
+    <tr style="border-bottom: 2px solid var(--border-color);">
+    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Voter</th>
+    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Status</th>
+    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Notes</th>
+    <th style="text-align: left; padding: 8px; font-weight: 600; color: var(--text-color);">Date</th>
+    </tr>
+    </thead>
+    <tbody>
+    ${calls.map(call => {
                     if (!call) return '';
-                    const callDate = call.callDate || call.createdAt;
-                    const date = callDate ? (callDate.toDate ? callDate.toDate() : new Date(callDate)) : new Date();
+        const callDate = call.callDate || call.createdAt;
+        const date = callDate ? (callDate.toDate ? callDate.toDate() : new Date(callDate)) : new Date();
                     const dateStr = formatDate(date);
-                    const statusClass = call.status === 'positive' ? 'status-success' : call.status === 'negative' ? 'status-danger' : 'status-pending';
-                    const statusText = call.status ? call.status.charAt(0).toUpperCase() + call.status.slice(1) : 'N/A';
-                    const notes = call.notes || call.remark || 'N/A';
-                    const voterName = call.voterName || 'N/A';
+        const statusClass = call.status === 'positive' ? 'status-success' : call.status === 'negative' ? 'status-danger' : 'status-pending';
+        const statusText = call.status ? call.status.charAt(0).toUpperCase() + call.status.slice(1) : 'N/A';
+        const notes = call.notes || call.remark || 'N/A';
+        const voterName = call.voterName || 'N/A';
                     return `<tr style="border-bottom: 1px solid var(--border-color);">
                         <td style="padding: 8px;">${voterName}</td>
                         <td style="padding: 8px;"><span class="status-badge ${statusClass}" style="padding: 4px 8px; border-radius: 12px; font-size: 11px;">${statusText}</span></td>
@@ -16721,7 +16916,7 @@ function createCandidateDetailHTML(candidateData, pledges, calls) {
         <div id="candidate-tab-calls" class="candidate-tab-content" style="display: none;">
             <div id="candidate-calls-container"></div>
         </div>
-    `;
+`;
 }
 
 async function viewCandidateDetails(candidateId, navigateDirection = null) {

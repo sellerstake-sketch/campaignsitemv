@@ -109,12 +109,12 @@ function showDialog(options = {}) {
     if (buttons && Array.isArray(buttons) && buttons.length > 0) {
         // Clear existing buttons
         footerEl.innerHTML = '';
-        
+
         // Create custom buttons
         buttons.forEach(button => {
             const btn = document.createElement('button');
             btn.textContent = button.text || 'OK';
-            
+
             // Map button classes to dialog button classes
             let btnClass = 'custom-dialog-btn';
             if (button.class) {
@@ -129,7 +129,7 @@ function showDialog(options = {}) {
                 btnClass += ' custom-dialog-btn-primary';
             }
             btn.className = btnClass;
-            
+
             // Add click handler
             btn.addEventListener('click', () => {
                 if (button.onclick) {
@@ -138,10 +138,10 @@ function showDialog(options = {}) {
                     closeDialog();
                 }
             });
-            
+
             footerEl.appendChild(btn);
         });
-        
+
         footerEl.style.display = 'flex';
     } else {
         // Use default buttons - restore them if they were removed by custom buttons
@@ -151,11 +151,11 @@ function showDialog(options = {}) {
                 <button class="custom-dialog-btn custom-dialog-btn-primary" id="dialog-confirm-btn"></button>
             `;
         }
-        
+
         // Get buttons again (they might have been restored)
         const restoredConfirmBtn = document.getElementById('dialog-confirm-btn');
         const restoredCancelBtn = document.getElementById('dialog-cancel-btn');
-        
+
         // Make sure buttons exist before setting text
         if (restoredConfirmBtn) {
             restoredConfirmBtn.textContent = confirmText;
@@ -191,7 +191,7 @@ function showDialog(options = {}) {
         // Add new event listeners (get buttons again after cloning)
         const finalConfirmBtn = document.getElementById('dialog-confirm-btn');
         const finalCancelBtn = document.getElementById('dialog-cancel-btn');
-        
+
         if (finalConfirmBtn) {
             finalConfirmBtn.addEventListener('click', () => {
                 closeDialog();
@@ -216,7 +216,7 @@ function showDialog(options = {}) {
         return new Promise((resolve) => {
             const confirmBtnForPromise = document.getElementById('dialog-confirm-btn');
             const cancelBtnForPromise = document.getElementById('dialog-cancel-btn');
-            
+
             if (confirmBtnForPromise) {
                 confirmBtnForPromise.addEventListener('click', () => {
                     resolve(true);

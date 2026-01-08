@@ -1561,11 +1561,11 @@ function initializeEventListeners() {
                 if (!islandUserSnap.empty) {
                     // User is an island user - skip onboarding and load workspace directly
                     const islandUserData = islandUserSnap.docs[0].data();
-                    
+
                     // Create a user document structure for island users (minimal)
                     const islandUserWorkspaceData = {
-                        campaignName: window.campaignData?.campaignName || 'Campaign',
-                        constituency: islandUserData.constituency || window.campaignData?.constituency || '',
+                        campaignName: (window.campaignData && window.campaignData.campaignName) || 'Campaign',
+                        constituency: islandUserData.constituency || (window.campaignData && window.campaignData.constituency) || '',
                         island: islandUserData.island || '',
                         campaignSet: true, // Island users skip campaign setup
                         passwordChanged: true, // Island users skip password change
@@ -1575,6 +1575,16 @@ function initializeEventListeners() {
 
                     // Track session (non-blocking)
                     startSessionActivityTracking(email);
+
+                    // Set island user data before loading workspace
+                    window.isIslandUser = true;
+                    window.islandUserData = islandUserData;
+                    window.globalFilterState = {
+                        constituency: islandUserData.constituency || null,
+                        island: islandUserData.island || null,
+                        locked: true,
+                        initialized: false // Will be set to true after filter initialization
+                    };
 
                     // Load workspace directly (skip onboarding)
                     await loadWorkspace(islandUserWorkspaceData);
@@ -2156,6 +2166,18 @@ async function loadWorkspace(data) {
         // Switch to workspace screen IMMEDIATELY - show UI first
         showScreen('workspace-screen');
 
+        // For island users, set filter state BEFORE any data loads
+        if (window.isIslandUser && window.islandUserData) {
+            // Ensure filter state is set and initialized immediately
+            const islandUserData = window.islandUserData;
+            window.globalFilterState = {
+                constituency: islandUserData.constituency || null,
+                island: islandUserData.island || null,
+                locked: true,
+                initialized: false // Will be set to true after filter initialization
+            };
+        }
+
         // Initialize profile dropdown immediately when workspace is shown
         setTimeout(() => {
             if (typeof initializeProfileDropdown === 'function') {
@@ -2166,9 +2188,20 @@ async function loadWorkspace(data) {
                 }
             }
             // Check if user is an island user and set global filter accordingly
+            // For island users, the filter is already set above, but we need to ensure it's applied
             checkAndSetIslandUserFilter().then(() => {
-                // Initialize global filter
+                // Initialize global filter (this will set the UI and apply the filter)
                 initializeGlobalFilter();
+
+                // For island users, apply the filter immediately after initialization
+                if (window.isIslandUser && window.islandUserData) {
+                    // Apply the filter to refresh all data with the island filter
+                    setTimeout(() => {
+                        if (window.applyGlobalFilter) {
+                            window.applyGlobalFilter();
+                        }
+                    }, 300);
+                }
             });
             // Initialize refresh button
             initializeRefreshButton();
@@ -2203,13 +2236,13 @@ async function loadWorkspace(data) {
                 // Initially set from data, but will be updated by global filter
                 islandNameEl.textContent = data.island || 'Island';
             }
-            
+
             // Update sidebar island name based on global filter after a short delay
             // This ensures the global filter is initialized first
             setTimeout(() => {
                 updateSidebarIslandName();
             }, 500);
-            
+
             if (data.campaignLogo && logoEl) {
                 // Check if it's a data URL (SVG) or regular URL
                 if (data.campaignLogo.startsWith('data:image/svg+xml')) {
@@ -2294,63 +2327,78 @@ async function loadWorkspace(data) {
             }, 500); // Small delay to show completion
         });
 
-        // Load dashboard content IMMEDIATELY (will use cache if available)
-        if (typeof loadPageContent === 'function') {
-            loadPageContent('dashboard');
-        }
-
-        // Load critical data with progress tracking
-        try {
-            // Load notifications in background (non-blocking)
-            if (typeof loadNotifications === 'function') {
-                loadNotifications();
+        // For island users, wait for filter initialization before loading data
+        const loadDataAfterFilterInit = async () => {
+            // Load dashboard content (will use cache if available)
+            if (typeof loadPageContent === 'function') {
+                loadPageContent('dashboard');
             }
 
-            // Load dashboard data and track it
-            if (typeof loadDashboardData === 'function') {
-                updateLoadingProgress(30, 'Loading dashboard data...');
-                try {
-                    await loadDashboardData(true);
+            // Load critical data with progress tracking
+            try {
+                // Load notifications in background (non-blocking)
+                if (typeof loadNotifications === 'function') {
+                    loadNotifications();
+                }
+
+                // Load dashboard data and track it
+                if (typeof loadDashboardData === 'function') {
+                    updateLoadingProgress(30, 'Loading dashboard data...');
+                    try {
+                        await loadDashboardData(true);
+                        trackPageLoad('dashboard');
+                        console.log('[loadWorkspace] Dashboard data loaded ✓');
+                    } catch (error) {
+                        console.error('[loadWorkspace] Error loading dashboard data:', error);
+                        trackPageLoad('dashboard'); // Track even on error to prevent hanging
+                    }
+                } else {
                     trackPageLoad('dashboard');
-                    console.log('[loadWorkspace] Dashboard data loaded ✓');
-                } catch (error) {
-                    console.error('[loadWorkspace] Error loading dashboard data:', error);
-                    trackPageLoad('dashboard'); // Track even on error to prevent hanging
                 }
-            } else {
-                trackPageLoad('dashboard');
-            }
 
-            // Load voter data and track it
-            if (typeof loadVotersData === 'function') {
-                updateLoadingProgress(50, 'Loading voter data...');
-                try {
-                    await loadVotersData(true);
+                // Load voter data and track it
+                if (typeof loadVotersData === 'function') {
+                    updateLoadingProgress(50, 'Loading voter data...');
+                    try {
+                        await loadVotersData(true);
+                        trackPageLoad('voters');
+                        console.log('[loadWorkspace] Voter data loaded ✓');
+                    } catch (error) {
+                        console.error('[loadWorkspace] Error loading voter data:', error);
+                        trackPageLoad('voters'); // Track even on error to prevent hanging
+                    }
+                } else {
                     trackPageLoad('voters');
-                    console.log('[loadWorkspace] Voter data loaded ✓');
-                } catch (error) {
-                    console.error('[loadWorkspace] Error loading voter data:', error);
-                    trackPageLoad('voters'); // Track even on error to prevent hanging
                 }
-            } else {
-                trackPageLoad('voters');
+
+                // Mark other pages as ready (they load on-demand when navigated to)
+                // Give a small delay to ensure initial pages are rendered
+                updateLoadingProgress(80, 'Preparing application...');
+                setTimeout(() => {
+                    ['candidates', 'events', 'calls', 'pledges', 'agents', 'analytics', 'settings'].forEach(page => {
+                        trackPageLoad(page);
+                    });
+                    console.log('[loadWorkspace] All pages marked as ready ✓');
+                }, 1500); // Give time for initial pages to render
+
+                console.log('[loadWorkspace] Initial data loading completed ✓');
+            } catch (preloadError) {
+                console.error('[loadWorkspace] Error loading data:', preloadError);
+                // Track all pages as loaded even on error to prevent hanging
+                const allPages = ['dashboard', 'voters', 'candidates', 'events', 'calls', 'pledges', 'agents', 'analytics', 'settings'];
+                allPages.forEach(page => trackPageLoad(page));
             }
+        };
 
-            // Mark other pages as ready (they load on-demand when navigated to)
-            // Give a small delay to ensure initial pages are rendered
-            updateLoadingProgress(80, 'Preparing application...');
+        // For island users, wait for filter initialization before loading data
+        if (window.isIslandUser && window.islandUserData) {
+            // Wait for filter to be initialized (checkAndSetIslandUserFilter + initializeGlobalFilter)
             setTimeout(() => {
-                ['candidates', 'events', 'calls', 'pledges', 'agents', 'analytics', 'settings'].forEach(page => {
-                    trackPageLoad(page);
-                });
-                console.log('[loadWorkspace] All pages marked as ready ✓');
-            }, 1500); // Give time for initial pages to render
-
-            console.log('[loadWorkspace] Initial data loading completed ✓');
-        } catch (preloadError) {
-            console.error('[loadWorkspace] Error loading data:', preloadError);
-            // Track all pages as loaded even on error to prevent hanging
-            allPages.forEach(page => trackPageLoad(page));
+                loadDataAfterFilterInit();
+            }, 600); // Wait for filter initialization to complete
+        } else {
+            // For regular users, load data immediately
+            loadDataAfterFilterInit();
         }
 
         console.log('[loadWorkspace] Workspace initialized successfully ✓');
@@ -2377,9 +2425,9 @@ window.updateBreadcrumb = updateBreadcrumb;
 window.toggleSidebar = function toggleSidebar() {
     const sidebar = document.getElementById('main-sidebar');
     if (!sidebar) return;
-    
+
     sidebar.classList.toggle('collapsed');
-    
+
     // Update body class for CSS targeting
     const isCollapsed = sidebar.classList.contains('collapsed');
     if (isCollapsed) {
@@ -2387,7 +2435,7 @@ window.toggleSidebar = function toggleSidebar() {
     } else {
         document.body.classList.remove('sidebar-collapsed');
     }
-    
+
     // Save state to localStorage
     localStorage.setItem('sidebarCollapsed', isCollapsed ? 'true' : 'false');
 };
@@ -2412,13 +2460,13 @@ if (document.readyState === 'loading') {
 function initializeSidebarState() {
     const sidebar = document.getElementById('main-sidebar');
     if (!sidebar) return;
-    
+
     const savedState = localStorage.getItem('sidebarCollapsed');
     if (savedState === 'true') {
         sidebar.classList.add('collapsed');
         document.body.classList.add('sidebar-collapsed');
     }
-    
+
     // Attach event listener to toggle button
     const toggleButton = document.getElementById('sidebar-toggle');
     if (toggleButton) {
@@ -2428,7 +2476,7 @@ function initializeSidebarState() {
 
 function initializeWorkspace() {
     // Home breadcrumb link removed - no longer needed
-    
+
     // Initialize sidebar state
     initializeSidebarState();
 
@@ -3027,11 +3075,11 @@ onAuthStateChanged(auth, async (user) => {
             if (!islandUserSnap.empty) {
                 // User is an island user - skip onboarding and load workspace directly
                 const islandUserData = islandUserSnap.docs[0].data();
-                
+
                 // Create a user document structure for island users (minimal)
                 const islandUserWorkspaceData = {
-                    campaignName: window.campaignData?.campaignName || 'Campaign',
-                    constituency: islandUserData.constituency || window.campaignData?.constituency || '',
+                    campaignName: (window.campaignData && window.campaignData.campaignName) || 'Campaign',
+                    constituency: islandUserData.constituency || (window.campaignData && window.campaignData.constituency) || '',
                     island: islandUserData.island || '',
                     campaignSet: true, // Island users skip campaign setup
                     passwordChanged: true, // Island users skip password change
@@ -3041,6 +3089,16 @@ onAuthStateChanged(auth, async (user) => {
 
                 // Track session (non-blocking)
                 startSessionActivityTracking(user.email);
+
+                // Set island user data before loading workspace
+                window.isIslandUser = true;
+                window.islandUserData = islandUserData;
+                window.globalFilterState = {
+                    constituency: islandUserData.constituency || null,
+                    island: islandUserData.island || null,
+                    locked: true,
+                    initialized: false // Will be set to true after filter initialization
+                };
 
                 // Ensure loading class is removed before showing any screen
                 removeAuthLoadingClass();
@@ -3900,8 +3958,8 @@ function initializeProfileDropdown() {
 
 // Global Filter State Management
 window.globalFilterState = {
-    constituency: null,  // null = "Show All"
-    island: null,        // null = "All Islands"
+    constituency: null, // null = "Show All"
+    island: null, // null = "All Islands"
     initialized: false
 };
 
@@ -3909,27 +3967,32 @@ window.globalFilterState = {
 function getGlobalFilterState() {
     const constituencySelect = document.getElementById('global-filter-constituency');
     const islandSelect = document.getElementById('global-filter-island');
-    
+
     return {
-        constituency: constituencySelect?.value || null,
-        island: islandSelect?.value || null
+        constituency: constituencySelect.value || null,
+        island: islandSelect.value || null
     };
 }
 
 // Apply global filter and refresh current page
 function applyGlobalFilter() {
     const newState = getGlobalFilterState();
-    const oldState = { ...window.globalFilterState };
-    
-    window.globalFilterState = { ...newState, initialized: true };
-    
+    const oldState = {
+        ...window.globalFilterState
+    };
+
+    window.globalFilterState = {
+        ...newState,
+        initialized: true
+    };
+
     // Log filter change
     if (oldState.constituency !== newState.constituency || oldState.island !== newState.island) {
         console.log('[Global Filter] Filter changed:', {
             constituency: newState.constituency || 'Show All',
             island: newState.island || 'All Islands'
         });
-        
+
         // Clear caches when filter changes to ensure fresh data
         if (typeof clearCache === 'function') {
             clearCache('voters');
@@ -3943,7 +4006,7 @@ function applyGlobalFilter() {
             clearVoterCache();
         }
     }
-    
+
     // Refresh current page data
     refreshCurrentPageData();
 }
@@ -3952,14 +4015,14 @@ function applyGlobalFilter() {
 function refreshCurrentPageData() {
     // Determine current page from window.currentPage or active navigation
     const currentPage = window.currentPage || getCurrentActivePage();
-    
+
     if (!currentPage) {
         console.warn('[Global Filter] Could not determine current page');
         return;
     }
-    
+
     console.log('[Global Filter] Refreshing page:', currentPage);
-    
+
     // Map page names to their data loading functions
     const pageLoaders = {
         'dashboard': () => {
@@ -4024,7 +4087,7 @@ function refreshCurrentPageData() {
             }
         }
     };
-    
+
     const loader = pageLoaders[currentPage];
     if (loader) {
         loader();
@@ -4041,7 +4104,7 @@ function getCurrentActivePage() {
         const dataSection = activeNavItem.getAttribute('data-section');
         if (dataSection) return dataSection;
     }
-    
+
     // Check content area for page indicators
     const contentArea = document.querySelector('.content-area');
     if (contentArea) {
@@ -4059,7 +4122,7 @@ function getCurrentActivePage() {
             if (id.includes('analytics')) return 'analytics';
         }
     }
-    
+
     // Fallback: check window.currentPage
     return window.currentPage || 'dashboard';
 }
@@ -4068,15 +4131,15 @@ function getCurrentActivePage() {
 function restoreGlobalFilterState() {
     const constituencySelect = document.getElementById('global-filter-constituency');
     const islandSelect = document.getElementById('global-filter-island');
-    
+
     if (!constituencySelect || !islandSelect) {
         return;
     }
-    
+
     // Restore constituency selection
     if (window.globalFilterState && window.globalFilterState.constituency) {
         constituencySelect.value = window.globalFilterState.constituency;
-        
+
         // Update island dropdown based on selected constituency
         if (window.maldivesData && window.maldivesData.constituencyIslands) {
             const islands = window.maldivesData.constituencyIslands[window.globalFilterState.constituency] || [];
@@ -4090,7 +4153,7 @@ function restoreGlobalFilterState() {
         }
     } else {
         constituencySelect.value = '';
-        
+
         // If "Show All" is selected, show all islands from all constituencies
         if (window.maldivesData && window.maldivesData.constituencyIslands) {
             const allIslandsSet = new Set();
@@ -4107,14 +4170,14 @@ function restoreGlobalFilterState() {
             });
         }
     }
-    
+
     // Restore island selection
     if (window.globalFilterState && window.globalFilterState.island) {
         islandSelect.value = window.globalFilterState.island;
     } else {
         islandSelect.value = '';
     }
-    
+
     // Update sidebar island name
     updateSidebarIslandName();
 }
@@ -4123,17 +4186,17 @@ function restoreGlobalFilterState() {
 function updateSidebarIslandName() {
     const islandNameEl = document.getElementById('sidebar-island-name');
     if (!islandNameEl) return;
-    
+
     // Get selected island from global filter
     const islandSelect = document.getElementById('global-filter-island');
     let selectedIsland = '';
-    
+
     if (islandSelect && islandSelect.value) {
         selectedIsland = islandSelect.value;
     } else if (window.globalFilterState && window.globalFilterState.island) {
         selectedIsland = window.globalFilterState.island;
     }
-    
+
     // Update sidebar island name
     if (selectedIsland) {
         islandNameEl.textContent = selectedIsland;
@@ -4151,7 +4214,7 @@ function updateSidebarIslandName() {
 function applyGlobalFilterOnPageLoad(section) {
     // Restore filter UI state
     restoreGlobalFilterState();
-    
+
     // Apply filter to the newly loaded page
     if (window.globalFilterState && window.globalFilterState.initialized) {
         // Small delay to ensure page content is loaded
@@ -4197,11 +4260,25 @@ async function checkAndSetIslandUserFilter() {
             window.globalFilterState.constituency = islandUserData.constituency || null;
             window.globalFilterState.island = islandUserData.island || null;
             window.globalFilterState.locked = true; // Lock the filter for island users
+            window.globalFilterState.initialized = true; // Mark as initialized
 
-            // Hide global filter UI
+            // Clear all caches when island user logs in to ensure fresh data with correct filter
+            if (typeof clearCache === 'function') {
+                clearCache('voters');
+                clearCache('candidates');
+                clearCache('pledges');
+                clearCache('calls');
+                clearCache('agents');
+                clearCache('activities');
+            }
+            if (typeof clearVoterCache === 'function') {
+                clearVoterCache();
+            }
+
+            // Show global filter UI but keep it disabled
             const globalFilterContainer = document.getElementById('global-filter-container');
             if (globalFilterContainer) {
-                globalFilterContainer.style.display = 'none';
+                globalFilterContainer.style.display = 'flex';
             }
 
             console.log('[Island User] Global filter locked to:', {
@@ -4237,7 +4314,7 @@ function initializeGlobalFilter() {
         console.warn('[Global Filter] Filter elements not found');
         return;
     }
-    
+
     // Helper function to enable filter controls
     const enableFilterControls = () => {
         constituencySelect.disabled = false;
@@ -4247,7 +4324,7 @@ function initializeGlobalFilter() {
         constituencySelect.style.cursor = 'pointer';
         islandSelect.style.cursor = 'pointer';
     };
-    
+
     // Helper function to disable filter controls
     const disableFilterControls = () => {
         constituencySelect.disabled = true;
@@ -4261,22 +4338,22 @@ function initializeGlobalFilter() {
     // If user is an island user, set filter values and disable controls
     if (window.isIslandUser && window.islandUserData) {
         const islandUserData = window.islandUserData;
-        
-        // Set values
+
+        // Populate constituency dropdown with only their constituency (no "Show All" option)
         if (islandUserData.constituency) {
+            constituencySelect.innerHTML = '';
+            const constituencyOption = document.createElement('option');
+            constituencyOption.value = islandUserData.constituency;
+            constituencyOption.textContent = islandUserData.constituency;
+            constituencyOption.selected = true;
+            constituencySelect.appendChild(constituencyOption);
             constituencySelect.value = islandUserData.constituency;
         }
-        if (islandUserData.island) {
-            islandSelect.value = islandUserData.island;
-        }
 
-        // Disable controls (keep disabled for island users)
-        disableFilterControls();
-
-        // Populate island dropdown
-        if (islandUserData.constituency && window.maldivesData && window.maldivesData.constituencyIslands) {
+        // Populate island dropdown with only their island
+        if (islandUserData.island && islandUserData.constituency && window.maldivesData && window.maldivesData.constituencyIslands) {
             const islands = window.maldivesData.constituencyIslands[islandUserData.constituency] || [];
-            islandSelect.innerHTML = '<option value="">All Islands</option>';
+            islandSelect.innerHTML = '';
             islands.forEach(island => {
                 const islandOption = document.createElement('option');
                 islandOption.value = island;
@@ -4286,13 +4363,25 @@ function initializeGlobalFilter() {
                 }
                 islandSelect.appendChild(islandOption);
             });
+            islandSelect.value = islandUserData.island;
         }
+
+        // Disable controls (keep disabled for island users)
+        disableFilterControls();
 
         window.globalFilterState.initialized = true;
         console.log('[Global Filter] Initialized for island user');
-        
+
         // Update sidebar island name for island user
         updateSidebarIslandName();
+
+        // Apply the filter immediately for island users to ensure data is filtered
+        setTimeout(() => {
+            if (window.applyGlobalFilter) {
+                window.applyGlobalFilter();
+            }
+        }, 200);
+
         return;
     }
 
@@ -4361,23 +4450,23 @@ function initializeGlobalFilter() {
                 islandSelect.innerHTML = '<option value="">All Islands</option>';
             }
         }
-        
+
         // Reset island selection when constituency changes (unless it's still valid)
         const currentIsland = islandSelect.value;
         const availableIslands = Array.from(islandSelect.options).map(opt => opt.value);
         if (!availableIslands.includes(currentIsland)) {
             islandSelect.value = '';
         }
-        
+
         // Update global filter state immediately
         window.globalFilterState.constituency = selectedConstituency || null;
         if (!availableIslands.includes(currentIsland)) {
             window.globalFilterState.island = null;
         }
-        
+
         // Update sidebar island name when constituency changes (island might be reset)
         updateSidebarIslandName();
-        
+
         // Debounce filter application
         clearTimeout(constituencyDebounceTimer);
         constituencyDebounceTimer = setTimeout(() => {
@@ -4389,10 +4478,10 @@ function initializeGlobalFilter() {
     islandSelect.addEventListener('change', function() {
         // Update global filter state immediately
         window.globalFilterState.island = this.value || null;
-        
+
         // Update sidebar island name
         updateSidebarIslandName();
-        
+
         // Debounce filter application
         clearTimeout(islandDebounceTimer);
         islandDebounceTimer = setTimeout(() => {
@@ -4404,10 +4493,10 @@ function initializeGlobalFilter() {
     if (!window.isIslandUser) {
         enableFilterControls();
     }
-    
+
     window.globalFilterState.initialized = true;
     console.log('[Global Filter] Initialized successfully');
-    
+
     // Update sidebar island name on initial load
     updateSidebarIslandName();
 }
@@ -4416,7 +4505,7 @@ function initializeGlobalFilter() {
 // Comprehensive refresh function to sync with Firebase
 async function refreshApplicationData() {
     console.log('[Refresh] Starting comprehensive data refresh...');
-    
+
     try {
         // Clear all caches to force fresh data from Firebase
         if (typeof window.clearAllCaches === 'function') {
@@ -4425,13 +4514,13 @@ async function refreshApplicationData() {
         if (typeof window.clearVoterCache === 'function') {
             window.clearVoterCache();
         }
-        
+
         // Clear ballots cache if it exists
         if (window.ballotsCache) {
             window.ballotsCache.data = [];
             window.ballotsCache.lastFetch = null;
         }
-        
+
         // Clear transportation caches
         ['flights', 'speedboats', 'taxis'].forEach(transportType => {
             const cacheKey = `transportation_${transportType}`;
@@ -4440,18 +4529,18 @@ async function refreshApplicationData() {
                 window[cacheKey].lastFetch = null;
             }
         });
-        
+
         // Get current page to reload appropriate data
         const currentPage = window.currentPage || getCurrentActivePage();
-        
+
         // Reload all data based on current page
         const refreshPromises = [];
-        
+
         // Always reload dashboard data
         if (typeof window.loadDashboardData === 'function') {
             refreshPromises.push(window.loadDashboardData(true));
         }
-        
+
         // Reload current page data
         if (currentPage) {
             const pageLoaders = {
@@ -4467,7 +4556,7 @@ async function refreshApplicationData() {
                 'zero-day': () => window.loadZeroDayData && window.loadZeroDayData(true),
                 'settings': () => window.initializeSettingsPage && window.initializeSettingsPage()
             };
-            
+
             const loader = pageLoaders[currentPage];
             if (loader) {
                 refreshPromises.push(loader());
@@ -4475,15 +4564,15 @@ async function refreshApplicationData() {
                 refreshPromises.push(loadPageContent(currentPage));
             }
         }
-        
+
         // Reload notifications
         if (typeof window.loadNotifications === 'function') {
             refreshPromises.push(window.loadNotifications());
         }
-        
+
         // Wait for all data to refresh
         await Promise.all(refreshPromises);
-        
+
         console.log('[Refresh] All data refreshed successfully');
         return true;
     } catch (error) {
@@ -4504,19 +4593,19 @@ function initializeRefreshButton() {
 
     refreshBtn.addEventListener('click', async function() {
         const statusMessage = document.getElementById('refresh-status-message');
-        
+
         // Add loading state with rotation animation
         refreshBtn.disabled = true;
         refreshBtn.style.opacity = '0.7';
         refreshBtn.style.cursor = 'wait';
-        
+
         // Add rotation animation to SVG icon
         const svgIcon = refreshBtn.querySelector('svg');
         if (svgIcon) {
             svgIcon.style.animation = 'spin 1s linear infinite';
             svgIcon.style.transformOrigin = 'center';
         }
-        
+
         // Show "Syncing in progress" message
         if (statusMessage) {
             statusMessage.textContent = 'Syncing in progress...';
@@ -4526,12 +4615,12 @@ function initializeRefreshButton() {
 
         try {
             await refreshApplicationData();
-            
+
             // Show "Syncing Successful" message
             if (statusMessage) {
                 statusMessage.textContent = 'Syncing Successful';
                 statusMessage.className = 'refresh-status-message refresh-status-success';
-                
+
                 // Hide message after 2 seconds
                 setTimeout(() => {
                     if (statusMessage) {
@@ -4542,12 +4631,12 @@ function initializeRefreshButton() {
             }
         } catch (error) {
             console.error('[Refresh] Error refreshing data:', error);
-            
+
             // Show error message
             if (statusMessage) {
                 statusMessage.textContent = 'Syncing Failed';
                 statusMessage.className = 'refresh-status-message refresh-status-error';
-                
+
                 // Hide message after 2 seconds
                 setTimeout(() => {
                     if (statusMessage) {
@@ -4560,7 +4649,7 @@ function initializeRefreshButton() {
             refreshBtn.disabled = false;
             refreshBtn.style.opacity = '1';
             refreshBtn.style.cursor = 'pointer';
-            
+
             // Remove rotation animation
             if (svgIcon) {
                 svgIcon.style.animation = '';

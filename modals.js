@@ -175,24 +175,26 @@ function getVoterFormTemplate() {
         <form id="modal-form" class="modal-form import-form" data-import-mode="single" enctype="multipart/form-data" style="display: block;">
             <div class="form-group">
                 <label for="voter-image" style="display: block; font-size: 14px; font-weight: 600; color: var(--text-color); margin-bottom: 8px;">Image</label>
-                <div id="voter-image-upload-area" style="position: relative; border: 2px dashed var(--border-color); border-radius: 12px; padding: 32px 20px; text-align: center; background: var(--light-color); transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.borderColor='var(--primary-color)'; this.style.background='var(--primary-50)'" onmouseout="this.style.borderColor='var(--border-color)'; this.style.background='var(--light-color)'">
+                <div id="voter-image-upload-area" class="image-upload-area" style="position: relative; border: 2px dashed var(--border-color); border-radius: 16px; padding: 40px 24px; text-align: center; background: linear-gradient(135deg, var(--light-color) 0%, rgba(111, 193, 218, 0.05) 100%); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; overflow: hidden;" onmouseover="this.style.borderColor='var(--primary-color)'; this.style.background='linear-gradient(135deg, var(--primary-50) 0%, rgba(111, 193, 218, 0.15) 100%)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(111, 193, 218, 0.2)'" onmouseout="this.style.borderColor='var(--border-color)'; this.style.background='linear-gradient(135deg, var(--light-color) 0%, rgba(111, 193, 218, 0.05) 100%)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
                     <input type="file" id="voter-image" name="voter-image" accept="image/*" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; z-index: 1;" onchange="handleImagePreview(this)">
-                    <div style="pointer-events: none; z-index: 0;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 12px; display: block;">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="17 8 12 3 7 8"></polyline>
-                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                        </svg>
-                        <p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 600; color: var(--text-color);">Upload voter photo</p>
-                        <p style="margin: 0; font-size: 13px; color: var(--text-light);">Click to browse or drag and drop</p>
-                        <p style="margin: 8px 0 0 0; font-size: 12px; color: var(--text-muted);">(Optional - JPG, PNG up to 5MB)</p>
+                    <div style="pointer-events: none; z-index: 0; position: relative;">
+                        <div style="width: 64px; height: 64px; margin: 0 auto 16px; background: linear-gradient(135deg, var(--primary-color), rgba(111, 193, 218, 0.8)); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(111, 193, 218, 0.3);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <p style="margin: 0 0 6px 0; font-size: 16px; font-weight: 700; color: var(--text-color); letter-spacing: -0.3px;">Upload voter photo</p>
+                        <p style="margin: 0 0 8px 0; font-size: 14px; color: var(--text-light);">Click to browse or drag and drop</p>
+                        <p style="margin: 0; font-size: 12px; color: var(--text-muted); padding: 6px 12px; background: rgba(111, 193, 218, 0.1); border-radius: 20px; display: inline-block;">JPG, PNG up to 5MB</p>
                     </div>
                 </div>
-                <div id="voter-image-preview" style="margin-top: 16px; display: none; text-align: center;">
+                <div id="voter-image-preview" style="margin-top: 20px; display: none; text-align: center;">
                     <div style="position: relative; display: inline-block;">
-                        <img id="voter-image-preview-img" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 12px; border: 3px solid var(--primary-color); box-shadow: 0 4px 12px rgba(111, 193, 218, 0.2); object-fit: cover;">
-                        <button type="button" onclick="removeImagePreview()" style="position: absolute; top: -8px; right: -8px; width: 32px; height: 32px; border-radius: 50%; background: var(--danger-color); color: white; border: 2px solid white; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Remove image">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <img id="voter-image-preview-img" src="" alt="Preview" style="max-width: 220px; max-height: 220px; width: 100%; height: auto; border-radius: 16px; border: 3px solid var(--primary-color); box-shadow: 0 8px 24px rgba(111, 193, 218, 0.25); object-fit: cover; transition: all 0.3s ease;">
+                        <button type="button" onclick="removeImagePreview()" style="position: absolute; top: -10px; right: -10px; width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--danger-color), #dc3545); color: white; border: 3px solid white; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='scale(1.15) rotate(90deg)'; this.style.boxShadow='0 6px 16px rgba(220, 53, 69, 0.5)'" onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.boxShadow='0 4px 12px rgba(220, 53, 69, 0.4)'" title="Remove image">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
                                 <line x1="6" y1="6" x2="18" y2="18"></line>
                             </svg>
@@ -269,9 +271,25 @@ function getVoterFormTemplate() {
         <!-- Batch CSV Import Form -->
         <div id="batch-import-form" class="import-form" data-import-mode="batch" style="display: none;">
             <div class="form-group">
-                <label for="csv-file">CSV File *</label>
-                <input type="file" id="csv-file" accept=".csv" required>
-                <small>Upload a CSV file with voter data. <a href="#" id="download-csv-template" style="color: var(--primary-color); text-decoration: none;">Download template</a></small>
+                <label for="csv-file" style="display: block; font-size: 14px; font-weight: 600; color: var(--text-color); margin-bottom: 8px;">CSV File *</label>
+                <div style="position: relative; border: 2px dashed var(--border-color); border-radius: 16px; padding: 32px 24px; text-align: center; background: linear-gradient(135deg, var(--light-color) 0%, rgba(111, 193, 218, 0.05) 100%); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; overflow: hidden;" onmouseover="this.style.borderColor='var(--primary-color)'; this.style.background='linear-gradient(135deg, var(--primary-50) 0%, rgba(111, 193, 218, 0.15) 100%)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(111, 193, 218, 0.2)'" onmouseout="this.style.borderColor='var(--border-color)'; this.style.background='linear-gradient(135deg, var(--light-color) 0%, rgba(111, 193, 218, 0.05) 100%)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                    <input type="file" id="csv-file" accept=".csv" required style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; z-index: 1;">
+                    <div style="pointer-events: none; z-index: 0; position: relative;">
+                        <div style="width: 56px; height: 56px; margin: 0 auto 14px; background: linear-gradient(135deg, var(--primary-color), rgba(111, 193, 218, 0.8)); border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(111, 193, 218, 0.3);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                        </div>
+                        <p style="margin: 0 0 6px 0; font-size: 15px; font-weight: 700; color: var(--text-color); letter-spacing: -0.3px;">Upload CSV File</p>
+                        <p style="margin: 0 0 8px 0; font-size: 13px; color: var(--text-light);">Click to browse or drag and drop</p>
+                        <p style="margin: 0; font-size: 12px; color: var(--text-muted); padding: 6px 12px; background: rgba(111, 193, 218, 0.1); border-radius: 20px; display: inline-block;">CSV format only</p>
+                    </div>
+                </div>
+                <small style="display: block; margin-top: 12px; color: var(--text-light); font-size: 12px;">Upload a CSV file with voter data. <a href="#" id="download-csv-template" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">Download template</a></small>
             </div>
             <div id="csv-preview" style="display: none; margin-top: 20px;">
                 <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 10px; color: var(--text-color);">Preview (First 5 rows):</h4>
@@ -614,551 +632,246 @@ function getBallotFormTemplate() {
     const constituencies = window.maldivesData.constituencies || [];
     const defaultConstituency = (window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : '';
 
-    return ` <
-form id = "modal-form"
-class = "modal-form" >
-    <
-    div class = "form-group" >
-    <
-    label
-for = "ballot-number" > Ballot Number * < /label> <
-input type = "text"
-id = "ballot-number"
-name = "ballot-number"
-placeholder = "Enter ballot number"
-required >
-    <
-    /div> <
-div class = "form-row" >
-    <
-    div class = "form-group" >
-    <
-    label
-for = "ballot-constituency" > Constituency < /label> <
-input type = "text"
-id = "ballot-constituency"
-name = "ballot-constituency"
-readonly style = "background: var(--light-color); cursor: not-allowed;"
-value = "${defaultConstituency}" >
-    <
-    small style = "color: var(--text-light); font-size: 12px;" > Fetched from Campaign Setup < /small> < /
-div > <
-    div class = "form-group" >
-    <
-    label
-for = "ballot-island" > Island < /label> <
-select id = "ballot-island"
-name = "ballot-island" >
-    <
-    option value = "" > Select island < /option> < /
-select > <
-    /div> < /
-div > <
-    div class = "form-group" >
-    <
-    label
-for = "ballot-location" > Location * < /label> <
-input type = "text"
-id = "ballot-location"
-name = "ballot-location"
-placeholder = "Enter ballot location"
-required >
-    <
-    /div> <
-div class = "form-group" >
-    <
-    label
-for = "ballot-expected-voters" > Expected Voters * < /label> <
-input type = "number"
-id = "ballot-expected-voters"
-name = "ballot-expected-voters"
-placeholder = "Enter expected number of voters"
-min = "0"
-required >
-    <
-    /div> <
-div class = "form-group" >
-    <
-    label
-for = "ballot-status" > Status < /label> <
-select id = "ballot-status"
-name = "ballot-status" >
-    <
-    option value = "open" > Open < /option> <
-option value = "close" > Close < /option> < /
-select > <
-    /div> <
-div class = "form-group" >
-    <
-    label
-for = "ballot-notes" > Notes < /label> <
-textarea id = "ballot-notes"
-name = "ballot-notes"
-rows = "3"
-placeholder = "Additional notes (optional)" > < /textarea> < /
-div > <
-    div id = "modal-error"
-class = "error-message"
-style = "display: none;" > < /div> <
-div class = "modal-footer" >
-    <
-    button type = "button"
-class = "btn-secondary btn-compact"
-onclick = "closeModal()" > Cancel < /button> <
-button type = "submit"
-class = "btn-primary btn-compact" > Add Ballot < /button> < /
-div > <
-    /form>
+    return `
+<form id="modal-form" class="modal-form">
+    <div class="form-group">
+        <label for="ballot-number">Ballot Number *</label>
+        <input type="text" id="ballot-number" name="ballot-number" placeholder="Enter ballot number" required>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="ballot-constituency">Constituency</label>
+            <input type="text" id="ballot-constituency" name="ballot-constituency" readonly style="background: var(--light-color); cursor: not-allowed;" value="${defaultConstituency}">
+            <small style="color: var(--text-light); font-size: 12px;">Fetched from Campaign Setup</small>
+        </div>
+        <div class="form-group">
+            <label for="ballot-island">Island</label>
+            <select id="ballot-island" name="ballot-island">
+                <option value="">Select island</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="ballot-location">Location *</label>
+        <input type="text" id="ballot-location" name="ballot-location" placeholder="Enter ballot location" required>
+    </div>
+    <div class="form-group">
+        <label for="ballot-expected-voters">Expected Voters *</label>
+        <input type="number" id="ballot-expected-voters" name="ballot-expected-voters" placeholder="Enter expected number of voters" min="0" required>
+    </div>
+    <div class="form-group">
+        <label for="ballot-status">Status</label>
+        <select id="ballot-status" name="ballot-status">
+            <option value="open">Open</option>
+            <option value="close">Close</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="ballot-notes">Notes</label>
+        <textarea id="ballot-notes" name="ballot-notes" rows="3" placeholder="Additional notes (optional)"></textarea>
+    </div>
+    <div id="modal-error" class="error-message" style="display: none;"></div>
+    <div class="modal-footer">
+        <button type="button" class="btn-secondary btn-compact" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-primary btn-compact">Add Ballot</button>
+    </div>
+</form>
     `;
 }
 
 // Transportation Form Template
 function getTransportationFormTemplate() {
-    return ` <
-div class = "transportation-form-tabs"
-style = "display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color);" >
-    <
-    button type = "button"
-class = "transport-form-tab-btn active"
-data - transport - type = "flights"
-style = "padding: 10px 20px; background: none; border: none; border-bottom: 3px solid var(--primary-color); color: var(--primary-color); font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif;" >
-    <
-    svg xmlns = "http://www.w3.org/2000/svg"
-width = "18"
-height = "18"
-viewBox = "0 0 24 24"
-fill = "none"
-stroke = "currentColor"
-stroke - width = "2"
-stroke - linecap = "round"
-stroke - linejoin = "round"
-style = "margin-right: 6px; vertical-align: middle;" >
-    <
-    path d = "M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" > < /path> < /
-svg >
-    Flight <
-    /button> <
-button type = "button"
-class = "transport-form-tab-btn"
-data - transport - type = "speedboats"
-style = "padding: 10px 20px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-family: 'Poppins', sans-serif;" >
-    <
-    svg xmlns = "http://www.w3.org/2000/svg"
-width = "18"
-height = "18"
-viewBox = "0 0 24 24"
-fill = "none"
-stroke = "currentColor"
-stroke - width = "2"
-stroke - linecap = "round"
-stroke - linejoin = "round"
-style = "margin-right: 6px; vertical-align: middle;" >
-    <
-    path d = "M3 18h18" > < /path> <
-path d = "M3 12h18" > < /path> <
-path d = "M3 6h18" > < /path> < /
-svg >
-    Speed Boat <
-    /button> <
-button type = "button"
-class = "transport-form-tab-btn"
-data - transport - type = "taxis"
-style = "padding: 10px 20px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-family: 'Poppins', sans-serif;" >
-    <
-    svg xmlns = "http://www.w3.org/2000/svg"
-width = "18"
-height = "18"
-viewBox = "0 0 24 24"
-fill = "none"
-stroke = "currentColor"
-stroke - width = "2"
-stroke - linecap = "round"
-stroke - linejoin = "round"
-style = "margin-right: 6px; vertical-align: middle;" >
-    <
-    rect x = "1"
-y = "3"
-width = "22"
-height = "18"
-rx = "2"
-ry = "2" > < /rect> <
-line x1 = "7"
-y1 = "3"
-x2 = "7"
-y2 = "21" > < /line> <
-line x1 = "17"
-y1 = "3"
-x2 = "17"
-y2 = "21" > < /line> < /
-svg >
-    Taxi <
-    /button> < /
-div >
+    return `
+<div class="transportation-form-tabs" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color);">
+    <button type="button" class="transport-form-tab-btn active" data-transport-type="flights" style="padding: 10px 20px; background: none; border: none; border-bottom: 3px solid var(--primary-color); color: var(--primary-color); font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; vertical-align: middle;">
+            <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"></path>
+        </svg>
+        Flight
+    </button>
+    <button type="button" class="transport-form-tab-btn" data-transport-type="speedboats" style="padding: 10px 20px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-family: 'Poppins', sans-serif;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; vertical-align: middle;">
+            <path d="M3 18h18"></path>
+            <path d="M3 12h18"></path>
+            <path d="M3 6h18"></path>
+        </svg>
+        Speed Boat
+    </button>
+    <button type="button" class="transport-form-tab-btn" data-transport-type="taxis" style="padding: 10px 20px; background: none; border: none; border-bottom: 3px solid transparent; color: var(--text-light); font-weight: 500; cursor: pointer; font-family: 'Poppins', sans-serif;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; vertical-align: middle;">
+            <rect x="1" y="3" width="22" height="18" rx="2" ry="2"></rect>
+            <line x1="7" y1="3" x2="7" y2="21"></line>
+            <line x1="17" y1="3" x2="17" y2="21"></line>
+        </svg>
+        Taxi
+    </button>
+</div>
 
-    <
-    !--Flight Form-- >
-    <
-    form id = "modal-form"
-class = "modal-form transport-form"
-data - transport - type = "flights"
-style = "display: block;" >
-    <
-    div class = "form-group" >
-    <
-    label
-for = "transport-flight-number" > Flight Number * < /label> <
-input type = "text"
-id = "transport-flight-number"
-name = "transport-flight-number"
-placeholder = "Enter flight number"
-required >
-    <
-    /div> <
-div class = "form-row" >
-    <
-    div class = "form-group" >
-    <
-    label
-for = "transport-constituency" > Constituency * < /label> <
-input type = "text"
-id = "transport-constituency"
-name = "transport-constituency"
-readonly style = "background: var(--light-color); cursor: not-allowed;"
-value = "${(window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : ''}"
-required >
-    <
-    <
-    /div> <
-div class = "form-group" >
-    <
-                    <label for="transport-island">Island *</label>
-                    <select id="transport-island" name="transport-island" required>
-                        <option value="">Select island</option>
-</select> <
-/div> <
-/div> <
-div class = "form-group" >
-    <
-    label
-for = "transport-route" > Route * < /label> <
-input type = "text"
-id = "transport-route"
-name = "transport-route"
-placeholder = "e.g., Male to Addu"
-required >
-    <
-    /div> <
-div class = "form-row" >
-    <
-    div class = "form-group" >
-    <
-    label
-for = "transport-departure-time" > Departure Time * < /label> <
-input type = "time"
-id = "transport-departure-time"
-name = "transport-departure-time"
-required >
-    <
-    /div> <
-div class = "form-group" >
-    <
-    label
-for = "transport-arrival-time" > Arrival Time * < /label> <
-input type = "time"
-id = "transport-arrival-time"
-name = "transport-arrival-time"
-required >
-    <
-    /div> < /
-div > <
-    div class = "form-group" >
-    <
-    label
-for = "transport-capacity" > Capacity * < /label> <
-input type = "number"
-id = "transport-capacity"
-name = "transport-capacity"
-placeholder = "Number of passengers"
-min = "1"
-required >
-    <
-    /div> <
-div class = "form-group" >
-    <
-    label
-for = "transport-status" > Status < /label> <
-select id = "transport-status"
-name = "transport-status" >
-    <
-    option value = "pending" > Pending < /option> <
-option value = "confirmed" > Confirmed < /option> <
-option value = "completed" > Completed < /option> <
-option value = "cancelled" > Cancelled < /option> < /
-select > <
-    /div> <
-div class = "form-group" >
-    <
-    label
-for = "transport-notes" > Notes < /label> <
-textarea id = "transport-notes"
-name = "transport-notes"
-rows = "3"
-placeholder = "Additional notes (optional)" > < /textarea> < /
-div > <
-    div id = "modal-error"
-class = "error-message"
-style = "display: none;" > < /div> <
-div class = "modal-footer" >
-    <
-    button type = "button"
-class = "btn-secondary btn-compact"
-onclick = "closeModal()" > Cancel < /button> <
-button type = "submit"
-class = "btn-primary btn-compact" > Add Flight < /button> < /
-div > <
-    /form>
+<!--Flight Form-->
+<form id="modal-form" class="modal-form transport-form" data-transport-type="flights" style="display: block;">
+    <div class="form-group">
+        <label for="transport-flight-number">Flight Number *</label>
+        <input type="text" id="transport-flight-number" name="transport-flight-number" placeholder="Enter flight number" required>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="transport-constituency">Constituency *</label>
+            <input type="text" id="transport-constituency" name="transport-constituency" readonly style="background: var(--light-color); cursor: not-allowed;" value="${(window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : ''}" required>
+        </div>
+        <div class="form-group">
+            <label for="transport-island">Island *</label>
+            <select id="transport-island" name="transport-island" required>
+                <option value="">Select island</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="transport-route">Route *</label>
+        <input type="text" id="transport-route" name="transport-route" placeholder="e.g., Male to Addu" required>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="transport-departure-time">Departure Time *</label>
+            <input type="time" id="transport-departure-time" name="transport-departure-time" required>
+        </div>
+        <div class="form-group">
+            <label for="transport-arrival-time">Arrival Time *</label>
+            <input type="time" id="transport-arrival-time" name="transport-arrival-time" required>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="transport-capacity">Capacity *</label>
+        <input type="number" id="transport-capacity" name="transport-capacity" placeholder="Number of passengers" min="1" required>
+    </div>
+    <div class="form-group">
+        <label for="transport-status">Status</label>
+        <select id="transport-status" name="transport-status">
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="transport-notes">Notes</label>
+        <textarea id="transport-notes" name="transport-notes" rows="3" placeholder="Additional notes (optional)"></textarea>
+    </div>
+    <div id="modal-error" class="error-message" style="display: none;"></div>
+    <div class="modal-footer">
+        <button type="button" class="btn-secondary btn-compact" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-primary btn-compact">Add Flight</button>
+    </div>
+</form>
 
-    <
-    !--Speed Boat Form-- >
-    <
-    form id = "modal-form-speedboat"
-class = "modal-form transport-form"
-data - transport - type = "speedboats"
-style = "display: none;" >
-    <
-    div class = "form-group" >
-    <
-    label
-for = "transport-boat-name" > Boat Name / Number * < /label> <
-input type = "text"
-id = "transport-boat-name"
-name = "transport-boat-name"
-placeholder = "Enter boat name or number"
-required >
-    <
-    /div> <
-div class = "form-row" >
-    <
-    div class = "form-group" >
-    <
-    label
-for = "transport-constituency-sb" > Constituency * < /label> <
-input type = "text"
-id = "transport-constituency-sb"
-name = "transport-constituency-sb"
-readonly style = "background: var(--light-color); cursor: not-allowed;"
-value = "${(window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : ''}"
-required >
-    <
-    /div> <
-div class = "form-group" >
-                    <label for="transport-island-sb">Island *</label>
-                    <select id="transport-island-sb" name="transport-island-sb" required>
-                        <option value="">Select island</option>
-</select> <
-/div> <
-/div> <
-div class = "form-group" >
-    <
-    label
-for = "transport-route-sb" > Route * < /label> <
-input type = "text"
-id = "transport-route-sb"
-name = "transport-route-sb"
-placeholder = "e.g., Male to Maafushi"
-required >
-    <
-    /div> <
-div class = "form-row" >
-    <
-    div class = "form-group" >
-    <
-    label
-for = "transport-departure-time-sb" > Departure Time * < /label> <
-input type = "time"
-id = "transport-departure-time-sb"
-name = "transport-departure-time-sb"
-required >
-    <
-    /div> <
-div class = "form-group" >
-    <
-    label
-for = "transport-arrival-time-sb" > Arrival Time * < /label> <
-input type = "time"
-id = "transport-arrival-time-sb"
-name = "transport-arrival-time-sb"
-required >
-    <
-    /div> < /
-div > <
-    div class = "form-group" >
-    <
-    label
-for = "transport-capacity-sb" > Capacity * < /label> <
-input type = "number"
-id = "transport-capacity-sb"
-name = "transport-capacity-sb"
-placeholder = "Number of passengers"
-min = "1"
-required >
-    <
-    /div> <
-div class = "form-group" >
-    <
-    label
-for = "transport-status-sb" > Status < /label> <
-select id = "transport-status-sb"
-name = "transport-status-sb" >
-    <
-    option value = "pending" > Pending < /option> <
-option value = "confirmed" > Confirmed < /option> <
-option value = "completed" > Completed < /option> <
-option value = "cancelled" > Cancelled < /option> < /
-select > <
-    /div> <
-div class = "form-group" >
-    <
-    label
-for = "transport-notes-sb" > Notes < /label> <
-textarea id = "transport-notes-sb"
-name = "transport-notes-sb"
-rows = "3"
-placeholder = "Additional notes (optional)" > < /textarea> < /
-div > <
-    div id = "modal-error-sb"
-class = "error-message"
-style = "display: none;" > < /div> <
-div class = "modal-footer" >
-    <
-    button type = "button"
-class = "btn-secondary btn-compact"
-onclick = "closeModal()" > Cancel < /button> <
-button type = "submit"
-class = "btn-primary btn-compact" > Add Speed Boat < /button> < /
-div > <
-    /form>
+<!--Speed Boat Form-->
+<form id="modal-form-speedboat" class="modal-form transport-form" data-transport-type="speedboats" style="display: none;">
+    <div class="form-group">
+        <label for="transport-boat-name">Boat Name / Number *</label>
+        <input type="text" id="transport-boat-name" name="transport-boat-name" placeholder="Enter boat name or number" required>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="transport-constituency-sb">Constituency *</label>
+            <input type="text" id="transport-constituency-sb" name="transport-constituency-sb" readonly style="background: var(--light-color); cursor: not-allowed;" value="${(window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : ''}" required>
+        </div>
+        <div class="form-group">
+            <label for="transport-island-sb">Island *</label>
+            <select id="transport-island-sb" name="transport-island-sb" required>
+                <option value="">Select island</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="transport-route-sb">Route *</label>
+        <input type="text" id="transport-route-sb" name="transport-route-sb" placeholder="e.g., Male to Maafushi" required>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="transport-departure-time-sb">Departure Time *</label>
+            <input type="time" id="transport-departure-time-sb" name="transport-departure-time-sb" required>
+        </div>
+        <div class="form-group">
+            <label for="transport-arrival-time-sb">Arrival Time *</label>
+            <input type="time" id="transport-arrival-time-sb" name="transport-arrival-time-sb" required>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="transport-capacity-sb">Capacity *</label>
+        <input type="number" id="transport-capacity-sb" name="transport-capacity-sb" placeholder="Number of passengers" min="1" required>
+    </div>
+    <div class="form-group">
+        <label for="transport-status-sb">Status</label>
+        <select id="transport-status-sb" name="transport-status-sb">
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="transport-notes-sb">Notes</label>
+        <textarea id="transport-notes-sb" name="transport-notes-sb" rows="3" placeholder="Additional notes (optional)"></textarea>
+    </div>
+    <div id="modal-error-sb" class="error-message" style="display: none;"></div>
+    <div class="modal-footer">
+        <button type="button" class="btn-secondary btn-compact" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-primary btn-compact">Add Speed Boat</button>
+    </div>
+</form>
 
-    <
-    !--Taxi Form-- >
-    <
-    form id = "modal-form-taxi"
-class = "modal-form transport-form"
-data - transport - type = "taxis"
-style = "display: none;" >
-    <
-    div class = "form-group" >
-    <
-    label
-for = "transport-taxi-number" > Taxi Number * < /label> <
-input type = "text"
-id = "transport-taxi-number"
-name = "transport-taxi-number"
-placeholder = "Enter taxi number"
-required >
-    <
-    /div> <
-div class = "form-group" >
-    <
-    label
-for = "transport-driver-name" > Driver Name * < /label> <
-input type = "text"
-id = "transport-driver-name"
-name = "transport-driver-name"
-placeholder = "Enter driver name"
-required >
-    <
-    /div> <
-div class = "form-group" >
-    <
-    label
-for = "transport-contact" > Contact Number * < /label> <
-input type = "tel"
-id = "transport-contact"
-name = "transport-contact"
-placeholder = "Enter contact number"
-required >
-    <
-    /div> <
-div class = "form-row" >
-    <
-    div class = "form-group" >
-    <
-    label
-for = "transport-constituency-taxi" > Constituency * < /label> <
-input type = "text"
-id = "transport-constituency-taxi"
-name = "transport-constituency-taxi"
-readonly style = "background: var(--light-color); cursor: not-allowed;"
-value = "${(window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : ''}"
-required >
-    <
-    /div> <
-div class = "form-group" >
-    <
-    <label for="transport-island-taxi">Island *</label>
-    <select id="transport-island-taxi" name="transport-island-taxi" required>
-    <option value="">Select island</option>
-</select> <
-/div> <
-/div> <
-div class = "form-group" >
-    <
-    label
-for = "transport-route-taxi" > Route / Area * < /label> <
-input type = "text"
-id = "transport-route-taxi"
-name = "transport-route-taxi"
-placeholder = "e.g., Male City Center"
-required >
-    <
-    /div> <
-div class = "form-group" >
-    <
-    label
-for = "transport-capacity-taxi" > Capacity * < /label> <
-input type = "number"
-id = "transport-capacity-taxi"
-name = "transport-capacity-taxi"
-placeholder = "Number of passengers"
-min = "1"
-required >
-    <
-    /div> <
-div class = "form-group" >
-    <
-    label
-for = "transport-status-taxi" > Status < /label> <
-select id = "transport-status-taxi"
-name = "transport-status-taxi" >
-    <
-    option value = "pending" > Pending < /option> <
-option value = "assigned" > Assigned < /option> <
-option value = "completed" > Completed < /option> <
-option value = "cancelled" > Cancelled < /option> < /
-select > <
-    /div> <
-div class = "form-group" >
-    <
-    label
-for = "transport-notes-taxi" > Notes < /label> <
-textarea id = "transport-notes-taxi"
-name = "transport-notes-taxi"
-rows = "3"
-placeholder = "Additional notes (optional)" > < /textarea> < /
-div > <
-    div id = "modal-error-taxi"
-class = "error-message"
-style = "display: none;" > < /div> <
-div class = "modal-footer" >
-    <
-    button type = "button"
-class = "btn-secondary btn-compact"
-onclick = "closeModal()" > Cancel < /button> <
-button type = "submit"
-class = "btn-primary btn-compact" > Add Taxi < /button> < /
-div > <
-    /form>
+<!--Taxi Form-->
+<form id="modal-form-taxi" class="modal-form transport-form" data-transport-type="taxis" style="display: none;">
+    <div class="form-group">
+        <label for="transport-taxi-number">Taxi Number *</label>
+        <input type="text" id="transport-taxi-number" name="transport-taxi-number" placeholder="Enter taxi number" required>
+    </div>
+    <div class="form-group">
+        <label for="transport-driver-name">Driver Name *</label>
+        <input type="text" id="transport-driver-name" name="transport-driver-name" placeholder="Enter driver name" required>
+    </div>
+    <div class="form-group">
+        <label for="transport-contact">Contact Number *</label>
+        <input type="tel" id="transport-contact" name="transport-contact" placeholder="Enter contact number" required>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="transport-constituency-taxi">Constituency *</label>
+            <input type="text" id="transport-constituency-taxi" name="transport-constituency-taxi" readonly style="background: var(--light-color); cursor: not-allowed;" value="${(window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : ''}" required>
+        </div>
+        <div class="form-group">
+            <label for="transport-island-taxi">Island *</label>
+            <select id="transport-island-taxi" name="transport-island-taxi" required>
+                <option value="">Select island</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="transport-route-taxi">Route / Area *</label>
+        <input type="text" id="transport-route-taxi" name="transport-route-taxi" placeholder="e.g., Male City Center" required>
+    </div>
+    <div class="form-group">
+        <label for="transport-capacity-taxi">Capacity *</label>
+        <input type="number" id="transport-capacity-taxi" name="transport-capacity-taxi" placeholder="Number of passengers" min="1" required>
+    </div>
+    <div class="form-group">
+        <label for="transport-status-taxi">Status</label>
+        <select id="transport-status-taxi" name="transport-status-taxi">
+            <option value="pending">Pending</option>
+            <option value="assigned">Assigned</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="transport-notes-taxi">Notes</label>
+        <textarea id="transport-notes-taxi" name="transport-notes-taxi" rows="3" placeholder="Additional notes (optional)"></textarea>
+    </div>
+    <div id="modal-error-taxi" class="error-message" style="display: none;"></div>
+    <div class="modal-footer">
+        <button type="button" class="btn-secondary btn-compact" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-primary btn-compact">Add Taxi</button>
+    </div>
+</form>
 `;
 }
 
@@ -1554,32 +1267,27 @@ voters / $ {
                 }
 
                 // Handle candidate selection - check if multiple selection is allowed
-                const campaignType = window.campaignData.campaignType || '';
-                const allowMultiple = campaignType === 'WDC' || campaignType === 'Local Council Election';
-
+                // Always allow multiple candidate selection
                 let pledgeCandidates = [];
-                if (allowMultiple) {
-                    // Get all selected candidates
-                    const candidateSelect = document.getElementById('pledge-candidate');
-                    if (candidateSelect) {
-                        const selectedOptions = Array.from(candidateSelect.selectedOptions);
-                        pledgeCandidates = selectedOptions
-                            .filter(option => option.value && option.value.trim())
-                            .map(option => option.value.trim());
-                    }
+                const candidateSelect = document.getElementById('pledge-candidate');
+                if (candidateSelect) {
+                    const selectedOptions = Array.from(candidateSelect.selectedOptions);
+                    pledgeCandidates = selectedOptions
+                        .filter(option => option.value && option.value.trim())
+                        .map(option => option.value.trim());
+                }
 
-                    if (pledgeCandidates.length === 0) {
-                        showModalError('Please select at least one candidate.');
-                        return;
-                    }
-                } else {
-                    // Single candidate selection
+                // Fallback: if no multiple selection, try single value from formData
+                if (pledgeCandidates.length === 0) {
                     const pledgeCandidate = formData.get('pledge-candidate');
-                    if (!pledgeCandidate || !pledgeCandidate.trim()) {
-                        showModalError('Candidate is required.');
-                        return;
+                    if (pledgeCandidate && pledgeCandidate.trim()) {
+                        pledgeCandidates = [pledgeCandidate.trim()];
                     }
-                    pledgeCandidates = [pledgeCandidate.trim()];
+                }
+
+                if (pledgeCandidates.length === 0) {
+                    showModalError('Please select at least one candidate.');
+                    return;
                 }
                 // Get voter document ID - try FormData first, then DOM element as fallback
                 let finalVoterDocumentId = voterDocumentId;
@@ -1607,11 +1315,8 @@ voters / $ {
                     return;
                 }
 
-                // Prepare candidate data - store as array for multiple, single value for backward compatibility
-                const primaryCandidate = pledgeCandidates[0];
-                const candidateIds = allowMultiple ? pledgeCandidates : [primaryCandidate];
-
-                dataToSave = {
+                // Prepare base pledge data (will be used for each candidate)
+                const basePledgeData = {
                     voterName: pledgeVoterName.trim(),
                     voterId: cleanFormValue(pledgeVoterId), // Keep for backward compatibility
                     voterDocumentId: finalVoterDocumentId.trim(), // Link to voter document in voters collection
@@ -1619,14 +1324,20 @@ voters / $ {
                     island: cleanFormValue(pledgeIsland),
                     permanentAddress: cleanFormValue(pledgePermanentAddress),
                     currentLocation: cleanFormValue(pledgeCurrentLocation),
-                    candidateId: primaryCandidate, // Primary candidate ID for backward compatibility
-                    candidate: primaryCandidate, // Also store as candidate for backward compatibility
-                    candidateIds: candidateIds, // Array of all selected candidate IDs
-                    candidates: candidateIds, // Alias for candidateIds
                     pledge: pledgeStatus.trim(),
                     notes: cleanFormValue(pledgeNotes),
                     [emailField]: window.userEmail,
                     recordedAt: serverTimestamp()
+                };
+
+                // Store pledge candidates array for creating multiple pledges
+                dataToSave = {
+                    ...basePledgeData,
+                    pledgeCandidates: pledgeCandidates, // Store array for processing
+                    candidateId: pledgeCandidates[0], // Primary candidate for backward compatibility
+                    candidate: pledgeCandidates[0], // Also store as candidate for backward compatibility
+                    candidateIds: pledgeCandidates, // Array of all selected candidate IDs
+                    candidates: pledgeCandidates // Alias for candidateIds
                 };
                 break;
 
@@ -2342,9 +2053,11 @@ voters / $ {
             // Show prompt with email and password
             showIslandUserCredentialsPrompt(islandUserEmail, tempPassword);
 
-            // Reload island users table
+            // Reload island users table with a small delay to ensure Firestore write is complete
             if (window.loadIslandUsers) {
-                window.loadIslandUsers();
+                setTimeout(() => {
+                    window.loadIslandUsers();
+                }, 500);
             }
         } else {
             // Create new record
@@ -2506,20 +2219,20 @@ voters / $ {
             } else {
                 // For other types, use the original flow
 
-                // Special handling for pledges: check for duplicates
+                // Special handling for pledges: create a pledge for each selected candidate
                 if (type === 'pledge') {
                     const {
                         collection: collectionFn,
                         query,
                         where,
-                        getDocs
+                        getDocs,
+                        addDoc
                     } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
 
-                    // Check if a pledge already exists for this voter-candidate combination
                     const voterDocumentId = dataToSave.voterDocumentId;
-                    const candidateIds = dataToSave.candidateIds || dataToSave.candidates || (dataToSave.candidateId ? [dataToSave.candidateId] : []);
+                    const pledgeCandidates = dataToSave.pledgeCandidates || dataToSave.candidateIds || dataToSave.candidates || (dataToSave.candidateId ? [dataToSave.candidateId] : []);
 
-                    if (voterDocumentId && candidateIds.length > 0) {
+                    if (voterDocumentId && pledgeCandidates.length > 0) {
                         // Query for existing pledges for this voter
                         const existingPledgesQuery = query(
                             collectionFn(window.db, 'pledges'),
@@ -2528,26 +2241,90 @@ voters / $ {
                         );
                         const existingSnapshot = await getDocs(existingPledgesQuery);
 
-                        // Check if any existing pledge has the same candidate(s)
-                        let duplicateFound = false;
+                        // Build a set of existing candidate IDs for this voter
+                        const existingCandidateIds = new Set();
                         existingSnapshot.forEach(doc => {
                             const existingPledge = doc.data();
-                            const existingCandidateIds = existingPledge.candidateIds || existingPledge.candidates || (existingPledge.candidateId ? [existingPledge.candidateId] : []);
-
-                            // Check if there's any overlap between existing and new candidate IDs
-                            const hasOverlap = candidateIds.some(candidateId =>
-                                existingCandidateIds.includes(candidateId)
-                            );
-
-                            if (hasOverlap) {
-                                duplicateFound = true;
-                            }
+                            const existingIds = existingPledge.candidateIds || existingPledge.candidates || (existingPledge.candidateId ? [existingPledge.candidateId] : []);
+                            existingIds.forEach(id => existingCandidateIds.add(id));
                         });
 
-                        if (duplicateFound) {
-                            showModalError('A pledge already exists for this voter and candidate combination. Please update the existing pledge instead.');
+                        // Filter out candidates that already have pledges
+                        const newCandidates = pledgeCandidates.filter(candidateId => !existingCandidateIds.has(candidateId));
+
+                        if (newCandidates.length === 0) {
+                            showModalError('Pledges already exist for all selected candidates. Please update the existing pledges instead.');
                             return;
                         }
+
+                        if (newCandidates.length < pledgeCandidates.length) {
+                            const skippedCount = pledgeCandidates.length - newCandidates.length;
+                            if (window.showSuccess) {
+                                window.showSuccess(`${skippedCount} candidate(s) already have pledges. Creating pledge(s) for ${newCandidates.length} new candidate(s).`, 'Info');
+                            }
+                        }
+
+                        // Create a pledge for each candidate
+                        const baseData = { ...dataToSave };
+                        delete baseData.pledgeCandidates; // Remove the array, we'll create individual pledges
+                        delete baseData.candidateIds;
+                        delete baseData.candidates;
+
+                        const createdPledgeIds = [];
+                        for (const candidateId of newCandidates) {
+                            const pledgeData = {
+                                ...baseData,
+                                candidateId: candidateId,
+                                candidate: candidateId,
+                                candidateIds: [candidateId], // Store as array for consistency
+                                candidates: [candidateId]
+                            };
+
+                            console.log(`[handleFormSubmit] Creating pledge for candidate ${candidateId}:`, JSON.stringify(pledgeData, null, 2));
+                            const docRef = await addDoc(collectionFn(window.db, collectionName), pledgeData);
+                            createdPledgeIds.push(docRef.id);
+                            console.log(`[handleFormSubmit] Successfully created pledge with ID:`, docRef.id);
+                        }
+
+                        // Update voter's currentLocation if provided
+                        if (dataToSave.currentLocation !== undefined && dataToSave.voterDocumentId) {
+                            try {
+                                const {
+                                    doc,
+                                    updateDoc
+                                } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                                const voterRef = doc(window.db, 'voters', dataToSave.voterDocumentId);
+                                await updateDoc(voterRef, {
+                                    currentLocation: dataToSave.currentLocation
+                                });
+                                console.log('[Pledge Create] Updated voter currentLocation:', dataToSave.currentLocation);
+                            } catch (voterUpdateError) {
+                                console.error('[Pledge Create] Error updating voter currentLocation:', voterUpdateError);
+                            }
+                        }
+
+                        // Show success message
+                        if (window.showSuccess) {
+                            const candidateText = newCandidates.length === 1 ? 'candidate' : 'candidates';
+                            window.showSuccess(`Pledge(s) created successfully for ${newCandidates.length} ${candidateText}!`, 'Success');
+                        }
+
+                        // Close modal
+                        closeModal();
+
+                        // Reload table data
+                        reloadTableData(type, editVoterId, editPledgeId, editAgentId, editCandidateId);
+                        
+                        // Trigger comprehensive refresh
+                        if (window.refreshApplicationData) {
+                            setTimeout(() => {
+                                window.refreshApplicationData().catch(err => {
+                                    console.warn('[Modals] Error during auto-refresh after save:', err);
+                                });
+                            }, 500);
+                        }
+
+                        return; // Exit early since we've handled pledge creation
                     }
                 }
 
@@ -2601,23 +2378,7 @@ voters / $ {
                     console.error(`[handleFormSubmit] Error verifying saved data:`, verifyError);
                 }
 
-                // If this is a new pledge, update the voter's currentLocation
-                if (type === 'pledge' && dataToSave.voterDocumentId && dataToSave.currentLocation !== undefined) {
-                    try {
-                        const {
-                            doc,
-                            updateDoc
-                        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                        const voterRef = doc(window.db, 'voters', dataToSave.voterDocumentId);
-                        await updateDoc(voterRef, {
-                            currentLocation: dataToSave.currentLocation
-                        });
-                        console.log('[Pledge Create] Updated voter currentLocation:', dataToSave.currentLocation);
-                    } catch (voterUpdateError) {
-                        console.error('[Pledge Create] Error updating voter currentLocation:', voterUpdateError);
-                        // Don't fail the pledge creation if voter update fails
-                    }
-                }
+                // Note: Voter currentLocation update is handled in the pledge creation loop above
 
                 // Show success message
                 if (window.showSuccess) {
@@ -3744,34 +3505,24 @@ async function setupPledgeCandidateDropdown() {
     const candidateSelect = document.getElementById('pledge-candidate');
     if (!candidateSelect) return;
 
-    // Check campaign type to determine if multiple selection is allowed
-    const campaignType = window.campaignData.campaignType || '';
-    const allowMultiple = campaignType === 'WDC' || campaignType === 'Local Council Election';
+    // Always allow multiple selection for all campaign types
+    candidateSelect.setAttribute('multiple', 'multiple');
+    candidateSelect.size = 5; // Show 5 options at once for better visibility
+    candidateSelect.style.minHeight = '140px';
+    candidateSelect.style.padding = '10px';
+    candidateSelect.style.borderRadius = '8px';
+    candidateSelect.style.border = '2px solid var(--border-color)';
+    candidateSelect.style.backgroundColor = 'white';
+    candidateSelect.style.fontSize = '14px';
+    candidateSelect.style.lineHeight = '1.5';
 
-    // Update select element based on campaign type
-    if (allowMultiple) {
-        candidateSelect.setAttribute('multiple', 'multiple');
-        candidateSelect.size = 4; // Show 4 options at once
-        candidateSelect.style.minHeight = '120px';
-        candidateSelect.style.padding = '8px';
-
-        // Show hint
-        const hint = document.getElementById('pledge-candidate-hint');
-        if (hint) {
-            hint.style.display = 'block';
-            hint.textContent = 'Hold Ctrl/Cmd (Windows/Mac) or Shift to select multiple candidates';
-        }
-    } else {
-        candidateSelect.removeAttribute('multiple');
-        candidateSelect.size = 1;
-        candidateSelect.style.minHeight = '';
-        candidateSelect.style.padding = '';
-
-        // Hide hint
-        const hint = document.getElementById('pledge-candidate-hint');
-        if (hint) {
-            hint.style.display = 'none';
-        }
+    // Show hint for multiple selection
+    const hint = document.getElementById('pledge-candidate-hint');
+    if (hint) {
+        hint.style.display = 'block';
+        hint.textContent = 'Hold Ctrl/Cmd (Windows/Mac) or Shift to select multiple candidates. A pledge will be created for each selected candidate.';
+        hint.style.color = 'var(--primary-color)';
+        hint.style.fontWeight = '500';
     }
 
     // Try to use cached candidates first
@@ -3799,7 +3550,7 @@ async function setupPledgeCandidateDropdown() {
     }
 
     // Populate dropdown
-    candidateSelect.innerHTML = '<option value="">Select candidate' + (allowMultiple ? '(s)' : '') + '</option>';
+    candidateSelect.innerHTML = '<option value="">Select candidate(s)</option>';
     candidates.forEach(candidate => {
         const candidateName = candidate.name || 'Unknown';
         const candidateId = candidate.candidateId || candidate.id;
@@ -4621,6 +4372,10 @@ function handleImagePreview(input) {
     const imagePreviewImg = document.getElementById('voter-image-preview-img');
     const uploadArea = document.getElementById('voter-image-upload-area');
     
+    // Check if we're in edit mode
+    const form = document.getElementById('modal-form');
+    const isEditMode = form && form.dataset.editVoterId;
+    
     if (file && imagePreview && imagePreviewImg) {
         // Validate file size (5MB max)
         if (file.size > 5 * 1024 * 1024) {
@@ -4644,8 +4399,21 @@ function handleImagePreview(input) {
         reader.onload = (event) => {
             imagePreviewImg.src = event.target.result;
             imagePreview.style.display = 'block';
+            // In edit mode, keep upload area visible so user can change image again
             if (uploadArea) {
-                uploadArea.style.display = 'none';
+                if (isEditMode) {
+                    uploadArea.style.display = 'block';
+                    // Update text to indicate user can change image
+                    const uploadTexts = uploadArea.querySelectorAll('p');
+                    if (uploadTexts.length > 0) {
+                        uploadTexts[0].textContent = 'Change voter photo';
+                        if (uploadTexts.length > 1) {
+                            uploadTexts[1].textContent = 'Click to browse or drag and drop a new image';
+                        }
+                    }
+                } else {
+                    uploadArea.style.display = 'none';
+                }
             }
         };
         reader.readAsDataURL(file);
@@ -4669,6 +4437,14 @@ function removeImagePreview() {
     }
     if (uploadArea) {
         uploadArea.style.display = 'block';
+        // Reset upload area text
+        const uploadTexts = uploadArea.querySelectorAll('p');
+        if (uploadTexts.length > 0) {
+            uploadTexts[0].textContent = 'Upload voter photo';
+            if (uploadTexts.length > 1) {
+                uploadTexts[1].textContent = 'Click to browse or drag and drop';
+            }
+        }
     }
 }
 
