@@ -73,7 +73,7 @@ const pageTemplates = {
                             <p>Change your account password</p>
                         </div>
                         <div class="setting-value">
-                            <button class="icon-btn-sm">Change Password</button>
+                            <button class="icon-btn-sm" id="settings-change-password-btn" onclick="openPasswordChangeModal()">Change Password</button>
                         </div>
                     </div>
                 </div>
@@ -89,7 +89,7 @@ const pageTemplates = {
                         </div>
                         <div class="setting-value">
                             <label class="toggle-switch">
-                                <input type="checkbox" id="email-notifications-toggle" checked>
+                                <input type="checkbox" id="email-notifications-toggle">
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -101,7 +101,7 @@ const pageTemplates = {
                         </div>
                         <div class="setting-value">
                             <label class="toggle-switch">
-                                <input type="checkbox" id="push-notifications-toggle" checked>
+                                <input type="checkbox" id="push-notifications-toggle">
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -140,7 +140,7 @@ const pageTemplates = {
                         </div>
                         <div class="setting-value">
                             <label class="toggle-switch">
-                                <input type="checkbox" id="show-voter-images-toggle" checked>
+                                <input type="checkbox" id="show-voter-images-toggle">
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -6575,10 +6575,38 @@ function showEventsForDate(date) {
         const description = event.description || '';
         const expectedAttendees = event.expectedAttendees || 0;
 
-        eventsHTML += `<div class="event-detail-card" onclick="viewEventInDetail('${event.id}')">`;
-        eventsHTML += `<div class="event-detail-header">`;
+        eventsHTML += `<div class="event-detail-card">`;
+        eventsHTML += `<div class="event-detail-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">`;
+        eventsHTML += `<div style="flex: 1;">`;
         eventsHTML += `<div class="event-detail-title">${eventName}</div>`;
-        eventsHTML += `<span class="event-type-badge" style="background-color: ${eventColor}20; color: ${eventColor}; border: 1px solid ${eventColor};">${eventLabel}</span>`;
+        eventsHTML += `<span class="event-type-badge" style="background-color: ${eventColor}20; color: ${eventColor}; border: 1px solid ${eventColor}; margin-top: 4px; display: inline-block;">${eventLabel}</span>`;
+        eventsHTML += `</div>`;
+        eventsHTML += `<div style="display: flex; gap: 8px; flex-shrink: 0;">`;
+        eventsHTML += `<button
+            type="button"
+            title="Edit Event"
+            onclick="event.stopPropagation(); if (window.openModal) window.openModal('event', '${event.id}');"
+            style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: linear-gradient(135deg, #6fc1da 0%, #8dd4e8 100%); color: white; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(111, 193, 218, 0.3);"
+            onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(111, 193, 218, 0.4)'"
+            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(111, 193, 218, 0.3)'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+        </button>`;
+        eventsHTML += `<button
+            type="button"
+            title="Delete Event"
+            onclick="event.stopPropagation(); if (window.deleteEvent) window.deleteEvent('${event.id}');"
+            style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: #dc2626; color: white; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);"
+            onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 4px 12px rgba(220, 38, 38, 0.4)'"
+            onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 2px 8px rgba(220, 38, 38, 0.3)'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+        </button>`;
+        eventsHTML += `</div>`;
         eventsHTML += `</div>`;
 
         if (startTime || endTime) {
@@ -6613,13 +6641,16 @@ function showEventsForDate(date) {
     detailContent.innerHTML = eventsHTML;
 }
 
-// View event in detail (opens modal)
+// View event in detail (opens edit modal)
 function viewEventInDetail(eventId) {
-    // This will open the event edit modal
-    if (window.openModal && window.editEvent) {
-        window.editEvent(eventId);
+    // Open the event edit modal with the event ID
+    if (window.openModal) {
+        window.openModal('event', eventId);
     }
 }
+
+// Make function globally available
+window.viewEventInDetail = viewEventInDetail;
 
 // Navigate calendar month
 function navigateCalendarMonth(direction) {
@@ -10526,6 +10557,33 @@ async function loadShowVoterImagesSetting() {
     }
 }
 
+// Load Zero Day toggle setting from Firestore
+async function loadZeroDayToggle() {
+    if (!window.db || !window.userEmail) {
+        return false; // Default to false
+    }
+
+    try {
+        const {
+            getDoc,
+            doc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        const userRef = doc(window.db, 'users', window.userEmail);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            return userData.zeroDayEnabled === true; // Return true only if explicitly true
+        }
+
+        return false; // Default to false if not set
+    } catch (error) {
+        console.error('Error loading Zero Day toggle setting:', error);
+        return false; // Default to false on error
+    }
+}
+
 // Save show voter images setting to Firebase
 async function saveShowVoterImagesSetting(enabled) {
     if (!window.db || !window.userEmail) {
@@ -14367,10 +14425,13 @@ function updateSettingsFields(data) {
         emailEl.textContent = data.email;
     }
 
-    // Update Zero Day toggle
-    if (zeroDayToggle) {
+    // Update Zero Day toggle - only if data.zeroDayEnabled is explicitly set
+    // Don't override if initializeSettingsToggles has already loaded it from Firestore
+    if (zeroDayToggle && data.zeroDayEnabled !== undefined) {
         zeroDayToggle.checked = data.zeroDayEnabled === true;
-        updateZeroDayMenuVisibility(data.zeroDayEnabled === true);
+        if (typeof updateZeroDayMenuVisibility === 'function') {
+            updateZeroDayMenuVisibility(data.zeroDayEnabled === true);
+        }
     }
 }
 
@@ -19992,8 +20053,16 @@ async function deleteEvent(eventId) {
 
         const eventData = eventSnap.data();
 
-        // Verify the event belongs to the current user
-        if (eventData.campaignEmail !== window.userEmail) {
+        // Verify the event belongs to the current user or island user's island
+        let hasPermission = false;
+        if (eventData.campaignEmail === window.userEmail) {
+            hasPermission = true;
+        } else if (window.isIslandUser && window.islandUserData && window.islandUserData.island && eventData.island === window.islandUserData.island) {
+            // Island users can delete events in their island
+            hasPermission = true;
+        }
+
+        if (!hasPermission) {
             if (window.showErrorDialog) {
                 window.showErrorDialog('You do not have permission to delete this event.', 'Access Denied');
             }
@@ -23796,10 +23865,12 @@ function initializeSettingsToggles() {
     // Initialize email notifications toggle
     const emailNotificationsToggle = document.getElementById('email-notifications-toggle');
     if (emailNotificationsToggle) {
-        // Load saved state from localStorage
+        // Load saved state from localStorage, default to true if not set
         const savedState = localStorage.getItem('emailNotificationsEnabled');
-        if (savedState !== null) {
-            emailNotificationsToggle.checked = savedState === 'true';
+        emailNotificationsToggle.checked = savedState !== null ? savedState === 'true' : true;
+        // Save default if not set
+        if (savedState === null) {
+            localStorage.setItem('emailNotificationsEnabled', 'true');
         }
 
         // Remove existing listeners to avoid duplicates
@@ -23818,10 +23889,12 @@ function initializeSettingsToggles() {
     // Initialize push notifications toggle
     const pushNotificationsToggle = document.getElementById('push-notifications-toggle');
     if (pushNotificationsToggle) {
-        // Load saved state from localStorage
+        // Load saved state from localStorage, default to true if not set
         const savedState = localStorage.getItem('pushNotificationsEnabled');
-        if (savedState !== null) {
-            pushNotificationsToggle.checked = savedState === 'true';
+        pushNotificationsToggle.checked = savedState !== null ? savedState === 'true' : true;
+        // Save default if not set
+        if (savedState === null) {
+            localStorage.setItem('pushNotificationsEnabled', 'true');
         }
 
         // Remove existing listeners to avoid duplicates
@@ -23963,12 +24036,202 @@ async function checkAndShowManageUsersTab() {
     }
 }
 
+// Open password change modal
+async function openPasswordChangeModal() {
+    if (!window.db || !window.userEmail) {
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Database not initialized. Please refresh the page.', 'Error');
+        }
+        return;
+    }
+
+    const modalOverlay = window.ensureModalExists ? window.ensureModalExists() : null;
+    if (!modalOverlay) {
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Modal system not available.', 'Error');
+        }
+        return;
+    }
+
+    const modalBody = document.getElementById('modal-body');
+    const modalTitle = document.getElementById('modal-title');
+
+    if (!modalBody || !modalTitle) return;
+
+    modalTitle.textContent = 'Change Password';
+
+    modalBody.innerHTML = `
+        <form id="settings-password-change-form" style="display: flex; flex-direction: column; gap: 20px;">
+            <div>
+                <label style="display: block; font-size: 14px; font-weight: 600; color: var(--text-color); margin-bottom: 8px;">
+                    Current Password <span style="color: var(--danger-color);">*</span>
+                </label>
+                <input 
+                    type="password" 
+                    id="settings-current-password" 
+                    required 
+                    minlength="6"
+                    placeholder="Enter your current password"
+                    style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 14px; transition: border-color 0.2s;"
+                    onfocus="this.style.borderColor='var(--primary-color)'"
+                    onblur="this.style.borderColor='var(--border-color)'"
+                >
+            </div>
+            <div>
+                <label style="display: block; font-size: 14px; font-weight: 600; color: var(--text-color); margin-bottom: 8px;">
+                    New Password <span style="color: var(--danger-color);">*</span>
+                </label>
+                <input 
+                    type="password" 
+                    id="settings-new-password" 
+                    required 
+                    minlength="6"
+                    placeholder="Enter new password (min 6 characters)"
+                    style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 14px; transition: border-color 0.2s;"
+                    onfocus="this.style.borderColor='var(--primary-color)'"
+                    onblur="this.style.borderColor='var(--border-color)'"
+                >
+            </div>
+            <div>
+                <label style="display: block; font-size: 14px; font-weight: 600; color: var(--text-color); margin-bottom: 8px;">
+                    Confirm New Password <span style="color: var(--danger-color);">*</span>
+                </label>
+                <input 
+                    type="password" 
+                    id="settings-confirm-password" 
+                    required 
+                    minlength="6"
+                    placeholder="Confirm new password"
+                    style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 14px; transition: border-color 0.2s;"
+                    onfocus="this.style.borderColor='var(--primary-color)'"
+                    onblur="this.style.borderColor='var(--border-color)'"
+                >
+            </div>
+            <div id="settings-password-error" style="color: var(--danger-color); font-size: 13px; display: none;"></div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px;">
+                <button type="button" class="btn-secondary btn-compact" onclick="closeModal()" style="padding: 10px 20px;">Cancel</button>
+                <button type="submit" class="btn-primary btn-compact" style="padding: 10px 20px;">Change Password</button>
+            </div>
+        </form>
+    `;
+
+    // Add form submit handler
+    const form = document.getElementById('settings-password-change-form');
+    if (form) {
+        form.addEventListener('submit', handleSettingsPasswordChange);
+    }
+
+    modalOverlay.style.display = 'flex';
+    setTimeout(() => modalOverlay.classList.add('active'), 10);
+}
+
+// Handle password change from settings
+async function handleSettingsPasswordChange(e) {
+    e.preventDefault();
+
+    const errorDiv = document.getElementById('settings-password-error');
+    const currentPassword = document.getElementById('settings-current-password').value;
+    const newPassword = document.getElementById('settings-new-password').value;
+    const confirmPassword = document.getElementById('settings-confirm-password').value;
+
+    // Clear previous errors
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+    }
+
+    // Validation
+    if (!currentPassword) {
+        if (errorDiv) {
+            errorDiv.textContent = 'Current password is required';
+            errorDiv.style.display = 'block';
+        }
+        return;
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+        if (errorDiv) {
+            errorDiv.textContent = 'New password must be at least 6 characters';
+            errorDiv.style.display = 'block';
+        }
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        if (errorDiv) {
+            errorDiv.textContent = 'New passwords do not match';
+            errorDiv.style.display = 'block';
+        }
+        return;
+    }
+
+    if (currentPassword === newPassword) {
+        if (errorDiv) {
+            errorDiv.textContent = 'New password must be different from current password';
+            errorDiv.style.display = 'block';
+        }
+        return;
+    }
+
+    try {
+        const { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePassword } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) {
+            if (errorDiv) {
+                errorDiv.textContent = 'User not authenticated. Please refresh the page.';
+                errorDiv.style.display = 'block';
+            }
+            return;
+        }
+
+        // Reauthenticate with current password
+        const credential = EmailAuthProvider.credential(user.email, currentPassword);
+        await reauthenticateWithCredential(user, credential);
+
+        // Update password
+        await updatePassword(user, newPassword);
+
+        // Show success message
+        if (window.showSuccessMessage) {
+            window.showSuccessMessage('Password changed successfully!', 'Password Updated');
+        } else if (window.showSuccess) {
+            window.showSuccess('Password changed successfully!', 'Success');
+        }
+
+        // Close modal and reset form
+        if (window.closeModal) {
+            window.closeModal();
+        }
+    } catch (error) {
+        console.error('Password change error:', error);
+        let errorMessage = 'Failed to change password. ';
+        
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            errorMessage += 'Current password is incorrect.';
+        } else if (error.code === 'auth/weak-password') {
+            errorMessage += 'Password is too weak.';
+        } else if (error.code === 'auth/requires-recent-login') {
+            errorMessage += 'Please log out and log back in, then try again.';
+        } else {
+            errorMessage += error.message || 'Please try again.';
+        }
+
+        if (errorDiv) {
+            errorDiv.textContent = errorMessage;
+            errorDiv.style.display = 'block';
+        }
+    }
+}
+
 window.initializeSettingsPage = initializeSettingsPage;
 window.setupSettingsTabs = setupSettingsTabs;
 window.checkAndShowManageUsersTab = checkAndShowManageUsersTab;
 window.populateCampaignInformation = populateCampaignInformation;
 window.populateAccountSettings = populateAccountSettings;
 window.initializeSettingsToggles = initializeSettingsToggles;
+window.openPasswordChangeModal = openPasswordChangeModal;
 
 // Handle transportation coordinator view (no authentication required - only temporary password)
 window.handleTransportationCoordinatorView = async (campaignEmail, token) => {

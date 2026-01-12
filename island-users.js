@@ -151,13 +151,45 @@ function openIslandUserModal(userId = null) {
     if (window.openModal) {
         window.openModal('island-user', userId);
         
-        // Setup island dropdown
+        // Setup island dropdown - use longer timeout to ensure it runs after any other initialization
         setTimeout(() => {
             setupIslandUserIslandDropdown();
+            
+            // Multiple aggressive checks to ensure field stays enabled
+            const enableIslandField = () => {
+                const islandSelect = document.getElementById('island-user-island');
+                if (islandSelect) {
+                    islandSelect.disabled = false;
+                    islandSelect.removeAttribute('disabled');
+                    islandSelect.removeAttribute('readonly');
+                    islandSelect.style.cursor = 'pointer';
+                    islandSelect.style.opacity = '1';
+                    islandSelect.style.pointerEvents = 'auto';
+                    islandSelect.setAttribute('aria-disabled', 'false');
+                    islandSelect.title = '';
+                }
+            };
+            
+            // Check immediately
+            enableIslandField();
+            
+            // Check after 50ms
+            setTimeout(enableIslandField, 50);
+            
+            // Check after 100ms
+            setTimeout(enableIslandField, 100);
+            
+            // Check after 200ms (in case of very slow scripts)
+            setTimeout(enableIslandField, 200);
+            
+            // Check after 500ms (catch any late-running scripts)
+            setTimeout(enableIslandField, 500);
             
             // If editing, populate form (this will hide password field)
             if (userId) {
                 populateIslandUserEditForm(userId);
+                // Re-enable after form population
+                setTimeout(enableIslandField, 150);
             } else {
                 // When creating, ensure password field is visible
                 const passwordGroup = document.getElementById('island-user-password-group');
@@ -180,7 +212,18 @@ function setupIslandUserIslandDropdown() {
     if (!islandSelect) return;
 
     const constituency = window.campaignData && window.campaignData.constituency ? window.campaignData.constituency : '';
-    if (constituency && window.maldivesData && window.maldivesData.constituencyIslands && window.maldivesData.constituencyIslands[constituency]) {
+    
+    // For island users, show only their designated island
+    if (window.isIslandUser && window.islandUserData && window.islandUserData.island) {
+        const designatedIsland = window.islandUserData.island;
+        islandSelect.innerHTML = '<option value="">Select island</option>';
+        const option = document.createElement('option');
+        option.value = designatedIsland;
+        option.textContent = designatedIsland;
+        option.selected = true; // Pre-select the designated island
+        islandSelect.appendChild(option);
+    } else if (constituency && window.maldivesData && window.maldivesData.constituencyIslands && window.maldivesData.constituencyIslands[constituency]) {
+        // For campaign managers, show all islands in the constituency
         const islands = window.maldivesData.constituencyIslands[constituency];
         islandSelect.innerHTML = '<option value="">Select island</option>';
         islands.sort().forEach(island => {
@@ -191,6 +234,65 @@ function setupIslandUserIslandDropdown() {
         });
     } else {
         islandSelect.innerHTML = '<option value="">Select island</option>';
+    }
+    
+    // AGGRESSIVELY ENSURE FIELD IS ALWAYS ENABLED - NO EXCEPTIONS
+    // Force enable the field immediately and remove all possible disabling mechanisms
+    islandSelect.disabled = false;
+    islandSelect.removeAttribute('disabled');
+    islandSelect.removeAttribute('readonly');
+    islandSelect.style.cursor = 'pointer';
+    islandSelect.style.opacity = '1';
+    islandSelect.style.pointerEvents = 'auto';
+    islandSelect.title = '';
+    islandSelect.setAttribute('aria-disabled', 'false');
+    
+    // Setup MutationObserver to watch for any disabled attribute changes and immediately revert them
+    // This aggressively prevents any code from disabling this field
+    if (!islandSelect._disableWatcher) {
+        islandSelect._disableWatcher = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && (mutation.attributeName === 'disabled' || mutation.attributeName === 'readonly')) {
+                    if (islandSelect.hasAttribute('disabled') || islandSelect.disabled) {
+                        console.log('[Island User Modal] Detected disabled attribute change, re-enabling island-user-island field');
+                        islandSelect.disabled = false;
+                        islandSelect.removeAttribute('disabled');
+                        islandSelect.removeAttribute('readonly');
+                        islandSelect.style.cursor = 'pointer';
+                        islandSelect.style.opacity = '1';
+                        islandSelect.style.pointerEvents = 'auto';
+                        islandSelect.setAttribute('aria-disabled', 'false');
+                    }
+                }
+            });
+        });
+        islandSelect._disableWatcher.observe(islandSelect, {
+            attributes: true,
+            attributeFilter: ['disabled', 'readonly', 'style'],
+            attributeOldValue: true
+        });
+    }
+    
+    // Also set up a periodic check as a backup (runs every 100ms for 2 seconds)
+    if (!islandSelect._enableInterval) {
+        let checkCount = 0;
+        const maxChecks = 20; // 2 seconds at 100ms intervals
+        islandSelect._enableInterval = setInterval(() => {
+            if (islandSelect.disabled || islandSelect.hasAttribute('disabled')) {
+                console.log('[Island User Modal] Periodic check detected disabled field, re-enabling');
+                islandSelect.disabled = false;
+                islandSelect.removeAttribute('disabled');
+                islandSelect.removeAttribute('readonly');
+                islandSelect.style.cursor = 'pointer';
+                islandSelect.style.opacity = '1';
+                islandSelect.style.pointerEvents = 'auto';
+            }
+            checkCount++;
+            if (checkCount >= maxChecks) {
+                clearInterval(islandSelect._enableInterval);
+                islandSelect._enableInterval = null;
+            }
+        }, 100);
     }
 }
 
@@ -266,7 +368,26 @@ async function populateIslandUserEditForm(userId) {
                 if (islandField && data.island) {
                     islandField.value = data.island;
                 }
+                // AGGRESSIVELY ENSURE FIELD STAYS ENABLED AFTER SETTING VALUE
+                islandField.disabled = false;
+                islandField.removeAttribute('disabled');
+                islandField.removeAttribute('readonly');
+                islandField.style.cursor = 'pointer';
+                islandField.style.opacity = '1';
+                islandField.style.pointerEvents = 'auto';
+                islandField.setAttribute('aria-disabled', 'false');
             }, 100);
+            // Also check after longer delay to catch any late-running scripts
+            setTimeout(() => {
+                if (islandField) {
+                    islandField.disabled = false;
+                    islandField.removeAttribute('disabled');
+                    islandField.removeAttribute('readonly');
+                    islandField.style.cursor = 'pointer';
+                    islandField.style.opacity = '1';
+                    islandField.style.pointerEvents = 'auto';
+                }
+            }, 300);
         }
     } catch (error) {
         console.error('Error loading island user for edit:', error);

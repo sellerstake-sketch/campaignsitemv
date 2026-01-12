@@ -110,7 +110,8 @@ function populateIslandSelect(selectId, constituency) {
     });
     
     // If only one island from global filter, disable and lock it
-    if (globalFilter.initialized && globalFilter.island && filteredIslands.length === 1) {
+    // EXCEPT for island-user-island and event-island fields - keep them enabled
+    if (globalFilter.initialized && globalFilter.island && filteredIslands.length === 1 && selectId !== 'island-user-island' && selectId !== 'event-island') {
         select.disabled = true;
         select.title = 'Island is locked by global filter';
     } else {
@@ -345,7 +346,10 @@ function getVoterFormTemplate() {
 
 // Event Form Template
 function getEventFormTemplate() {
-    const currentConstituency = window.campaignData && window.campaignData.constituency ? window.campaignData.constituency : '';
+    // Get constituency from campaignData (for campaign managers) or islandUserData (for island users)
+    const currentConstituency = (window.isIslandUser && window.islandUserData && window.islandUserData.constituency) 
+        ? window.islandUserData.constituency 
+        : (window.campaignData && window.campaignData.constituency ? window.campaignData.constituency : '');
     const constituencyIslands = window.maldivesData && window.maldivesData.constituencyIslands ? window.maldivesData.constituencyIslands : {};
     const currentIslands = currentConstituency && constituencyIslands[currentConstituency] ? constituencyIslands[currentConstituency] : [];
     
@@ -1254,6 +1258,10 @@ voters / $ {
                     eventDateValue = new Date(eventDate);
                 }
 
+                // Check if this is an edit operation
+                const eventForm = document.getElementById('modal-form');
+                const editEventId = eventForm && eventForm.dataset.editEventId ? eventForm.dataset.editEventId : null;
+
                 dataToSave = {
                     eventName: eventName.trim(),
                     eventDate: eventDateValue || serverTimestamp(),
@@ -1266,9 +1274,13 @@ voters / $ {
                     endTime: cleanFormValue(eventEndTime),
                     expectedAttendees: eventAttendees && eventAttendees.trim() ? parseInt(eventAttendees) : null,
                     description: cleanFormValue(eventDescription),
-                    [emailField]: window.userEmail,
-                    createdAt: serverTimestamp()
+                    [emailField]: window.userEmail
                 };
+
+                // Only add createdAt if creating new event (not editing)
+                if (!editEventId) {
+                    dataToSave.createdAt = serverTimestamp();
+                }
                 break;
 
             case 'call':
@@ -1795,6 +1807,7 @@ voters / $ {
         const editBallotId = form && form.dataset.editBallotId ? form.dataset.editBallotId : null;
         const editTransportationId = form && form.dataset.editTransportationId ? form.dataset.editTransportationId : null;
         const editCallId = form && form.dataset.editCallId ? form.dataset.editCallId : null;
+        const editEventId = form && form.dataset.editEventId ? form.dataset.editEventId : null;
         const editIslandUserId = form && form.dataset.editIslandUserId ? form.dataset.editIslandUserId : null;
 
         if (editVoterId && type === 'voter') {
@@ -2017,6 +2030,46 @@ voters / $ {
             } else if (window.loadCallsData) {
                 setTimeout(() => {
                     window.loadCallsData(true);
+                }, 500);
+            }
+        } else if (editEventId && type === 'event') {
+            // Update existing event
+            const {
+                doc,
+                getDoc,
+                updateDoc
+            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+            // Load existing event data to preserve constituency if form value is empty
+            const eventRef = doc(window.db, 'events', editEventId);
+            const eventSnap = await getDoc(eventRef);
+            const existingEventData = eventSnap.exists() ? eventSnap.data() : {};
+
+            // Preserve constituency if form value is empty/null but existing data has it
+            if ((!dataToSave.constituency || dataToSave.constituency === '') && existingEventData.constituency) {
+                dataToSave.constituency = existingEventData.constituency;
+            }
+
+            // Remove createdAt from update data (preserve original timestamp)
+            const {
+                createdAt,
+                ...updateData
+            } = dataToSave;
+
+            await updateDoc(eventRef, updateData);
+
+            // Show success message
+            if (window.showSuccess) {
+                window.showSuccess('Event updated successfully!', 'Success');
+            }
+
+            // Close modal
+            closeModal();
+
+            // Reload events data
+            if (window.loadEventsData) {
+                setTimeout(() => {
+                    window.loadEventsData(true);
                 }, 500);
             }
         } else if (editTransportationId && type === 'transportation') {
@@ -2852,6 +2905,8 @@ function openModal(type, itemId = null) {
                     freshForm.dataset.editTransportationId = itemId;
                 } else if (type === 'call') {
                     freshForm.dataset.editCallId = itemId;
+                } else if (type === 'event') {
+                    freshForm.dataset.editEventId = itemId;
                 } else if (type === 'island-user') {
                     freshForm.dataset.editIslandUserId = itemId;
                 }
@@ -2902,7 +2957,10 @@ function openModal(type, itemId = null) {
         }
 
         // Populate island selects for all forms that need them (DOM-based, safe)
-        const constituency = window.campaignData?.constituency || '';
+        // Get constituency from campaignData (for campaign managers) or islandUserData (for island users)
+        const constituency = (window.isIslandUser && window.islandUserData && window.islandUserData.constituency) 
+            ? window.islandUserData.constituency 
+            : (window.campaignData?.constituency || '');
             setTimeout(() => {
             if (type === 'candidate') {
                 populateIslandSelect('candidate-island', constituency);
@@ -2916,7 +2974,9 @@ function openModal(type, itemId = null) {
                 populateIslandSelect('transport-island-sb', constituency);
                 populateIslandSelect('transport-island-taxi', constituency);
             } else if (type === 'island-user') {
-                populateIslandSelect('island-user-island', constituency);
+                // Don't call populateIslandSelect for island-user type
+                // setupIslandUserIslandDropdown() will handle it in openIslandUserModal()
+                // This prevents the field from being disabled for island users
             }
         }, 50);
 
@@ -3031,13 +3091,19 @@ function openModal(type, itemId = null) {
         // Set default date/time for event and call forms
         if (type === 'event') {
             setTimeout(() => {
-                const dateInput = document.getElementById('event-date');
-                if (dateInput) {
-                    const tomorrow = new Date();
-                    tomorrow.setDate(tomorrow.getDate() + 1);
-                    dateInput.value = tomorrow.toISOString().split('T')[0];
+                // If editing, populate form with existing event data
+                if (itemId) {
+                    populateEventEditForm(itemId);
+                } else {
+                    // Only set default date when creating new event
+                    const dateInput = document.getElementById('event-date');
+                    if (dateInput) {
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        dateInput.value = tomorrow.toISOString().split('T')[0];
+                    }
                 }
-            }, 100);
+            }, 150);
         }
 
         if (type === 'call') {
@@ -3460,6 +3526,138 @@ async function populateCallEditForm(callId) {
         console.log('[populateCallEditForm] Form populated successfully');
     } catch (error) {
         console.error('[populateCallEditForm] Error populating form:', error);
+    }
+}
+
+// Populate event edit form with existing data
+async function populateEventEditForm(eventId) {
+    if (!window.db || !window.userEmail || !eventId) {
+        console.warn('[populateEventEditForm] Missing required parameters');
+        return;
+    }
+
+    try {
+        const {
+            doc,
+            getDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const eventRef = doc(window.db, 'events', eventId);
+        const eventSnap = await getDoc(eventRef);
+
+        if (!eventSnap.exists()) {
+            console.warn('[populateEventEditForm] Event not found:', eventId);
+            return;
+        }
+
+        const eventData = eventSnap.data();
+
+        // Check permission - allow if campaignEmail matches OR if island user and island matches
+        let hasPermission = false;
+        if (eventData.campaignEmail === window.userEmail) {
+            hasPermission = true;
+        } else if (window.isIslandUser && window.islandUserData && window.islandUserData.island && eventData.island === window.islandUserData.island) {
+            // Island users can edit events in their island
+            hasPermission = true;
+        }
+
+        if (!hasPermission) {
+            console.warn('[populateEventEditForm] Permission denied');
+            if (window.showErrorDialog) {
+                window.showErrorDialog('You do not have permission to edit this event.', 'Access Denied');
+            }
+            closeModal();
+            return;
+        }
+
+        // Update modal title
+        const modalTitle = document.getElementById('modal-title');
+        if (modalTitle) {
+            modalTitle.textContent = 'Edit Event';
+        }
+
+        // Update submit button text
+        const submitButton = document.querySelector('#modal-form button[type="submit"]');
+        if (submitButton) {
+            submitButton.textContent = 'Update Event';
+        }
+
+        // Populate form fields
+        const eventNameInput = document.getElementById('event-name');
+        const eventDateInput = document.getElementById('event-date');
+        const eventTypeSelect = document.getElementById('event-type');
+        const eventConstituencyInput = document.getElementById('event-constituency');
+        const eventIslandSelect = document.getElementById('event-island');
+        const eventVenueInput = document.getElementById('event-venue');
+        const eventLocationInput = document.getElementById('event-location');
+        const eventStartTimeInput = document.getElementById('event-start-time');
+        const eventEndTimeInput = document.getElementById('event-end-time');
+        const eventAttendeesInput = document.getElementById('event-attendees');
+        const eventDescriptionTextarea = document.getElementById('event-description');
+
+        if (eventNameInput) eventNameInput.value = eventData.eventName || '';
+        if (eventTypeSelect) eventTypeSelect.value = eventData.eventType || '';
+        // Preserve constituency from existing data - don't override with campaign data when editing
+        if (eventConstituencyInput) {
+            eventConstituencyInput.value = eventData.constituency || '';
+        }
+        if (eventVenueInput) eventVenueInput.value = eventData.venue || '';
+        if (eventLocationInput) eventLocationInput.value = eventData.location || '';
+        if (eventStartTimeInput) eventStartTimeInput.value = eventData.startTime || '';
+        if (eventEndTimeInput) eventEndTimeInput.value = eventData.endTime || '';
+        if (eventAttendeesInput) eventAttendeesInput.value = eventData.expectedAttendees || '';
+        if (eventDescriptionTextarea) eventDescriptionTextarea.value = eventData.description || '';
+
+        // Handle event date (convert from Firestore timestamp to date string)
+        if (eventDateInput && eventData.eventDate) {
+            let eventDate;
+            if (eventData.eventDate.toDate) {
+                eventDate = eventData.eventDate.toDate();
+            } else if (eventData.eventDate instanceof Date) {
+                eventDate = eventData.eventDate;
+            } else {
+                eventDate = new Date(eventData.eventDate);
+            }
+            const dateStr = eventDate.toISOString().split('T')[0];
+            eventDateInput.value = dateStr;
+        }
+
+        // Handle island select (populate dropdown first, then set value)
+        if (eventIslandSelect && eventData.island) {
+            // Island dropdown is populated in openModal, but we need to ensure it's populated before setting value
+            // Get constituency from eventData for populating dropdown
+            const eventConstituency = eventData.constituency || 
+                ((window.isIslandUser && window.islandUserData && window.islandUserData.constituency) 
+                    ? window.islandUserData.constituency 
+                    : (window.campaignData?.constituency || ''));
+            
+            // Re-populate island dropdown with correct constituency to ensure options are available
+            if (eventConstituency && window.maldivesData && window.maldivesData.constituencyIslands) {
+                populateIslandSelect('event-island', eventConstituency);
+                // Explicitly ensure the select is enabled (populateIslandSelect may disable it in some cases)
+                setTimeout(() => {
+                    const islandSelect = document.getElementById('event-island');
+                    if (islandSelect) {
+                        islandSelect.disabled = false;
+                    }
+                }, 10);
+            }
+            
+            // Set the value after dropdown is populated
+            setTimeout(() => {
+                const islandSelect = document.getElementById('event-island');
+                if (islandSelect) {
+                    islandSelect.disabled = false; // Ensure it's enabled before setting value
+                    islandSelect.value = eventData.island;
+                }
+            }, 150);
+        }
+
+        console.log('[populateEventEditForm] Form populated successfully');
+    } catch (error) {
+        console.error('[populateEventEditForm] Error populating form:', error);
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Failed to load event data. Please try again.', 'Error');
+        }
     }
 }
 
