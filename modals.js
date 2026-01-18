@@ -1017,23 +1017,41 @@ CAND - $ {
 
                 if (imageFile) {
                     try {
+                        console.log('[Voter Form] Starting image upload...', {
+                            fileName: imageFile.name,
+                            fileSize: imageFile.size,
+                            fileType: imageFile.type,
+                            userEmail: window.userEmail
+                        });
+                        
                         const {
                             getStorage,
                             ref,
                             uploadBytes,
                             getDownloadURL
                         } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js');
-                        const storage = getStorage();
-                        const imageRef = ref(storage, `
-voters / $ {
-    window.userEmail
-}
-/${Date.now()}_${imageFile.name}`);
+                        
+                        // Use global storage instance if available, otherwise get default
+                        const storage = window.storage || getStorage();
+                        const imageFileName = `${Date.now()}_${imageFile.name}`;
+                        const imagePath = `voters/${window.userEmail}/${imageFileName}`;
+                        console.log('[Voter Form] Uploading to path:', imagePath);
+                        console.log('[Voter Form] Storage instance:', storage);
+                        console.log('[Voter Form] User email:', window.userEmail);
+                        
+                        const imageRef = ref(storage, imagePath);
                         await uploadBytes(imageRef, imageFile);
+                        console.log('[Voter Form] Image uploaded successfully, getting download URL...');
+                        
                         imageUrl = await getDownloadURL(imageRef);
+                        console.log('[Voter Form] Image upload complete, URL:', imageUrl);
                     } catch (uploadError) {
-                        console.warn('Image upload failed:', uploadError);
+                        console.error('[Voter Form] Image upload failed:', uploadError);
+                        if (window.showErrorDialog) {
+                            window.showErrorDialog(`Failed to upload image: ${uploadError.message || uploadError}. The voter will be saved without an image.`, 'Image Upload Error');
+                        }
                         // Continue without image if upload fails
+                        imageUrl = '';
                     }
                 } else if (editVoterId) {
                     // If editing and no new image, preserve existing image
@@ -1199,6 +1217,7 @@ voters / $ {
 
                 // Debug logging
                 console.log('[handleFormSubmit] Voter data to save:', dataToSave);
+                console.log('[handleFormSubmit] Image URL:', imageUrl);
                 console.log('[handleFormSubmit] Form values:', {
                     idNumber: formData.get('voter-id-number'),
                     name: formData.get('voter-name'),
@@ -1207,7 +1226,8 @@ voters / $ {
                     gender: formData.get('voter-gender'),
                     island: formData.get('voter-island'),
                     ballot: formData.get('voter-ballot'),
-                    number: formData.get('voter-number')
+                    number: formData.get('voter-number'),
+                    hasImageFile: !!(imageInput && imageInput.files && imageInput.files[0])
                 });
                 break;
 

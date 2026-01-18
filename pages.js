@@ -13189,6 +13189,65 @@ window.generateBallotLink = async (ballotId, ballotNumber) => {
 
         const ballotData = ballotSnap.data();
 
+        // Get agent name from ballot's voters
+        let agentName = 'N/A';
+        try {
+            const {
+                collection,
+                query,
+                where,
+                getDocs
+            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+            
+            // Get voters assigned to this ballot
+            const ballotNum = ballotNumber || ballotData.ballotNumber;
+            if (ballotNum) {
+                const votersQuery = query(
+                    collection(window.db, 'voters'),
+                    where('ballot', '==', ballotNum),
+                    where('email', '==', ballotData.email || window.userEmail)
+                );
+                const votersSnapshot = await getDocs(votersQuery);
+                
+                // Build agent map
+                const agentsMap = {};
+                const agentCounts = {};
+                
+                // Fetch agents
+                try {
+                    const agentsQuery = query(
+                        collection(window.db, 'agents'),
+                        where('email', '==', ballotData.email || window.userEmail)
+                    );
+                    const agentsSnapshot = await getDocs(agentsQuery);
+                    agentsSnapshot.docs.forEach(doc => {
+                        const agentData = doc.data();
+                        agentsMap[agentData.agentId || doc.id] = agentData.name || 'N/A';
+                    });
+                } catch (agentError) {
+                    console.warn('Could not fetch agents:', agentError);
+                }
+                
+                // Count agents from voters
+                votersSnapshot.docs.forEach(doc => {
+                    const voterData = doc.data();
+                    const agentId = voterData.agentId || voterData.assignedAgent || null;
+                    if (agentId && agentsMap[agentId]) {
+                        agentCounts[agentsMap[agentId]] = (agentCounts[agentsMap[agentId]] || 0) + 1;
+                    }
+                });
+                
+                // Get most common agent
+                if (Object.keys(agentCounts).length > 0) {
+                    agentName = Object.keys(agentCounts).reduce((a, b) => 
+                        agentCounts[a] > agentCounts[b] ? a : b
+                    );
+                }
+            }
+        } catch (agentError) {
+            console.warn('Could not fetch agent name:', agentError);
+        }
+
         // Generate unique token for the ballot link
         const token = 'ballot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
@@ -13207,7 +13266,7 @@ window.generateBallotLink = async (ballotId, ballotNumber) => {
         const shareLink = `${baseUrl}?ballot=${ballotId}&token=${token}`;
 
         // Show modal with shareable link and password
-        showBallotLinkModal(ballotNumber || ballotData.ballotNumber || 'N/A', shareLink, tempPassword);
+        showBallotLinkModal(ballotNumber || ballotData.ballotNumber || 'N/A', shareLink, tempPassword, agentName);
     } catch (error) {
         console.error('Error generating ballot link:', error);
         if (window.showErrorDialog) {
@@ -13217,7 +13276,7 @@ window.generateBallotLink = async (ballotId, ballotNumber) => {
 };
 
 // Show modal with shareable link
-function showBallotLinkModal(ballotNumber, shareLink, tempPassword) {
+function showBallotLinkModal(ballotNumber, shareLink, tempPassword, agentName = 'N/A') {
     const modalOverlay = document.getElementById('modal-overlay') || createModalOverlay();
     const modalBody = document.getElementById('modal-body');
     const modalTitle = document.getElementById('modal-title');
@@ -13229,6 +13288,13 @@ function showBallotLinkModal(ballotNumber, shareLink, tempPassword) {
     modalBody.innerHTML = `
         <div style="margin-bottom: 20px;">
             <p style="color: var(--text-light); margin-bottom: 12px;">Share this link and password with voting center officers to allow them to view and manage the ballot list:</p>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-color);">Agent Name:</label>
+                <div style="padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--light-color); font-size: 14px; font-weight: 500; color: var(--text-color);">
+                    ${agentName}
+                </div>
+            </div>
             
             <div style="margin-bottom: 20px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-color);">Shareable Link:</label>
@@ -15442,34 +15508,48 @@ async function saveVoterFromDetail() {
         if (currentLocationInput && currentLocationInput.value) updateData.currentLocation = currentLocationInput.value.trim();
         if (phoneInput && phoneInput.value) updateData.number = phoneInput.value.trim();
 
-        // Handle image upload if a new image was selected
-        const imageInput = document.getElementById('voter-detail-image-input');
-        if (imageInput && imageInput.files && imageInput.files[0]) {
-            try {
-                const {
-                    getStorage,
-                    ref,
-                    uploadBytes,
-                    getDownloadURL
-                } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js');
-                
-                const storage = getStorage();
-                const imageFile = imageInput.files[0];
-                const imageFileName = `${voterId}_${Date.now()}_${imageFile.name}`;
-                const imageRef = ref(storage, `voters/${window.userEmail}/${imageFileName}`);
-                
-                await uploadBytes(imageRef, imageFile);
-                const imageUrl = await getDownloadURL(imageRef);
-                updateData.imageUrl = imageUrl;
-                updateData.image = imageUrl; // Keep for backward compatibility
-            } catch (imageError) {
-                console.error('Error uploading image:', imageError);
-                if (window.showErrorDialog) {
-                    window.showErrorDialog('Failed to upload image. Please try again.', 'Error');
-                }
-                // Continue with save even if image upload fails
-            }
-        }
+                    // Handle image upload if a new image was selected
+                    const imageInput = document.getElementById('voter-detail-image-input');
+                    if (imageInput && imageInput.files && imageInput.files[0]) {
+                        try {
+                            console.log('[Voter Detail] Starting image upload...', {
+                                fileName: imageInput.files[0].name,
+                                fileSize: imageInput.files[0].size,
+                                fileType: imageInput.files[0].type,
+                                userEmail: window.userEmail
+                            });
+                            
+                            const {
+                                getStorage,
+                                ref,
+                                uploadBytes,
+                                getDownloadURL
+                            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js');
+                            
+                            // Use global storage instance if available, otherwise get default
+                            const storage = window.storage || getStorage();
+                            const imageFile = imageInput.files[0];
+                            const imageFileName = `${voterId}_${Date.now()}_${imageFile.name}`;
+                            const imagePath = `voters/${window.userEmail}/${imageFileName}`;
+                            console.log('[Voter Detail] Uploading to path:', imagePath);
+                            
+                            const imageRef = ref(storage, imagePath);
+                            await uploadBytes(imageRef, imageFile);
+                            console.log('[Voter Detail] Image uploaded successfully, getting download URL...');
+                            
+                            const imageUrl = await getDownloadURL(imageRef);
+                            console.log('[Voter Detail] Image upload complete, URL:', imageUrl);
+                            
+                            updateData.imageUrl = imageUrl;
+                            updateData.image = imageUrl; // Keep for backward compatibility
+                        } catch (imageError) {
+                            console.error('[Voter Detail] Error uploading image:', imageError);
+                            if (window.showErrorDialog) {
+                                window.showErrorDialog(`Failed to upload image: ${imageError.message || imageError}. The voter will be saved without the new image.`, 'Image Upload Error');
+                            }
+                            // Continue with save even if image upload fails
+                        }
+                    }
 
         // Set email and campaignEmail fields (required for Firestore rules)
         // Updated Firestore rules allow updates if:
