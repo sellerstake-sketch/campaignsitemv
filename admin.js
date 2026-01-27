@@ -306,9 +306,22 @@ function checkAdminAuth() {
                         }
                     }
 
+                    // Update desktop profile display
                     const nameDisplay = document.getElementById('admin-name-display');
+                    const emailDisplay = document.getElementById('admin-email-display');
                     if (nameDisplay) {
-                        nameDisplay.textContent = user.email;
+                        // Extract name from email or use email as name
+                        const emailName = user.email.split('@')[0];
+                        nameDisplay.textContent = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+                    }
+                    if (emailDisplay) {
+                        emailDisplay.textContent = user.email;
+                    }
+
+                    // Update desktop profile menu email
+                    const profileMenuEmail = document.getElementById('admin-profile-menu-email');
+                    if (profileMenuEmail) {
+                        profileMenuEmail.textContent = user.email;
                     }
 
                     // Update mobile profile dropdown email
@@ -414,6 +427,44 @@ function setupEventListeners() {
         console.error('Admin login form not found!');
     }
 
+    // Desktop Profile Menu Toggle
+    const profileMenuToggle = document.getElementById('admin-profile-menu-toggle');
+    const profileCard = document.querySelector('.admin-profile-card');
+    const profileDesktopMenu = document.getElementById('admin-profile-desktop-menu');
+
+    if (profileMenuToggle && profileDesktopMenu) {
+        // Toggle menu on button click
+        profileMenuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDesktopMenu.classList.toggle('active');
+        });
+
+        // Toggle menu on card click
+        if (profileCard) {
+            profileCard.addEventListener('click', (e) => {
+                // Don't toggle if clicking the menu button (handled above)
+                if (!profileMenuToggle.contains(e.target)) {
+                    e.stopPropagation();
+                    profileDesktopMenu.classList.toggle('active');
+                }
+            });
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (profileCard && !profileCard.contains(e.target) && !profileDesktopMenu.contains(e.target)) {
+                profileDesktopMenu.classList.remove('active');
+            }
+        });
+
+        // Close menu on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && profileDesktopMenu.classList.contains('active')) {
+                profileDesktopMenu.classList.remove('active');
+            }
+        });
+    }
+
     // Profile Dropdown Toggle (Mobile)
     const profileToggle = document.getElementById('admin-profile-toggle');
     const profileDropdown = document.getElementById('admin-profile-dropdown-menu');
@@ -445,9 +496,12 @@ function setupEventListeners() {
     const logoutMobileBtn = document.getElementById('admin-logout-mobile');
 
     const handleLogout = async () => {
-        // Close profile dropdown if open
+        // Close profile dropdowns if open
         if (profileDropdown) {
             profileDropdown.classList.remove('active');
+        }
+        if (profileDesktopMenu) {
+            profileDesktopMenu.classList.remove('active');
         }
 
         // Set admin as offline
