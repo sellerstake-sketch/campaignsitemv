@@ -1,6 +1,27 @@
 // Modal System with Full Form Functionality
 // Provides complete modal forms for all campaign management features
 
+// Helper function to get selected island from global filter
+function getSelectedIslandFromGlobalFilter() {
+    // Check global filter state
+    if (window.globalFilterState && window.globalFilterState.island) {
+        return window.globalFilterState.island;
+    }
+    
+    // Check global filter UI element
+    const islandSelect = document.getElementById('global-filter-island');
+    if (islandSelect && islandSelect.value) {
+        return islandSelect.value;
+    }
+    
+    // Check if user is an island user (locked to specific island)
+    if (window.isIslandUser && window.islandUserData && window.islandUserData.island) {
+        return window.islandUserData.island;
+    }
+    
+    return null; // No island filter selected
+}
+
 // Check if modal overlay exists, if not, create one
 function ensureModalExists() {
     let modalOverlay = document.getElementById('modal-overlay');
@@ -110,13 +131,18 @@ function populateIslandSelect(selectId, constituency) {
     });
     
     // If only one island from global filter, disable and lock it
-    // EXCEPT for island-user-island and event-island fields - keep them enabled
-    if (globalFilter.initialized && globalFilter.island && filteredIslands.length === 1 && selectId !== 'island-user-island' && selectId !== 'event-island') {
+    // EXCEPT for island-user-island, event-island, and agent-island fields - keep them enabled
+    if (globalFilter.initialized && globalFilter.island && filteredIslands.length === 1 && selectId !== 'island-user-island' && selectId !== 'event-island' && selectId !== 'agent-island') {
         select.disabled = true;
         select.title = 'Island is locked by global filter';
     } else {
         select.disabled = false;
         select.title = '';
+    }
+    
+    // Pre-select the island from global filter if available
+    if (globalFilter.initialized && globalFilter.island && filteredIslands.includes(globalFilter.island)) {
+        select.value = globalFilter.island;
     }
 }
 
@@ -534,7 +560,7 @@ function getPledgeFormTemplate() {
             <div class="form-row">
                 <div class="form-group">
                     <label for="pledge-island">Island</label>
-                    <input type="text" id="pledge-island" name="pledge-island" placeholder="Auto-filled when voter selected" readonly style="background: var(--light-color);" value="${window.campaignData?.island || ''}">
+                    <input type="text" id="pledge-island" name="pledge-island" placeholder="Auto-filled when voter selected" readonly style="background: var(--light-color);" value="">
                 </div>
             </div>
             <div class="form-group">
@@ -3092,6 +3118,17 @@ function openModal(type, itemId = null) {
         // Setup searchable voter dropdown and candidate dropdown for pledge form (after form is set up)
         if (type === 'pledge') {
             setTimeout(() => {
+                // Set island field from global filter
+                const islandInput = document.getElementById('pledge-island');
+                if (islandInput) {
+                    const selectedIsland = getSelectedIslandFromGlobalFilter();
+                    if (selectedIsland) {
+                        islandInput.value = selectedIsland;
+                    } else if (window.campaignData?.island) {
+                        // Fallback to campaign data if no global filter
+                        islandInput.value = window.campaignData.island;
+                    }
+                }
                 setupPledgeVoterDropdown();
                 setupPledgeCandidateDropdown();
             }, 150);
@@ -3332,19 +3369,29 @@ function setupCallVoterDropdown() {
 
     // Load voters from cache or Firebase
     async function loadVoters() {
+        const selectedIsland = getSelectedIslandFromGlobalFilter();
+        
         // Try to use cached data first
         if (window.voterDataCache && window.voterDataCache.data && window.voterDataCache.data.filteredDocs) {
-            allVoters = window.voterDataCache.data.filteredDocs.map(({
-                id,
-                data
-            }) => ({
-                id: id,
-                name: data.name || 'N/A',
-                idNumber: data.idNumber || data.voterId || id,
-                phone: data.phone || data.phoneNumber || data.mobile || data.contact || data.number || '',
-                island: data.island || data.constituency || '',
-                address: data.address || data.permanentAddress || data.location || ''
-            }));
+            allVoters = window.voterDataCache.data.filteredDocs
+                .map(({
+                    id,
+                    data
+                }) => ({
+                    id: id,
+                    name: data.name || 'N/A',
+                    idNumber: data.idNumber || data.voterId || id,
+                    phone: data.phone || data.phoneNumber || data.mobile || data.contact || data.number || '',
+                    island: data.island || data.constituency || '',
+                    address: data.address || data.permanentAddress || data.location || ''
+                }))
+                .filter(voter => {
+                    // Filter by island if one is selected in global filter
+                    if (selectedIsland) {
+                        return voter.island === selectedIsland;
+                    }
+                    return true;
+                });
             return;
         }
 
@@ -3375,6 +3422,13 @@ function setupCallVoterDropdown() {
                         island: data.island || data.constituency || '',
                         address: data.address || data.permanentAddress || data.location || ''
                     };
+                })
+                .filter(voter => {
+                    // Filter by island if one is selected in global filter
+                    if (selectedIsland) {
+                        return voter.island === selectedIsland;
+                    }
+                    return true;
                 });
         } catch (error) {
             console.error('Error loading voters for call:', error);
@@ -3389,11 +3443,17 @@ function setupCallVoterDropdown() {
             return;
         }
 
+        const selectedIsland = getSelectedIslandFromGlobalFilter();
         const term = searchTerm.toLowerCase().trim();
-        filteredVoters = Array.isArray(allVoters) ? allVoters.filter(voter =>
-            voter && ((voter.name && voter.name.toLowerCase().includes(term)) ||
-                (voter.idNumber && voter.idNumber.toLowerCase().includes(term)))
-        ).slice(0, 20) : []; // Limit to 20 results for performance
+        filteredVoters = Array.isArray(allVoters) ? allVoters.filter(voter => {
+            // First check if island matches (if island filter is active)
+            if (selectedIsland && voter.island !== selectedIsland) {
+                return false;
+            }
+            // Then check if name or ID matches search term
+            return voter && ((voter.name && voter.name.toLowerCase().includes(term)) ||
+                (voter.idNumber && voter.idNumber.toLowerCase().includes(term)));
+        }).slice(0, 20) : []; // Limit to 20 results for performance
 
         if (!Array.isArray(filteredVoters) || filteredVoters.length === 0) {
             voterDropdown.innerHTML = '<div style="padding: 15px; text-align: center; color: var(--text-light);">No voters found</div>';
@@ -3699,19 +3759,29 @@ function setupPledgeVoterDropdown() {
 
     // Load voters from cache or Firebase
     async function loadVoters() {
+        const selectedIsland = getSelectedIslandFromGlobalFilter();
+        
         // Try to use cached data first
         if (window.voterDataCache && window.voterDataCache.data && window.voterDataCache.data.filteredDocs) {
-            allVoters = window.voterDataCache.data.filteredDocs.map(({
-                id,
-                data
-            }) => ({
-                id: id,
-                name: data.name || 'N/A',
-                idNumber: data.idNumber || data.voterId || id,
-                island: data.island || '',
-                permanentAddress: data.permanentAddress || data.address || '',
-                currentLocation: data.currentLocation || ''
-            }));
+            allVoters = window.voterDataCache.data.filteredDocs
+                .map(({
+                    id,
+                    data
+                }) => ({
+                    id: id,
+                    name: data.name || 'N/A',
+                    idNumber: data.idNumber || data.voterId || id,
+                    island: data.island || '',
+                    permanentAddress: data.permanentAddress || data.address || '',
+                    currentLocation: data.currentLocation || ''
+                }))
+                .filter(voter => {
+                    // Filter by island if one is selected in global filter
+                    if (selectedIsland) {
+                        return voter.island === selectedIsland;
+                    }
+                    return true;
+                });
             return;
         }
 
@@ -3742,6 +3812,13 @@ function setupPledgeVoterDropdown() {
                         permanentAddress: data.permanentAddress || data.address || '',
                         currentLocation: data.currentLocation || ''
                     };
+                })
+                .filter(voter => {
+                    // Filter by island if one is selected in global filter
+                    if (selectedIsland) {
+                        return voter.island === selectedIsland;
+                    }
+                    return true;
                 });
         } catch (error) {
             console.error('Error loading voters for pledge:', error);
@@ -3756,11 +3833,17 @@ function setupPledgeVoterDropdown() {
             return;
         }
 
+        const selectedIsland = getSelectedIslandFromGlobalFilter();
         const term = searchTerm.toLowerCase().trim();
-        filteredVoters = Array.isArray(allVoters) ? allVoters.filter(voter =>
-            voter && ((voter.name && voter.name.toLowerCase().includes(term)) ||
-                (voter.idNumber && voter.idNumber.toLowerCase().includes(term)))
-        ).slice(0, 20) : []; // Limit to 20 results for performance
+        filteredVoters = Array.isArray(allVoters) ? allVoters.filter(voter => {
+            // First check if island matches (if island filter is active)
+            if (selectedIsland && voter.island !== selectedIsland) {
+                return false;
+            }
+            // Then check if name or ID matches search term
+            return voter && ((voter.name && voter.name.toLowerCase().includes(term)) ||
+                (voter.idNumber && voter.idNumber.toLowerCase().includes(term)));
+        }).slice(0, 20) : []; // Limit to 20 results for performance
 
         if (!Array.isArray(filteredVoters) || filteredVoters.length === 0) {
             voterDropdown.innerHTML = '<div style="padding: 15px; text-align: center; color: var(--text-light);">No voters found</div>';
@@ -3796,7 +3879,15 @@ function setupPledgeVoterDropdown() {
                         bubbles: true
                     }));
                 }
-                if (islandInput) islandInput.value = voterIsland || window.campaignData.island || '';
+                // Keep island locked to global filter if set, otherwise use voter's island
+                if (islandInput) {
+                    const selectedIsland = getSelectedIslandFromGlobalFilter();
+                    if (selectedIsland) {
+                        islandInput.value = selectedIsland;
+                    } else {
+                        islandInput.value = voterIsland || window.campaignData?.island || '';
+                    }
+                }
                 if (permanentAddressTextarea) permanentAddressTextarea.value = voterPermanentAddress;
                 if (currentLocationTextarea) currentLocationTextarea.value = voterCurrentLocation;
 
@@ -3849,7 +3940,15 @@ function setupPledgeVoterDropdown() {
                         bubbles: true
                     }));
                 }
-                if (islandInput) islandInput.value = voterToPopulate.island || window.campaignData.island || '';
+                // Keep island locked to global filter if set, otherwise use voter's island
+                if (islandInput) {
+                    const selectedIsland = getSelectedIslandFromGlobalFilter();
+                    if (selectedIsland) {
+                        islandInput.value = selectedIsland;
+                    } else {
+                        islandInput.value = voterToPopulate.island || window.campaignData?.island || '';
+                    }
+                }
                 if (permanentAddressTextarea) permanentAddressTextarea.value = voterToPopulate.permanentAddress || '';
                 if (currentLocationTextarea) currentLocationTextarea.value = voterToPopulate.currentLocation || '';
                 
@@ -3919,7 +4018,15 @@ async function fetchVoterByIdForPledge(voterId) {
                     bubbles: true
                 }));
             }
-            if (islandInput) islandInput.value = voterData.island || window.campaignData.island || '';
+            // Keep island locked to global filter if set, otherwise use voter's island
+            if (islandInput) {
+                const selectedIsland = getSelectedIslandFromGlobalFilter();
+                if (selectedIsland) {
+                    islandInput.value = selectedIsland;
+                } else {
+                    islandInput.value = voterData.island || window.campaignData?.island || '';
+                }
+            }
             if (permanentAddressTextarea) permanentAddressTextarea.value = voterData.permanentAddress || voterData.address || '';
             if (currentLocationTextarea) currentLocationTextarea.value = voterData.currentLocation || '';
             

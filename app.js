@@ -2160,8 +2160,23 @@ async function loadWorkspace(data) {
         window.showVoterImages = data.showVoterImages !== false;
 
         // Update Zero Day menu visibility
-        if (typeof updateZeroDayMenuVisibility === 'function' && data.zeroDayEnabled !== undefined) {
-            updateZeroDayMenuVisibility(data.zeroDayEnabled === true);
+        if (typeof updateZeroDayMenuVisibility === 'function') {
+            if (data.zeroDayEnabled !== undefined) {
+                updateZeroDayMenuVisibility(data.zeroDayEnabled === true);
+            } else {
+                // If not in initial data, check from Firestore after a delay
+                setTimeout(async () => {
+                    if (typeof window.loadZeroDayToggle === 'function') {
+                        try {
+                            const enabled = await window.loadZeroDayToggle();
+                            updateZeroDayMenuVisibility(enabled);
+                        } catch (error) {
+                            console.warn('[loadWorkspace] Error loading zero day toggle state:', error);
+                            updateZeroDayMenuVisibility(false);
+                        }
+                    }
+                }, 500);
+            }
         }
 
         // Switch to workspace screen IMMEDIATELY - show UI first

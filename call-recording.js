@@ -398,6 +398,27 @@ async function loadCallForm(container) {
 // Global variable to store all voters
 let allVotersForCall = [];
 
+// Helper function to get selected island from global filter
+function getSelectedIslandFromGlobalFilter() {
+    // Check global filter state
+    if (window.globalFilterState && window.globalFilterState.island) {
+        return window.globalFilterState.island;
+    }
+    
+    // Check global filter UI element
+    const islandSelect = document.getElementById('global-filter-island');
+    if (islandSelect && islandSelect.value) {
+        return islandSelect.value;
+    }
+    
+    // Check if user is an island user (locked to specific island)
+    if (window.isIslandUser && window.islandUserData && window.islandUserData.island) {
+        return window.islandUserData.island;
+    }
+    
+    return null; // No island filter selected
+}
+
 // Setup voter search with dropdown
 async function setupVoterSearch() {
     const voterInput = document.getElementById('call-voter-name');
@@ -510,8 +531,14 @@ async function setupVoterSearch() {
             return;
         }
 
+        const selectedIsland = getSelectedIslandFromGlobalFilter();
         const term = searchTerm.toLowerCase().trim();
         const filtered = allVotersForCall.filter(voter => {
+            // First check if island matches (if island filter is active)
+            if (selectedIsland && voter.island !== selectedIsland) {
+                return false;
+            }
+            // Then check if search term matches any field
             const name = (voter.name || '').toLowerCase();
             const voterId = (voter.voterId || voter.idNumber || '').toLowerCase();
             const phone = (voter.phone || voter.phoneNumber || voter.mobile || '').toLowerCase();
@@ -814,31 +841,41 @@ async function loadVotersForCall() {
             throw new Error('Invalid response from Firestore');
         }
 
-        allVotersForCall = snapshot.docs.map(doc => {
-            const data = doc.data();
-            const voter = {
-                id: doc.id,
-                name: data.name || 'N/A',
-                voterId: data.voterId || data.idNumber || '',
-                idNumber: data.idNumber || data.voterId || '',
-                phone: data.phone || data.phoneNumber || data.mobile || data.contact || data.number || '',
-                island: data.island || data.constituency || '',
-                address: data.address || data.location || '',
-                permanentAddress: data.permanentAddress || data.address || data.location || '',
-                // Include email fields for debugging
-                campaignEmail: data.campaignEmail || data.email || '',
-                email: data.email || ''
-            };
-            // Log first voter's email fields for debugging
-            if (snapshot.docs.indexOf(doc) === 0) {
-                console.log('[Call Recording] First voter email fields:', {
-                    campaignEmail: data.campaignEmail,
-                    email: data.email,
-                    name: data.name
-                });
-            }
-            return voter;
-        });
+        const selectedIsland = getSelectedIslandFromGlobalFilter();
+        
+        allVotersForCall = snapshot.docs
+            .map(doc => {
+                const data = doc.data();
+                const voter = {
+                    id: doc.id,
+                    name: data.name || 'N/A',
+                    voterId: data.voterId || data.idNumber || '',
+                    idNumber: data.idNumber || data.voterId || '',
+                    phone: data.phone || data.phoneNumber || data.mobile || data.contact || data.number || '',
+                    island: data.island || data.constituency || '',
+                    address: data.address || data.location || '',
+                    permanentAddress: data.permanentAddress || data.address || data.location || '',
+                    // Include email fields for debugging
+                    campaignEmail: data.campaignEmail || data.email || '',
+                    email: data.email || ''
+                };
+                // Log first voter's email fields for debugging
+                if (snapshot.docs.indexOf(doc) === 0) {
+                    console.log('[Call Recording] First voter email fields:', {
+                        campaignEmail: data.campaignEmail,
+                        email: data.email,
+                        name: data.name
+                    });
+                }
+                return voter;
+            })
+            .filter(voter => {
+                // Filter by island if one is selected in global filter
+                if (selectedIsland) {
+                    return voter.island === selectedIsland;
+                }
+                return true;
+            });
 
         console.log(`[Call Recording] Successfully loaded ${allVotersForCall.length} voters for campaign:`, currentLinkData.campaignEmail);
 

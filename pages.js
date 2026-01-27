@@ -541,6 +541,15 @@ const pageTemplates = {
                 <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: var(--text-color);">Voter Profile</h1>
             </div>
             <div style="display: flex; gap: 12px;">
+                <button class="btn-secondary btn-compact" onclick="bulkDeleteAllVoters()" style="background: var(--danger-color); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                    Delete All Voters
+                </button>
                 <button class="btn-primary btn-compact" onclick="openModal('voter')" style="background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -10387,6 +10396,12 @@ function updateMobileBottomNavVisibility() {
 
     // Update Zero Day visibility in More menu
     updateMobileMoreMenuZeroDay();
+    
+    // Also update sidebar menu visibility based on current state
+    if (typeof updateZeroDayMenuVisibility === 'function') {
+        const zeroDayEnabled = (window.campaignData && window.campaignData.zeroDayEnabled === true);
+        updateZeroDayMenuVisibility(zeroDayEnabled);
+    }
 }
 
 // Update Zero Day visibility in mobile more menu
@@ -10507,8 +10522,16 @@ function populateSettingsData() {
             if (typeof loadZeroDayToggle === 'function') {
                 loadZeroDayToggle().then(enabled => {
                     zeroDayToggle.checked = enabled;
+                    // Update menu visibility when toggle state is loaded
+                    if (typeof updateZeroDayMenuVisibility === 'function') {
+                        updateZeroDayMenuVisibility(enabled);
+                    }
                 }).catch(() => {
                     zeroDayToggle.checked = false;
+                    // Update menu visibility even on error (default to disabled)
+                    if (typeof updateZeroDayMenuVisibility === 'function') {
+                        updateZeroDayMenuVisibility(false);
+                    }
                 });
             }
 
@@ -14504,9 +14527,21 @@ function updateSettingsFields(data) {
 
 // Update Zero Day menu visibility based on toggle state
 function updateZeroDayMenuVisibility(enabled) {
+    // Update sidebar nav item
     const zeroDayNavItem = document.getElementById('zero-day-nav-item');
     if (zeroDayNavItem) {
         zeroDayNavItem.style.display = enabled ? 'flex' : 'none';
+    }
+    
+    // Update mobile more menu item
+    const mobileZeroDayNavItem = document.getElementById('mobile-more-zero-day');
+    if (mobileZeroDayNavItem) {
+        mobileZeroDayNavItem.style.display = enabled ? 'flex' : 'none';
+    }
+    
+    // Also update window.campaignData to keep it in sync
+    if (window.campaignData) {
+        window.campaignData.zeroDayEnabled = enabled;
     }
 }
 
@@ -17095,6 +17130,139 @@ async function deleteVoter(voterId) {
         console.error('Error deleting voter:', error);
         if (window.showErrorDialog) {
             window.showErrorDialog('Failed to delete voter. Please try again.', 'Error');
+        }
+    }
+}
+
+// Bulk delete all voters function
+async function bulkDeleteAllVoters() {
+    if (!window.db || !window.userEmail) {
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Database not initialized. Please refresh the page.', 'Error');
+        }
+        return;
+    }
+
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs,
+            deleteDoc,
+            writeBatch,
+            doc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // First, get count of voters (query both campaignEmail and email to catch all voters)
+        console.log('[Bulk Delete] Counting voters for user:', window.userEmail);
+        
+        // Query voters by campaignEmail
+        const votersQueryByCampaign = query(
+            collection(window.db, 'voters'),
+            where('campaignEmail', '==', window.userEmail)
+        );
+        
+        // Query voters by email
+        const votersQueryByEmail = query(
+            collection(window.db, 'voters'),
+            where('email', '==', window.userEmail)
+        );
+        
+        // Get both snapshots and combine (using a Set to avoid duplicates)
+        const [snapshotByCampaign, snapshotByEmail] = await Promise.all([
+            getDocs(votersQueryByCampaign),
+            getDocs(votersQueryByEmail)
+        ]);
+        
+        // Combine results, avoiding duplicates by document ID
+        const voterDocsMap = new Map();
+        snapshotByCampaign.docs.forEach(doc => voterDocsMap.set(doc.id, doc));
+        snapshotByEmail.docs.forEach(doc => voterDocsMap.set(doc.id, doc));
+        
+        const allVoterDocs = Array.from(voterDocsMap.values());
+        const voterCount = allVoterDocs.length;
+
+        if (voterCount === 0) {
+            if (window.showErrorDialog) {
+                window.showErrorDialog('No voters found to delete.', 'Info');
+            }
+            return;
+        }
+
+        // Confirm deletion with count
+        const confirmMessage = `Are you sure you want to delete ALL ${voterCount} voter(s)?\n\nThis action cannot be undone and will permanently remove all voter records. This is useful when you need to upload a new list with updated information (such as updated Ballot Box numbers).`;
+        
+        let confirmed = false;
+        if (window.showConfirm) {
+            confirmed = await window.showConfirm(
+                confirmMessage,
+                'Delete All Voters'
+            );
+        } else {
+            confirmed = confirm(confirmMessage);
+        }
+
+        if (!confirmed) {
+            return;
+        }
+
+        // Show loading/progress message
+        if (window.showSuccess) {
+            window.showSuccess(`Deleting ${voterCount} voter(s)... Please wait.`, 'Processing');
+        }
+
+        // Delete voters in batches (Firestore batch limit is 500 operations)
+        const BATCH_SIZE = 500;
+        let deletedCount = 0;
+        const allDocs = allVoterDocs;
+
+        for (let i = 0; i < allDocs.length; i += BATCH_SIZE) {
+            const batch = writeBatch(window.db);
+            const batchDocs = allDocs.slice(i, i + BATCH_SIZE);
+
+            for (const voterDoc of batchDocs) {
+                const voterData = voterDoc.data();
+                // Double-check permission
+                if (voterData.email === window.userEmail || voterData.campaignEmail === window.userEmail) {
+                    batch.delete(doc(window.db, 'voters', voterDoc.id));
+                }
+            }
+
+            await batch.commit();
+            deletedCount += batchDocs.length;
+            console.log(`[Bulk Delete] Deleted batch: ${deletedCount}/${voterCount}`);
+        }
+
+        // Clear cache since voters were deleted
+        clearVoterCache();
+
+        // Show success message
+        if (window.showSuccess) {
+            window.showSuccess(`Successfully deleted ${deletedCount} voter(s).`, 'Success');
+        }
+
+        // Reload voters table
+        if (window.reloadTableData) {
+            window.reloadTableData('voter');
+        } else if (window.loadPageContent) {
+            setTimeout(() => {
+                window.loadPageContent('voters');
+            }, 500);
+        }
+
+        // Trigger comprehensive refresh to sync with Firebase
+        if (window.refreshApplicationData) {
+            setTimeout(() => {
+                window.refreshApplicationData().catch(err => {
+                    console.warn('[Bulk Delete] Error during auto-refresh after delete:', err);
+                });
+            }, 500);
+        }
+    } catch (error) {
+        console.error('Error bulk deleting voters:', error);
+        if (window.showErrorDialog) {
+            window.showErrorDialog(`Failed to delete voters: ${error.message}`, 'Error');
         }
     }
 }
@@ -20141,6 +20309,7 @@ window.viewPledgeDetails = viewPledgeDetails;
 window.viewCandidateDetails = viewCandidateDetails;
 window.editVoter = editVoter;
 window.deleteVoter = deleteVoter;
+window.bulkDeleteAllVoters = bulkDeleteAllVoters;
 window.editPledge = editPledge;
 window.deletePledge = deletePledge;
 window.editCandidate = editCandidate;
