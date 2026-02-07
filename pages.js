@@ -507,11 +507,11 @@ const pageTemplates = {
                         <thead style="position: sticky; top: 0; z-index: 5; background: var(--light-color);">
                             <tr>
                                 <th>#</th>
-                                <th>Name</th>
-                                <th>Position</th>
-                                <th>Constituency</th>
-                                <th>Island</th>
-                                <th>Status</th>
+                                <th class="sortable-th" data-sort="name" title="Sort by name">Name <span class="sort-indicator"></span></th>
+                                <th class="sortable-th" data-sort="position" title="Sort by position">Position <span class="sort-indicator"></span></th>
+                                <th class="sortable-th" data-sort="constituency" title="Sort by constituency">Constituency <span class="sort-indicator"></span></th>
+                                <th class="sortable-th" data-sort="island" title="Sort by island">Island <span class="sort-indicator"></span></th>
+                                <th class="sortable-th" data-sort="status" title="Sort by status">Status <span class="sort-indicator"></span></th>
                             </tr>
                         </thead>
                         <tbody id="candidates-table-body">
@@ -732,11 +732,19 @@ const pageTemplates = {
                                         </svg>
                                     </div>
                                 </th>
+                                <th style="padding: 12px; font-size: 12px; font-weight: 600; color: var(--text-light); text-transform: uppercase; background: var(--light-color);">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        BALLOT BOX SEQUENCE
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor: pointer; opacity: 0.5;">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </div>
+                                </th>
                     </tr>
                 </thead>
                 <tbody id="voters-table-body">
                     <tr>
-                                <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-light);">No voters registered yet</td>
+                                <td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">No voters registered yet</td>
                     </tr>
                 </tbody>
             </table>
@@ -999,6 +1007,12 @@ const pageTemplates = {
                     <option value="no">No</option>
                     <option value="undecided">Undecided</option>
                 </select>
+                <select class="search-input" style="width: 140px; min-width: 0; flex-shrink: 0;" id="pledge-filter-island" title="Filter by Island">
+                    <option value="">All Islands</option>
+                </select>
+                <select class="search-input" style="width: 160px; min-width: 0; flex-shrink: 0;" id="pledge-filter-constituency" title="Filter by Constituency">
+                    <option value="">All Constituencies</option>
+                </select>
                 <button class="btn-primary btn-compact" style="flex-shrink: 0; white-space: nowrap;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; display: inline-block;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     Add Pledge
@@ -1121,15 +1135,6 @@ const pageTemplates = {
                 <p class="page-subtitle">Assign and manage campaign agents</p>
             </div>
             <div class="action-buttons-row" style="display: flex; gap: 12px; align-items: center; flex-wrap: nowrap;">
-                <button class="btn-secondary btn-compact" onclick="showAgentSelectionForVoterAssignment()" style="white-space: nowrap; flex: 0 0 auto;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; display: inline-block;">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="8.5" cy="7" r="4"></circle>
-                        <line x1="20" y1="8" x2="20" y2="14"></line>
-                        <line x1="23" y1="11" x2="17" y2="11"></line>
-                    </svg>
-                    Assign Voters
-                </button>
                 <button class="btn-primary btn-compact" onclick="window.openModal('agent')" style="white-space: nowrap; flex: 0 0 auto;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px; display: inline-block;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     Add Agent
@@ -3201,6 +3206,49 @@ function renderCachedActivitiesData() {
     return true;
 }
 
+// Update sort direction indicators in candidate table header
+function updateCandidatesSortIndicators() {
+    const state = paginationState.candidates;
+    const wrapper = document.getElementById('candidates-table-detail-wrapper');
+    if (!wrapper) return;
+    wrapper.querySelectorAll('.sortable-th').forEach(th => {
+        const key = th.getAttribute('data-sort');
+        const ind = th.querySelector('.sort-indicator');
+        if (!ind) return;
+        if (state.sortBy === key) {
+            ind.textContent = state.sortDir === 1 ? ' ↑' : ' ↓';
+            ind.style.visibility = 'visible';
+        } else {
+            ind.textContent = '';
+            ind.style.visibility = 'hidden';
+        }
+    });
+}
+
+// Sort candidates array by current sort state (does not mutate original)
+function sortCandidatesArray(candidatesArray) {
+    const state = paginationState.candidates;
+    if (!state.sortBy) return [...candidatesArray];
+    const key = state.sortBy;
+    const dir = state.sortDir;
+    const sorted = [...candidatesArray];
+    sorted.sort((a, b) => {
+        const rawA = a[key];
+        const rawB = b[key];
+        const va = (rawA != null && rawA !== '') ? String(rawA).trim().toLowerCase() : '';
+        const vb = (rawB != null && rawB !== '') ? String(rawB).trim().toLowerCase() : '';
+        let cmp = 0;
+        if (va !== vb) cmp = va < vb ? -1 : 1;
+        if (cmp !== 0) return dir * cmp;
+        // Stable sort: tie-break by name then id
+        const na = (a.name != null) ? String(a.name).toLowerCase() : '';
+        const nb = (b.name != null) ? String(b.name).toLowerCase() : '';
+        if (na !== nb) return na < nb ? -1 : 1;
+        return (a.id || '').localeCompare(b.id || '');
+    });
+    return sorted;
+}
+
 // Load candidates data
 async function loadCandidatesData(forceRefresh = false) {
     if (!window.db || !window.userEmail) return;
@@ -3314,11 +3362,14 @@ async function loadCandidatesData(forceRefresh = false) {
             return;
         }
 
+        const sortedCandidates = sortCandidatesArray(candidatesArray);
+        updateCandidatesSortIndicators();
+
         // Pagination
         const state = paginationState.candidates;
         const startIndex = (state.currentPage - 1) * state.recordsPerPage;
         const endIndex = startIndex + state.recordsPerPage;
-        const paginatedCandidates = candidatesArray.slice(startIndex, endIndex);
+        const paginatedCandidates = sortedCandidates.slice(startIndex, endIndex);
 
         // Use DocumentFragment for efficient DOM updates
         const fragment = document.createDocumentFragment();
@@ -3359,14 +3410,14 @@ async function loadCandidatesData(forceRefresh = false) {
         });
 
         // Render pagination
-        renderPagination('candidates', candidatesArray.length);
+        renderPagination('candidates', sortedCandidates.length);
 
         // Auto-select first candidate on initial load (only if detail panel is not already showing)
         const detailPanel = document.getElementById('candidate-detail-panel');
-        if (candidatesArray.length > 0 && detailPanel && detailPanel.style.display === 'none') {
+        if (sortedCandidates.length > 0 && detailPanel && detailPanel.style.display === 'none') {
             // Small delay to ensure DOM is ready
             setTimeout(() => {
-                const firstCandidate = candidatesArray[0];
+                const firstCandidate = sortedCandidates[0];
                 if (firstCandidate && firstCandidate.id) {
                     viewCandidateDetails(firstCandidate.id);
                 }
@@ -3406,11 +3457,14 @@ function renderCachedCandidatesData() {
         });
     }
 
+    const sortedCandidates = sortCandidatesArray(candidatesArray);
+    updateCandidatesSortIndicators();
+
     // Pagination
     const state = paginationState.candidates;
     const startIndex = (state.currentPage - 1) * state.recordsPerPage;
     const endIndex = startIndex + state.recordsPerPage;
-    const paginatedCandidates = candidatesArray.slice(startIndex, endIndex);
+    const paginatedCandidates = sortedCandidates.slice(startIndex, endIndex);
 
     const fragment = document.createDocumentFragment();
 
@@ -3450,12 +3504,14 @@ function renderCachedCandidatesData() {
         tbody.appendChild(fragment);
     });
 
+    renderPagination('candidates', sortedCandidates.length);
+
     // Auto-select first candidate on initial load (only if detail panel is not already showing)
     const detailPanel = document.getElementById('candidate-detail-panel');
-    if (candidatesArray.length > 0 && detailPanel && detailPanel.style.display === 'none') {
+    if (sortedCandidates.length > 0 && detailPanel && detailPanel.style.display === 'none') {
         // Small delay to ensure DOM is ready
         setTimeout(() => {
-            const firstCandidate = candidatesArray[0];
+            const firstCandidate = sortedCandidates[0];
             if (firstCandidate && firstCandidate.id) {
                 viewCandidateDetails(firstCandidate.id);
             }
@@ -3539,6 +3595,8 @@ function setupSearchListeners(tableType) {
     if (tableType === 'pledges') {
         const pledgeSearch = document.getElementById('pledge-search');
         const pledgeFilter = document.getElementById('pledge-filter');
+        const pledgeFilterIsland = document.getElementById('pledge-filter-island');
+        const pledgeFilterConstituency = document.getElementById('pledge-filter-constituency');
 
         const refreshPledges = debounce(() => {
             if (dataCache.pledges.data) {
@@ -3551,6 +3609,12 @@ function setupSearchListeners(tableType) {
         }
         if (pledgeFilter) {
             pledgeFilter.addEventListener('change', refreshPledges);
+        }
+        if (pledgeFilterIsland) {
+            pledgeFilterIsland.addEventListener('change', refreshPledges);
+        }
+        if (pledgeFilterConstituency) {
+            pledgeFilterConstituency.addEventListener('change', refreshPledges);
         }
     }
 
@@ -3578,7 +3642,9 @@ function setupSearchListeners(tableType) {
 const paginationState = {
     candidates: {
         currentPage: 1,
-        recordsPerPage: 15
+        recordsPerPage: 15,
+        sortBy: null,   // 'name' | 'position' | 'constituency' | 'island' | 'status'
+        sortDir: 1      // 1 = ascending, -1 = descending
     },
     voters: {
         currentPage: 1,
@@ -4320,8 +4386,8 @@ const debouncedRefresh = debounce((tableType) => {
     console.log(`[Real-time Sync] Refreshing ${tableType} table...`);
     clearCache(tableType);
 
-    // Always refresh the table if it's currently visible, regardless of section name
-    const currentSection = window.currentSection || '';
+    // Resolve current section (window.currentSection may be a getter function)
+    const currentSection = (typeof window.currentSection === 'function' ? window.currentSection() : window.currentSection) || '';
     const shouldRefresh = currentSection === tableType ||
         currentSection === tableType.slice(0, -1) ||
         document.getElementById(`${tableType}-table-body`) !== null ||
@@ -4528,8 +4594,7 @@ async function setupRealtimeListener(collectionName, tableType) {
                     return;
                 }
 
-                // Show sync notification
-                showSyncNotification(tableType, changeCount);
+                // Sync notification disabled - was slowing down progress when saving records
 
                 // For agents, we need to trigger full reload to recalculate stats
                 // Don't update cache directly for agents - let loadAgentsData handle it
@@ -4621,15 +4686,14 @@ async function setupRealtimeListener(collectionName, tableType) {
                 console.log(`[Real-time Sync] Triggering refresh for ${tableType}...`);
                 debouncedRefresh(tableType);
 
-                // Also force immediate refresh if table is definitely visible (bypass debounce for critical updates)
+                // Force immediate refresh when table is visible (don't wait for debounce)
                 const tableBody = document.getElementById(`${tableType}-table-body`) ||
                     document.getElementById(`${tableType.slice(0, -1)}-table-body`);
-                if (tableBody && tableBody.offsetParent !== null) {
-                    // Table is visible, refresh immediately
-                    setTimeout(() => {
-                        switch (tableType) {
-                            case 'voters':
-                                if (typeof loadVotersData === 'function') loadVotersData(true);
+                const tableVisible = tableBody && tableBody.offsetParent !== null;
+                if (tableVisible) {
+                    switch (tableType) {
+                        case 'voters':
+                            if (typeof loadVotersData === 'function') loadVotersData(true);
                                 break;
                             case 'calls':
                                 if (typeof loadCallsData === 'function') loadCallsData(true);
@@ -4651,8 +4715,7 @@ async function setupRealtimeListener(collectionName, tableType) {
                             case 'candidates':
                                 if (typeof loadCandidatesData === 'function') loadCandidatesData(true);
                                 break;
-                        }
-                    }, 100);
+                    }
                 }
 
                 // Also refresh activities when any data changes
@@ -4927,6 +4990,29 @@ window.cleanupAllRealtimeListeners = cleanupAllRealtimeListeners;
 window.setupRealtimeListener = setupRealtimeListener;
 window.showSyncNotification = showSyncNotification;
 
+// Candidate table sort: delegate click on sortable headers (capture so we run before other handlers)
+document.addEventListener('click', function(e) {
+    const th = e.target.closest('th.sortable-th');
+    if (!th) return;
+    const key = th.getAttribute('data-sort');
+    if (!key) return;
+    const wrapper = document.getElementById('candidates-table-detail-wrapper');
+    if (!wrapper || !wrapper.contains(th)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const state = paginationState.candidates;
+    if (state.sortBy === key) {
+        state.sortDir = state.sortDir === 1 ? -1 : 1;
+    } else {
+        state.sortBy = key;
+        state.sortDir = 1;
+    }
+    state.currentPage = 1; // show first page of sorted results
+    if (dataCache.candidates && dataCache.candidates.data) {
+        renderCachedCandidatesData();
+    }
+}, true);
+
 // Universal cache validation function
 function isCacheValid(cacheType, forceRefresh = false) {
     const cache = dataCache[cacheType];
@@ -5004,6 +5090,7 @@ function createVoterTableRow(id, data, rowNumber) {
     const gender = data.gender ? (data.gender.charAt(0).toUpperCase() + data.gender.slice(1)) : 'N/A';
     const island = data.island || 'N/A';
     const ballotBox = data.ballot || data.ballotBox || 'N/A';
+    const ballotBoxSequence = data.ballotBoxSequence != null && data.ballotBoxSequence !== '' ? String(data.ballotBoxSequence) : 'N/A';
     const constituency = (window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : (data.constituency || 'N/A');
     const number = data.number || data.phone || 'N/A';
 
@@ -5049,6 +5136,7 @@ function createVoterTableRow(id, data, rowNumber) {
         <td style="font-size: 13px; color: var(--text-color); text-align: center; padding: 12px;">${age}</td>
         <td style="font-size: 13px; color: var(--text-color); padding: 12px;">${gender}</td>
         <td style="font-size: 13px; color: var(--text-color); padding: 12px;">${ballotBox}</td>
+        <td style="font-size: 13px; color: var(--text-color); padding: 12px;">${ballotBoxSequence}</td>
     `;
 
     // If no image URL found, try to lookup from images folder asynchronously
@@ -5169,6 +5257,10 @@ function createVoterMobileCard(id, data, rowNumber) {
             <div class="voter-mobile-card-field">
                 <span class="voter-mobile-card-label">Ballot Box</span>
                 <span class="voter-mobile-card-value">${ballotBox}</span>
+            </div>
+            <div class="voter-mobile-card-field">
+                <span class="voter-mobile-card-label">Ballot Box Sequence</span>
+                <span class="voter-mobile-card-value">${data.ballotBoxSequence != null && data.ballotBoxSequence !== '' ? String(data.ballotBoxSequence) : 'N/A'}</span>
             </div>
         </div>
     `;
@@ -5353,19 +5445,21 @@ function renderCachedVotersData() {
                 return false;
             }
 
-            // Search filter
+            // Search filter (includes ballot box sequence)
             if (searchTerm) {
                 const name = (data.name || '').toLowerCase();
                 const idNumber = (data.idNumber || data.voterId || '').toLowerCase();
                 const permanentAddress = (data.permanentAddress || data.address || '').toLowerCase();
                 const currentLocation = (data.currentLocation || data.location || '').toLowerCase();
                 const island = (data.island || '').toLowerCase();
+                const ballotBoxSeq = (data.ballotBoxSequence != null ? String(data.ballotBoxSequence) : '').toLowerCase();
 
                 if (!name.includes(searchTerm) &&
                     !idNumber.includes(searchTerm) &&
                     !permanentAddress.includes(searchTerm) &&
                     !currentLocation.includes(searchTerm) &&
-                    !island.includes(searchTerm)) {
+                    !island.includes(searchTerm) &&
+                    !ballotBoxSeq.includes(searchTerm)) {
                     return false;
                 }
             }
@@ -5535,7 +5629,7 @@ function renderCachedVotersData() {
                         displayKey = item.groupKey.substring(0, 60) + '...';
                     }
                 }
-                headerRow.innerHTML = `<td colspan="9" style="padding: 12px; font-size: 13px; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.5px;" title="${item.groupKey}">${groupLabel}: ${displayKey} (${groupVoters.length})</td>`;
+                headerRow.innerHTML = `<td colspan="11" style="padding: 12px; font-size: 13px; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.5px;" title="${item.groupKey}">${groupLabel}: ${displayKey} (${groupVoters.length})</td>`;
                 fragment.appendChild(headerRow);
             } else if (item.type === 'voter') {
                 // If this voter's group header hasn't been shown yet, show it first
@@ -5575,7 +5669,7 @@ function renderCachedVotersData() {
                             displayKey = item.groupKey.substring(0, 60) + '...';
                         }
                     }
-                    headerRow.innerHTML = `<td colspan="9" style="padding: 12px; font-size: 13px; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.5px;" title="${item.groupKey}">${groupLabel}: ${displayKey} (${groupVoters.length})</td>`;
+                    headerRow.innerHTML = `<td colspan="11" style="padding: 12px; font-size: 13px; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.5px;" title="${item.groupKey}">${groupLabel}: ${displayKey} (${groupVoters.length})</td>`;
                     fragment.appendChild(headerRow);
                 }
 
@@ -5597,7 +5691,7 @@ function renderCachedVotersData() {
 
     // Render table (non-grouped)
     if (filteredDocs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">' +
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">' +
             (searchTerm || filterBallot || filterGender ? 'No voters found matching your filters' : 'No voters registered yet') + '</td></tr>';
         renderPagination('voters', filteredDocs.length);
         return true;
@@ -5820,7 +5914,7 @@ async function loadVotersData(forceRefresh = false) {
             }
         } catch (queryError) {
             console.error('Error querying voters:', queryError);
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">Error loading voters. Please check console for details.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">Error loading voters. Please check console for details.</td></tr>';
             // Mark voters as complete even on error
             if (window.updateComponentProgress) {
                 window.updateComponentProgress('voters', 100);
@@ -5914,7 +6008,7 @@ async function loadVotersData(forceRefresh = false) {
         if (pendingEl) pendingEl.textContent = pending;
 
         if (filteredDocs.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">No voters registered yet</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">No voters registered yet</td></tr>';
             renderPagination('voters', 0);
             // Mark voters as complete even if empty
             if (window.updateComponentProgress) {
@@ -5923,32 +6017,38 @@ async function loadVotersData(forceRefresh = false) {
             return;
         }
 
-        // Pagination
-        const state = paginationState.voters;
-        const startIndex = (state.currentPage - 1) * state.recordsPerPage;
-        const endIndex = startIndex + state.recordsPerPage;
-        const paginatedVoters = filteredDocs.slice(startIndex, endIndex);
-
-        // Use DocumentFragment for efficient DOM updates
-        const fragment = document.createDocumentFragment();
-        let rowNumber = startIndex + 1;
-        const totalRows = paginatedVoters.length;
-        const renderStartTime = performance.now();
-
-        // Update progress - starting to render
-        (tbody, 40);
-
+        // Cache data so renderCachedVotersData can render (preserves Group By and filters)
+        const validDocsForCache = filteredDocs.filter(doc => {
+            if (!doc || typeof doc !== 'object') return false;
+            if (!doc.id || typeof doc.id !== 'string') return false;
+            if (!doc.data || typeof doc.data !== 'function') return false;
+            return true;
+        });
+        voterDataCache.data = {
+            filteredDocs: validDocsForCache.map(doc => {
+                try {
+                    return { id: doc.id, data: doc.data() };
+                } catch (err) {
+                    return null;
+                }
+            }).filter(item => item !== null),
+            stats: {
+                total: typeof total === 'number' ? total : 0,
+                todayCount: typeof todayCount === 'number' ? todayCount : 0,
+                verified: typeof verified === 'number' ? verified : 0,
+                pending: typeof pending === 'number' ? pending : 0
+            }
+        };
+        voterDataCache.timestamp = Date.now();
+        voterDataCache.userEmail = window.userEmail;
+        renderCachedVotersData();
         if (window.updateComponentProgress) {
-            window.updateComponentProgress('voters', 60);
+            window.updateComponentProgress('voters', 100);
         }
-
-        // Calculate update intervals for progress (update every 5% progress for smooth updates)
-        const updateInterval = Math.max(1, Math.floor(totalRows / 20));
-        let lastUpdatePercent = 40;
-        let lastMainProgress = 60;
-
-        for (let i = 0; i < paginatedVoters.length; i++) {
-            const doc = paginatedVoters[i];
+        setTimeout(() => { populateVoterFilters(); }, 100);
+        return;
+        /* DEADCODE_START
+            const doc = paginatedVoters[0];
             const data = doc.data();
 
             // Update progress percentage during rendering (40-90%) - less frequently for better performance
@@ -6022,6 +6122,7 @@ async function loadVotersData(forceRefresh = false) {
             const gender = data.gender ? data.gender.charAt(0).toUpperCase() + data.gender.slice(1) : 'N/A';
             const island = data.island || 'N/A';
             const ballotBox = data.ballot || (data.ballot && data.box ? `${data.ballot}-${data.box}` : '') || 'N/A';
+            const ballotBoxSequence = data.ballotBoxSequence != null && data.ballotBoxSequence !== '' ? String(data.ballotBoxSequence) : 'N/A';
             const permanentAddress = (data.permanentAddress && data.permanentAddress.trim()) || (data.address && data.address.trim()) || 'N/A';
             const currentLocation = (data.currentLocation && data.currentLocation.trim()) || (data.location && data.location.trim()) || 'N/A';
             const number = data.number || data.phone || 'N/A';
@@ -6066,6 +6167,7 @@ async function loadVotersData(forceRefresh = false) {
                 <td style="font-size: 13px; color: var(--text-color); text-align: center;">${age}</td>
                 <td style="font-size: 13px; color: var(--text-color);">${gender}</td>
                 <td style="font-size: 13px; color: var(--text-color);">${ballotBox}</td>
+                <td style="font-size: 13px; color: var(--text-color);">${ballotBoxSequence}</td>
             `;
 
             fragment.appendChild(row);
@@ -6184,10 +6286,7 @@ async function loadVotersData(forceRefresh = false) {
             }
         }
 
-        // Populate filter dropdowns after data is loaded
-        setTimeout(() => {
-            populateVoterFilters();
-        }, 100);
+        */
 
         // Loading indicator is already replaced by actual table content
     } catch (error) {
@@ -7954,21 +8053,15 @@ async function loadPledgesData(forceRefresh = false) {
             }
             const candidateDisplay = candidateNames.length > 0 ? candidateNames.join(', ') : 'N/A';
 
+            const pledgeStatus = pledgeData.pledge === 'yes' ? 'yes' : (pledgeData.pledge === 'no' || pledgeData.pledge === 'negative' ? 'no' : 'undecided');
             const row = document.createElement('tr');
             const currentPledgeId = pledgeDoc.id;
             row.className = 'pledge-table-row';
             row.style.cursor = 'pointer';
             row.setAttribute('data-pledge-id', currentPledgeId);
+            row.setAttribute('data-pledge-status', pledgeStatus);
             row.onclick = () => {
                 viewPledgeDetails(currentPledgeId);
-            };
-            row.onmouseenter = function() {
-                this.style.backgroundColor = 'var(--light-color)';
-            };
-            row.onmouseleave = function() {
-                if (!this.classList.contains('selected')) {
-                    this.style.backgroundColor = '';
-                }
             };
             row.innerHTML = `
                 <td style="text-align: center; color: var(--text-light); font-weight: 600;">${rowNumber}</td>
@@ -8105,11 +8198,45 @@ function renderCachedPledgesData() {
 
     const voterDataMap = new Map(voterDataMapEntries || []);
 
+    // Helper to get island/constituency for a pledge
+    const getPledgeLocation = (pledge) => {
+        const voterData = pledge.voterDocumentId ? voterDataMap.get(pledge.voterDocumentId) : null;
+        const island = (pledge.island || (voterData && voterData.island) || 'N/A').toString().trim();
+        const constituency = (pledge.constituency || (voterData && voterData.constituency) || 'N/A').toString().trim();
+        return { island, constituency };
+    };
+
+    // Populate Island and Constituency filter dropdowns from data (once we have options)
+    const islandSelect = document.getElementById('pledge-filter-island');
+    const constituencySelect = document.getElementById('pledge-filter-constituency');
+    const islands = new Set();
+    const constituencies = new Set();
+    allPledges.forEach(pledge => {
+        const { island, constituency } = getPledgeLocation(pledge);
+        if (island) islands.add(island);
+        if (constituency) constituencies.add(constituency);
+    });
+    const sortedIslands = Array.from(islands).filter(Boolean).sort();
+    const sortedConstituencies = Array.from(constituencies).filter(Boolean).sort();
+    const escapeAttr = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    if (islandSelect) {
+        const currentValue = islandSelect.value;
+        islandSelect.innerHTML = '<option value="">All Islands</option>' + sortedIslands.map(i => `<option value="${escapeAttr(i)}">${escapeAttr(i)}</option>`).join('');
+        if (currentValue && sortedIslands.includes(currentValue)) islandSelect.value = currentValue;
+    }
+    if (constituencySelect) {
+        const currentValue = constituencySelect.value;
+        constituencySelect.innerHTML = '<option value="">All Constituencies</option>' + sortedConstituencies.map(c => `<option value="${escapeAttr(c)}">${escapeAttr(c)}</option>`).join('');
+        if (currentValue && sortedConstituencies.includes(currentValue)) constituencySelect.value = currentValue;
+    }
+
     // Apply search filter
     const searchInput = document.getElementById('pledge-search');
     const filterSelect = document.getElementById('pledge-filter');
     const searchTerm = (searchInput && searchInput.value) ? searchInput.value.toLowerCase().trim() : '';
     const filterValue = (filterSelect && filterSelect.value) ? filterSelect.value.trim() : '';
+    const filterIsland = (islandSelect && islandSelect.value) ? islandSelect.value.trim() : '';
+    const filterConstituency = (constituencySelect && constituencySelect.value) ? constituencySelect.value.trim() : '';
 
     // Initialize filteredPledges - ensure it's always an array
     let filteredPledges = Array.isArray(allPledges) ? allPledges : [];
@@ -8149,6 +8276,22 @@ function renderCachedPledgesData() {
         });
     }
 
+    // Apply island filter
+    if (filterIsland) {
+        filteredPledges = filteredPledges.filter(pledge => {
+            const { island } = getPledgeLocation(pledge);
+            return island === filterIsland;
+        });
+    }
+
+    // Apply constituency filter
+    if (filterConstituency) {
+        filteredPledges = filteredPledges.filter(pledge => {
+            const { constituency } = getPledgeLocation(pledge);
+            return constituency === filterConstituency;
+        });
+    }
+
     // Initialize filter tracking if not exists
     if (!paginationState.pledges.hasOwnProperty('lastSearchTerm')) {
         paginationState.pledges.lastSearchTerm = '';
@@ -8156,13 +8299,22 @@ function renderCachedPledgesData() {
     if (!paginationState.pledges.hasOwnProperty('lastFilterValue')) {
         paginationState.pledges.lastFilterValue = '';
     }
+    if (!paginationState.pledges.hasOwnProperty('lastFilterIsland')) {
+        paginationState.pledges.lastFilterIsland = '';
+    }
+    if (!paginationState.pledges.hasOwnProperty('lastFilterConstituency')) {
+        paginationState.pledges.lastFilterConstituency = '';
+    }
 
     // Check if filter/search changed - only reset to page 1 if filter actually changed
     const previousSearchTerm = paginationState.pledges.lastSearchTerm || '';
     const previousFilterValue = paginationState.pledges.lastFilterValue || '';
+    const previousFilterIsland = paginationState.pledges.lastFilterIsland || '';
+    const previousFilterConstituency = paginationState.pledges.lastFilterConstituency || '';
 
     // Only reset to page 1 if the filter/search actually changed (not on pagination navigation)
-    const filterChanged = (searchTerm !== previousSearchTerm) || (filterValue !== previousFilterValue);
+    const filterChanged = (searchTerm !== previousSearchTerm) || (filterValue !== previousFilterValue) ||
+        (filterIsland !== previousFilterIsland) || (filterConstituency !== previousFilterConstituency);
 
     if (filterChanged) {
         console.log('[Pagination] Filter/search changed, resetting to page 1', {
@@ -8177,13 +8329,16 @@ function renderCachedPledgesData() {
     // Always update the last known filter/search values (to track current state)
     paginationState.pledges.lastSearchTerm = searchTerm;
     paginationState.pledges.lastFilterValue = filterValue;
+    paginationState.pledges.lastFilterIsland = filterIsland;
+    paginationState.pledges.lastFilterConstituency = filterConstituency;
 
     // Update statistics based on filtered results
     updatePledgeStatisticsFromArray(filteredPledges);
 
     if (filteredPledges.length === 0) {
+        const hasActiveFilter = searchTerm || filterValue || filterIsland || filterConstituency;
         tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">' +
-            (searchTerm || filterValue ? 'No pledges found matching your search' : 'No pledges recorded yet') + '</td></tr>';
+            (hasActiveFilter ? 'No pledges found matching your filters' : 'No pledges recorded yet') + '</td></tr>';
         renderPagination('pledges', 0);
         return true;
     }
@@ -8314,22 +8469,16 @@ function renderCachedPledgesData() {
             candidateDisplay = 'Loading...';
         }
 
+        const pledgeStatus = pledgeData.pledge === 'yes' ? 'yes' : (pledgeData.pledge === 'no' || pledgeData.pledge === 'negative' ? 'no' : 'undecided');
         const row = document.createElement('tr');
         row.className = 'pledge-table-row';
         row.style.cursor = 'pointer';
         row.setAttribute('data-pledge-id', pledge.id || pledgeData.id);
+        row.setAttribute('data-pledge-status', pledgeStatus);
         row.onclick = (e) => {
             // Don't trigger if clicking on action buttons
             if (e.target.closest('.icon-btn')) return;
             viewPledgeDetails(pledge.id || pledgeData.id);
-        };
-        row.onmouseenter = function() {
-            this.style.backgroundColor = 'var(--light-color)';
-        };
-        row.onmouseleave = function() {
-            if (!this.classList.contains('selected')) {
-                this.style.backgroundColor = '';
-            }
         };
         row.innerHTML = `
             <td style="text-align: center; color: var(--text-light); font-weight: 600;">${rowNumber}</td>
@@ -10044,14 +10193,13 @@ async function generateReport(type) {
                 constituency: null,
                 island: null
             };
+            let voterDataMap = new Map();
             if (globalFilter.initialized && (globalFilter.constituency || globalFilter.island)) {
                 // Fetch voter data for pledges
                 const voterIds = new Set();
                 pledgesData.forEach(pledge => {
                     if (pledge.voterDocumentId) voterIds.add(pledge.voterDocumentId);
                 });
-
-                const voterDataMap = new Map();
                 if (voterIds.size > 0) {
                     const voterPromises = Array.from(voterIds).map(async (voterId) => {
                         try {
@@ -10093,29 +10241,101 @@ async function generateReport(type) {
                 });
             }
 
-            const pledges = [];
-            for (const pledgeData of pledgesData) {
-                let voterName = 'N/A';
-                let voterId = 'N/A';
-
-                if (pledgeData.voterDocumentId) {
-                    try {
-                        const voterDoc = await getDocFn(docFn(window.db, 'voters', pledgeData.voterDocumentId));
-                        if (voterDoc.exists()) {
-                            const voterData = voterDoc.data();
-                            voterName = voterData.name || 'N/A';
-                            voterId = voterData.idNumber || 'N/A';
+            // When no global filter, build voterDataMap for all pledges so we can export all fields
+            let reportVoterDataMap = voterDataMap;
+            if (!reportVoterDataMap || reportVoterDataMap.size === 0) {
+                const voterIds = new Set();
+                pledgesData.forEach(pledge => {
+                    if (pledge.voterDocumentId) voterIds.add(pledge.voterDocumentId);
+                });
+                reportVoterDataMap = new Map();
+                if (voterIds.size > 0) {
+                    const voterPromises = Array.from(voterIds).map(async (voterId) => {
+                        try {
+                            const voterDocRef = docFn(window.db, 'voters', voterId);
+                            const voterDoc = await getDocFn(voterDocRef);
+                            if (voterDoc.exists()) {
+                                return { id: voterId, data: voterDoc.data() };
+                            }
+                        } catch (error) {
+                            console.warn(`Could not fetch voter for pledge report ${voterId}:`, error);
                         }
-                    } catch (err) {
-                        console.warn('Error fetching voter for pledge:', err);
-                    }
+                        return null;
+                    });
+                    const voterResults = await Promise.all(voterPromises);
+                    voterResults.forEach(result => {
+                        if (result) reportVoterDataMap.set(result.id, result.data);
+                    });
                 }
+            }
+
+            // Collect candidate IDs and fetch candidate names (same as pledge tracker table)
+            const candidateIds = new Set();
+            pledgesData.forEach(pledgeData => {
+                if (pledgeData.candidateIds && Array.isArray(pledgeData.candidateIds)) {
+                    pledgeData.candidateIds.forEach(id => candidateIds.add(id));
+                } else if (pledgeData.candidateId) {
+                    candidateIds.add(pledgeData.candidateId);
+                } else if (pledgeData.candidate) {
+                    candidateIds.add(pledgeData.candidate);
+                }
+            });
+            const candidateNamesMap = new Map();
+            if (candidateIds.size > 0 && typeof fetchCandidateNamesMap === 'function') {
+                try {
+                    const fetchedMap = await fetchCandidateNamesMap(Array.from(candidateIds));
+                    Object.entries(fetchedMap).forEach(([id, name]) => candidateNamesMap.set(id, name));
+                } catch (error) {
+                    console.warn('Error fetching candidate names for pledge report:', error);
+                }
+            }
+
+            const pledges = [];
+            let rowNumber = 1;
+            for (const pledgeData of pledgesData) {
+                const voterData = pledgeData.voterDocumentId ? reportVoterDataMap.get(pledgeData.voterDocumentId) : null;
+                const displayData = voterData || pledgeData;
+
+                const voterName = voterData ? (voterData.name || pledgeData.voterName || 'N/A') : (pledgeData.voterName || 'N/A');
+                const idNumber = voterData ? (voterData.idNumber || voterData.voterId || 'N/A') : (pledgeData.voterId || 'N/A');
+                const constituency = pledgeData.constituency || (voterData && voterData.constituency) || (window.campaignData && window.campaignData.constituency) || 'N/A';
+                const island = pledgeData.island || (voterData && voterData.island) || 'N/A';
+                const permanentAddress = voterData
+                    ? ((voterData.permanentAddress && voterData.permanentAddress.trim()) || (voterData.address && voterData.address.trim()) || 'N/A')
+                    : ((pledgeData.permanentAddress && pledgeData.permanentAddress.trim()) || (pledgeData.address && pledgeData.address.trim()) || 'N/A');
+                const currentLocation = voterData
+                    ? ((voterData.currentLocation && voterData.currentLocation.trim()) || (voterData.location && voterData.location.trim()) || 'N/A')
+                    : ((pledgeData.currentLocation && pledgeData.currentLocation.trim()) || 'N/A');
+
+                let statusText = 'Undecided';
+                if (pledgeData.pledge === 'yes') statusText = 'Yes';
+                else if (pledgeData.pledge === 'no' || pledgeData.pledge === 'negative') statusText = 'No';
+
+                let candidateNames = [];
+                if (pledgeData.candidateIds && Array.isArray(pledgeData.candidateIds) && pledgeData.candidateIds.length > 0) {
+                    candidateNames = pledgeData.candidateIds.map(id => candidateNamesMap.get(id) || 'Unknown Candidate').filter(Boolean);
+                } else if (pledgeData.candidateId) {
+                    candidateNames = [candidateNamesMap.get(pledgeData.candidateId) || 'Unknown Candidate'];
+                } else if (pledgeData.candidate) {
+                    candidateNames = [candidateNamesMap.get(pledgeData.candidate) || 'Unknown Candidate'];
+                }
+                const candidateDisplay = candidateNames.length > 0 ? candidateNames.join(', ') : 'N/A';
+
+                const dateRecorded = pledgeData.recordedAt
+                    ? (pledgeData.recordedAt.toDate ? pledgeData.recordedAt.toDate().toLocaleDateString() : pledgeData.recordedAt)
+                    : (pledgeData.dateRecorded ? (pledgeData.dateRecorded.toDate ? pledgeData.dateRecorded.toDate().toLocaleDateString() : pledgeData.dateRecorded) : 'N/A');
 
                 pledges.push({
-                    'Voter Name': voterName,
-                    'Voter ID': voterId,
-                    'Pledge Status': pledgeData.pledge || 'N/A',
-                    'Date Recorded': pledgeData.recordedAt ? (pledgeData.recordedAt.toDate ? pledgeData.recordedAt.toDate().toLocaleDateString() : pledgeData.recordedAt) : (pledgeData.dateRecorded ? (pledgeData.dateRecorded.toDate ? pledgeData.dateRecorded.toDate().toLocaleDateString() : pledgeData.dateRecorded) : 'N/A'),
+                    'No.': rowNumber++,
+                    'ID Number': idNumber,
+                    'Name': voterName,
+                    'Constituency': constituency,
+                    'Island': island,
+                    'Permanent Address': permanentAddress,
+                    'Current Location': currentLocation,
+                    'Pledge Status': statusText,
+                    'Candidate Name': candidateDisplay,
+                    'Date Recorded': dateRecorded,
                     'Agent': pledgeData.agentName || 'N/A'
                 });
             }
@@ -10617,30 +10837,18 @@ async function saveShowVoterImagesSetting(enabled) {
     try {
         const {
             doc,
-            updateDoc,
             setDoc
         } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
 
         const userRef = doc(window.db, 'users', window.userEmail);
 
-        // Try to update, if document doesn't exist, create it
-        try {
-            await updateDoc(userRef, {
-                showVoterImages: enabled
-            });
-        } catch (error) {
-            if (error.code === 'not-found') {
-                // Document doesn't exist, create it
-                await setDoc(userRef, {
-                    email: window.userEmail,
-                    showVoterImages: enabled
-                }, {
-                    merge: true
-                });
-            } else {
-                throw error;
-            }
-        }
+        // setDoc with merge: true creates the document if missing, or updates if it exists
+        await setDoc(userRef, {
+            email: window.userEmail,
+            showVoterImages: enabled
+        }, {
+            merge: true
+        });
 
         // Update local campaignData
         if (window.campaignData) {
@@ -10670,30 +10878,18 @@ async function saveZeroDayToggle(enabled) {
     try {
         const {
             doc,
-            updateDoc,
             setDoc
         } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
 
         const userRef = doc(window.db, 'users', window.userEmail);
 
-        // Try to update, if document doesn't exist, create it
-        try {
-            await updateDoc(userRef, {
-                zeroDayEnabled: enabled
-            });
-        } catch (error) {
-            if (error.code === 'not-found') {
-                // Document doesn't exist, create it
-                await setDoc(userRef, {
-                    email: window.userEmail,
-                    zeroDayEnabled: enabled
-                }, {
-                    merge: true
-                });
-            } else {
-                throw error;
-            }
-        }
+        // setDoc with merge: true creates the document if missing, or updates if it exists
+        await setDoc(userRef, {
+            email: window.userEmail,
+            zeroDayEnabled: enabled
+        }, {
+            merge: true
+        });
 
         // Update local campaignData
         if (window.campaignData) {
@@ -11682,7 +11878,7 @@ function renderOfficerBallotTable(voters, ballotStatus) {
     const isDisabled = ballotStatus === 'close';
 
     if (voters.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">No voters found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--text-light);">No voters found</td></tr>';
         return;
     }
 
@@ -11691,9 +11887,11 @@ function renderOfficerBallotTable(voters, ballotStatus) {
         const row = document.createElement('tr');
         const votedClass = voter.voted ? 'status-active' : 'status-pending';
         const votedText = voter.voted ? 'Voted' : 'Not Voted';
+        const ballotBoxSeq = voter.ballotBoxSequence != null && voter.ballotBoxSequence !== '' ? String(voter.ballotBoxSequence) : '—';
 
         row.innerHTML = `
             <td>${index + 1}</td>
+            <td>${ballotBoxSeq}</td>
             <td><strong>${voter.name}</strong></td>
             <td>${voter.idNumber}</td>
             <td>${voter.permanentAddress}</td>
@@ -11734,6 +11932,9 @@ function setupOfficerVoterSearch() {
 
             if (searchTerm) {
                 filteredVoters = window.officerVotersData.filter(voter => {
+                    // Primary key: ballot box sequence (exact or partial match)
+                    const ballotBoxSeq = (voter.ballotBoxSequence != null ? String(voter.ballotBoxSequence) : '').toLowerCase();
+                    if (ballotBoxSeq && ballotBoxSeq.includes(searchTerm)) return true;
                     const name = (voter.name || '').toLowerCase();
                     const idNumber = (voter.idNumber || '').toLowerCase();
                     const address = (voter.permanentAddress || '').toLowerCase();
@@ -11822,6 +12023,8 @@ window.markVoterAsVoted = async (voterId) => {
             // Apply search filter if active
             if (searchTerm) {
                 votersToRender = window.officerVotersData.filter(voter => {
+                    const ballotBoxSeq = (voter.ballotBoxSequence != null ? String(voter.ballotBoxSequence) : '').toLowerCase();
+                    if (ballotBoxSeq && ballotBoxSeq.includes(searchTerm)) return true;
                     const name = (voter.name || '').toLowerCase();
                     const idNumber = (voter.idNumber || '').toLowerCase();
                     const address = (voter.permanentAddress || '').toLowerCase();
@@ -13085,6 +13288,7 @@ function showBallotVotersModal(ballotNumber, location, voters, ballotStatus) {
     const votersList = voters.map((voter, index) => `
         <tr>
             <td>${index + 1}</td>
+            <td>${voter.ballotBoxSequence != null && voter.ballotBoxSequence !== '' ? String(voter.ballotBoxSequence) : '—'}</td>
             <td>${voter.name}</td>
             <td>${voter.idNumber}</td>
             <td>${voter.permanentAddress}</td>
@@ -13104,6 +13308,7 @@ function showBallotVotersModal(ballotNumber, location, voters, ballotStatus) {
                 <thead>
                     <tr>
                         <th>No.</th>
+                        <th>Ballot Box Sequence</th>
                         <th>Name</th>
                         <th>ID Number</th>
                         <th>Permanent Address</th>
@@ -13112,7 +13317,7 @@ function showBallotVotersModal(ballotNumber, location, voters, ballotStatus) {
                     </tr>
                 </thead>
                 <tbody>
-                    ${voters.length > 0 ? votersList : '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-light);">No voters assigned to this ballot</td></tr>'}
+                    ${voters.length > 0 ? votersList : '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">No voters assigned to this ballot</td></tr>'}
                 </tbody>
             </table>
         </div>
@@ -13138,12 +13343,14 @@ window.downloadBallotVotersList = (ballotNumber, voters) => {
     }
 
     // Prepare CSV content
-    const headers = ['No.', 'Name', 'ID Number', 'Permanent Address', 'Agent', 'Voted'];
+    const headers = ['No.', 'Ballot Box Sequence', 'Name', 'ID Number', 'Permanent Address', 'Ballot', 'Agent', 'Voted'];
     const rows = voters.map((voter, index) => [
         index + 1,
+        voter.ballotBoxSequence != null && voter.ballotBoxSequence !== '' ? String(voter.ballotBoxSequence) : '',
         voter.name,
         voter.idNumber,
         voter.permanentAddress,
+        voter.ballot || '',
         voter.agentName,
         voter.voted ? 'Yes' : 'No'
     ]);
@@ -16632,6 +16839,10 @@ async function createVoterDetailHTML(data, {
                     <div>
                         <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">BALLOT BOX</label>
                         <input type="text" id="voter-edit-ballot" value="${(data.ballot && data.ballot.trim()) ? data.ballot.trim() : ''}" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color);" />
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">BALLOT BOX SEQUENCE</label>
+                        <input type="text" id="voter-edit-ballot-box-sequence" value="${(data.ballotBoxSequence != null && data.ballotBoxSequence !== '') ? String(data.ballotBoxSequence) : ''}" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color);" />
                     </div>
                 </div>
             </div>
@@ -21315,7 +21526,8 @@ Error: $ {
         if (window.showErrorDialog) {
             window.showErrorDialog(errorMessage, 'Error');
         } else {
-            alert(errorMessage);
+            if (window.showErrorDialog) window.showErrorDialog(errorMessage, 'Error');
+            else console.error(errorMessage);
         }
     }
 }
@@ -21421,7 +21633,8 @@ Error: $ {
         if (window.showErrorDialog) {
             window.showErrorDialog(errorMessage, 'Error');
         } else {
-            alert(errorMessage);
+            if (window.showErrorDialog) window.showErrorDialog(errorMessage, 'Error');
+            else console.error(errorMessage);
         }
     }
 }
@@ -21514,7 +21727,7 @@ for $ {
         if (window.showSuccess) {
             window.showSuccess('Access code changed successfully! The new code is displayed above.', 'Code Changed');
         } else {
-            alert('Access code changed successfully! The new code is displayed above.');
+            if (window.showStatusMessage) window.showStatusMessage('Access code changed successfully! The new code is displayed above.', 'Code Changed');
         }
 
         // Reload agents to show updated data
@@ -24592,7 +24805,8 @@ window.handleTransportationCoordinatorView = async (campaignEmail, token) => {
                     } else if (typeof showOfficerError === 'function') {
                         showOfficerError(errorMsg);
                     } else {
-                        alert(errorMsg);
+                        if (window.showErrorDialog) window.showErrorDialog(errorMsg, 'Error');
+                        else console.error(errorMsg);
                     }
                     return;
                 }
@@ -24640,7 +24854,8 @@ window.handleTransportationCoordinatorView = async (campaignEmail, token) => {
             } else if (typeof showOfficerError === 'function') {
                 showOfficerError(errorMsg);
             } else {
-                alert(errorMsg);
+                if (window.showErrorDialog) window.showErrorDialog(errorMsg, 'Error');
+                else console.error(errorMsg);
             }
             return;
         }
@@ -24662,7 +24877,8 @@ window.handleTransportationCoordinatorView = async (campaignEmail, token) => {
             } else if (typeof showOfficerError === 'function') {
                 showOfficerError(errorMsg);
             } else {
-                alert(errorMsg);
+                if (window.showErrorDialog) window.showErrorDialog(errorMsg, 'Error');
+                else console.error(errorMsg);
             }
             return;
         }
@@ -24677,7 +24893,8 @@ window.handleTransportationCoordinatorView = async (campaignEmail, token) => {
             } else if (typeof showOfficerError === 'function') {
                 showOfficerError(errorMsg);
             } else {
-                alert(errorMsg);
+                if (window.showErrorDialog) window.showErrorDialog(errorMsg, 'Error');
+                else console.error(errorMsg);
             }
             return;
         }
@@ -24710,7 +24927,8 @@ window.handleTransportationCoordinatorView = async (campaignEmail, token) => {
             } else if (typeof showOfficerError === 'function') {
                 showOfficerError(errorMsg);
             } else {
-                alert(errorMsg);
+                if (window.showErrorDialog) window.showErrorDialog(errorMsg, 'Error');
+                else console.error(errorMsg);
             }
             return;
         }
@@ -24726,7 +24944,8 @@ window.handleTransportationCoordinatorView = async (campaignEmail, token) => {
         } else if (typeof showOfficerError === 'function') {
             showOfficerError(errorMsg);
         } else {
-            alert(errorMsg);
+            if (window.showErrorDialog) window.showErrorDialog(errorMsg, 'Error');
+            else console.error(errorMsg);
         }
     }
 };
@@ -25541,7 +25760,8 @@ window.markVoterOnBoardTransportCoord = async (transportId, voterId, markAsOnBoa
         if (window.showOfficerError) {
             window.showOfficerError(errorMessage);
         } else {
-            alert(errorMessage);
+            if (window.showErrorDialog) window.showErrorDialog(errorMessage, 'Error');
+            else console.error(errorMessage);
         }
     }
 };
@@ -25818,7 +26038,8 @@ window.markVoterOnBoardTransportCoord = async (transportId, voterId, markAsOnBoa
         if (window.showOfficerError) {
             window.showOfficerError(errorMessage);
         } else {
-            alert(errorMessage);
+            if (window.showErrorDialog) window.showErrorDialog(errorMessage, 'Error');
+            else console.error(errorMessage);
         }
     }
 };

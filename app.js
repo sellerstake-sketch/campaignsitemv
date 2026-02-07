@@ -2059,9 +2059,14 @@ function initializeEventListeners() {
                 }
 
                 // Also save to clients document for admin access
+                // Use current auth user's email (lowercase) for document ID so it matches Firestore rule: request.auth.token.email == clientId
+                const clientDocId = (auth.currentUser && auth.currentUser.email ? auth.currentUser.email : userEmail || '').toLowerCase();
+                if (!clientDocId) {
+                    throw new Error('Not authenticated. Please sign in again.');
+                }
                 console.log('[campaign-setup-form] Saving to clients collection...');
                 try {
-                    await setDoc(doc(db, 'clients', userEmail), {
+                    await setDoc(doc(db, 'clients', clientDocId), {
                         campaignType,
                         campaignName,
                         campaignLogo: logoURL,

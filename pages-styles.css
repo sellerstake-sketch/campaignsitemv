@@ -482,6 +482,26 @@
         transition: width 0.3s ease;
     }
 
+    /* Pledge tracker row highlighting by status */
+    .pledge-table-row[data-pledge-status="yes"] {
+        background-color: rgba(0, 188, 212, 0.12) !important;
+    }
+    .pledge-table-row[data-pledge-status="yes"]:hover {
+        background-color: rgba(0, 188, 212, 0.2) !important;
+    }
+    .pledge-table-row[data-pledge-status="no"] {
+        background-color: rgba(255, 235, 59, 0.25) !important;
+    }
+    .pledge-table-row[data-pledge-status="no"]:hover {
+        background-color: rgba(255, 235, 59, 0.4) !important;
+    }
+    .pledge-table-row[data-pledge-status="undecided"] {
+        background-color: rgba(129, 199, 132, 0.2) !important;
+    }
+    .pledge-table-row[data-pledge-status="undecided"]:hover {
+        background-color: rgba(129, 199, 132, 0.35) !important;
+    }
+
     .call-detail-panel,
     .pledge-detail-panel {
         display: none;
@@ -1097,6 +1117,26 @@
 
 .data-table tbody tr:hover {
     background: var(--light-color);
+}
+
+/* Pledge tracker row highlighting by status (global) */
+.pledge-table-row[data-pledge-status="yes"] {
+    background-color: rgba(0, 188, 212, 0.12) !important;
+}
+.pledge-table-row[data-pledge-status="yes"]:hover {
+    background-color: rgba(0, 188, 212, 0.2) !important;
+}
+.pledge-table-row[data-pledge-status="no"] {
+    background-color: rgba(255, 235, 59, 0.25) !important;
+}
+.pledge-table-row[data-pledge-status="no"]:hover {
+    background-color: rgba(255, 235, 59, 0.4) !important;
+}
+.pledge-table-row[data-pledge-status="undecided"] {
+    background-color: rgba(129, 199, 132, 0.2) !important;
+}
+.pledge-table-row[data-pledge-status="undecided"]:hover {
+    background-color: rgba(129, 199, 132, 0.35) !important;
 }
 
 .table-cell-user {
@@ -2970,6 +3010,16 @@ select.search-input:focus {
     white-space: nowrap;
     padding: 10px 8px;
     font-size: 11px;
+}
+
+.candidates-table-container .data-table thead th.sortable-th {
+    cursor: pointer;
+    user-select: none;
+}
+
+.candidates-table-container .data-table thead th .sort-indicator {
+    font-size: 10px;
+    margin-left: 2px;
 }
 
 .candidates-table-container .data-table tbody td {

@@ -67,7 +67,7 @@ async function updateAgentPresence(isOnline) {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Agent Portal] Initializing...');
 
-    // Sign in anonymously for Firestore access (required for messenger)
+    // Sign in anonymously for Firestore access
     try {
         const userCredential = await signInAnonymously(auth);
         console.log('[Agent Portal] Anonymous authentication successful', {
@@ -214,7 +214,6 @@ async function validateAgentCode(agentCode) {
             agentNameDisplay.textContent = currentAgentData.name || 'Agent';
         }
 
-        // Store agent data globally for messenger access
         window.agentData = currentAgentData;
         window.agentId = currentAgentData.id;
         // Ensure campaignEmail is set - prioritize campaignEmail field, fallback to email
@@ -257,30 +256,8 @@ async function validateAgentCode(agentCode) {
         // Setup event listeners
         setupEventListeners();
 
-        // Initialize messenger (will handle chat with Campaign Manager badge)
-        // This needs to be called after window variables are set
-        // Wait a bit longer to ensure all data is ready and messenger.js is loaded
-        const initMessengerWithRetry = (retries = 3) => {
-            if (window.initMessenger && window.agentData && window.campaignEmail) {
-                console.log('[Agent Portal] Initializing messenger with agent data:', {
-                    agentData: window.agentData,
-                    campaignEmail: window.campaignEmail,
-                    agentId: window.agentData.id
-                });
-                try {
-                    window.initMessenger();
-                } catch (error) {
-                    console.error('[Agent Portal] Error initializing messenger:', error);
-                }
-            } else if (retries > 0) {
-                console.log(`[Agent Portal] Messenger not ready, retrying... (${retries} attempts left)`);
-                setTimeout(() => initMessengerWithRetry(retries - 1), 500);
-            } else {
-                console.error('[Agent Portal] Failed to initialize messenger after retries');
-            }
-        };
-
-        setTimeout(() => initMessengerWithRetry(), 1000);
+        // Initialize refresh button
+        initializeAgentRefreshButton();
 
         updateLoadingProgress(100, 'Ready!');
 
@@ -445,8 +422,8 @@ async function loadAssignedVotersSection() {
         `;
     } else {
         html += `
-            <div class="table-container" style="background: white; border-radius: 12px; box-shadow: var(--shadow-sm); overflow: hidden;">
-                <table class="data-table" style="width: 100%; border-collapse: collapse;">
+            <div class="table-container agent-assigned-table-wrapper" style="background: white; border-radius: 12px; box-shadow: var(--shadow-sm); overflow-x: auto; overflow-y: visible;">
+                <table class="data-table" style="width: 100%; min-width: 700px; border-collapse: collapse;">
                     <thead>
                         <tr style="background: var(--light-color); border-bottom: 2px solid var(--border-color);">
                             <th style="padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">No.</th>
@@ -1600,8 +1577,8 @@ async function notifyCampaignManager(notificationData) {
 
 // Setup event listeners
 function setupEventListeners() {
-    // Navigation
-    const navItems = document.querySelectorAll('.nav-item');
+    // Navigation (agent sidebar uses .agent-nav-item)
+    const navItems = document.querySelectorAll('.agent-nav-item, .nav-item');
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
@@ -1648,6 +1625,72 @@ function setupEventListeners() {
             await updateAgentPresence(false);
         } catch (error) {
             console.error('Error setting agent offline on page unload:', error);
+        }
+    });
+}
+
+// Refresh agent data from Firebase (no re-login required)
+async function refreshAgentData() {
+    if (!currentAgentData || !currentAgentData.id) {
+        console.warn('[Agent Refresh] No agent data, skipping refresh');
+        return;
+    }
+    await loadAssignedVoters();
+    updateAgentStats();
+    const contentArea = document.getElementById('agent-content');
+    if (contentArea && document.querySelector('.agent-nav-item.active')?.dataset.section === 'assigned-voters') {
+        await loadAssignedVotersSection();
+    }
+}
+
+// Initialize refresh button (same UX as campaign manager)
+function initializeAgentRefreshButton() {
+    const refreshBtn = document.getElementById('agent-refresh-btn');
+    if (!refreshBtn) return;
+
+    refreshBtn.addEventListener('click', async function () {
+        const statusMessage = document.getElementById('agent-refresh-status-message');
+
+        refreshBtn.disabled = true;
+        refreshBtn.style.opacity = '0.7';
+        refreshBtn.style.cursor = 'wait';
+        const svgIcon = refreshBtn.querySelector('svg');
+        if (svgIcon) {
+            svgIcon.style.animation = 'spin 1s linear infinite';
+            svgIcon.style.transformOrigin = 'center';
+        }
+        if (statusMessage) {
+            statusMessage.textContent = 'Syncing in progress...';
+            statusMessage.style.display = 'inline-block';
+        }
+
+        try {
+            await refreshAgentData();
+            if (statusMessage) {
+                statusMessage.textContent = 'Syncing Successful';
+                statusMessage.style.color = 'var(--success-color)';
+                setTimeout(() => {
+                    statusMessage.style.display = 'none';
+                    statusMessage.textContent = '';
+                    statusMessage.style.color = '';
+                }, 2000);
+            }
+        } catch (err) {
+            console.error('[Agent Refresh] Error:', err);
+            if (statusMessage) {
+                statusMessage.textContent = 'Sync failed';
+                statusMessage.style.color = 'var(--danger-color)';
+                setTimeout(() => {
+                    statusMessage.style.display = 'none';
+                    statusMessage.textContent = '';
+                    statusMessage.style.color = '';
+                }, 3000);
+            }
+        } finally {
+            refreshBtn.disabled = false;
+            refreshBtn.style.opacity = '';
+            refreshBtn.style.cursor = '';
+            if (svgIcon) svgIcon.style.animation = '';
         }
     });
 }

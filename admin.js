@@ -1294,7 +1294,9 @@ async function registerNewClient() {
                 };
 
                 try {
-                    await setDoc(doc(db, 'clients', email), clientData);
+                    // Use lowercase email as document ID so it matches Firebase Auth token and client write rule
+                    const clientDocId = (email || '').toLowerCase();
+                    await setDoc(doc(db, 'clients', clientDocId), clientData);
                     console.log('[registerNewClient] Step 5: Client document created ✓');
                 } catch (firestoreError) {
                     console.error('[registerNewClient] Step 5: Firestore error creating client:', firestoreError);
@@ -1350,7 +1352,7 @@ async function registerNewClient() {
                     console.error('[registerNewClient] Step 7: Firestore error creating user:', firestoreError);
                     // Clean up: delete client document
                     try {
-                        await deleteDoc(doc(db, 'clients', email));
+                        await deleteDoc(doc(db, 'clients', (email || '').toLowerCase()));
                         console.log('[registerNewClient] Cleaned up client document');
                     } catch (cleanupError) {
                         console.error('[registerNewClient] Error cleaning up client document:', cleanupError);
@@ -1601,10 +1603,11 @@ async function generateLicense() {
             licenseGeneratedBy: currentAdmin.email
         });
 
-        // Update user document
-        await updateDoc(doc(db, 'users', clientEmail), {
+        // Update user document (setDoc with merge creates if missing)
+        await setDoc(doc(db, 'users', clientEmail), {
+            email: clientEmail,
             serialNumber
-        });
+        }, { merge: true });
 
         // Log action
         await logAdminAction('license_generated', `Generated license for client: ${clientEmail}`, {
@@ -1683,9 +1686,10 @@ async function suspendClient(clientEmail) {
             suspendedBy: currentAdmin.email
         });
 
-        await updateDoc(doc(db, 'users', clientEmail), {
+        await setDoc(doc(db, 'users', clientEmail), {
+            email: clientEmail,
             isActive: false
-        });
+        }, { merge: true });
 
         await logAdminAction('client_suspended', `Suspended client: ${clientEmail}`, {
             email: clientEmail
@@ -1711,9 +1715,10 @@ async function activateClient(clientEmail) {
             activatedBy: currentAdmin.email
         });
 
-        await updateDoc(doc(db, 'users', clientEmail), {
+        await setDoc(doc(db, 'users', clientEmail), {
+            email: clientEmail,
             isActive: true
-        });
+        }, { merge: true });
 
         await logAdminAction('client_activated', `Activated client: ${clientEmail}`, {
             email: clientEmail

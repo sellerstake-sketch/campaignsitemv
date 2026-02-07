@@ -273,7 +273,44 @@ function getDefaultTitle(type) {
     return titles[type] || 'Information';
 }
 
-// Convenience functions
+// On-screen status message (non-blocking, does not slow down progress)
+function showStatusMessage(message, title = 'Success') {
+    let container = document.getElementById('status-message-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'status-message-container';
+        container.style.cssText = `
+            position: fixed; bottom: 20px; left: 20px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+            max-width: 360px;
+        `;
+        document.body.appendChild(container);
+    }
+    const line = document.createElement('div');
+    line.style.cssText = `
+        background: var(--white, #fff); border: 1px solid var(--success-color, #059669);
+        border-radius: 8px; padding: 10px 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        font-size: 13px; color: var(--text-color, #111);
+        animation: statusMessageIn 0.25s ease-out;
+    `;
+    line.innerHTML = title ? `<strong style="color: var(--success-color, #059669);">${title}</strong><br>${message}` : message;
+    container.appendChild(line);
+    setTimeout(() => {
+        line.style.animation = 'statusMessageOut 0.25s ease-out';
+        setTimeout(() => { if (line.parentNode) line.parentNode.removeChild(line); }, 250);
+    }, 3500);
+}
+// Ensure status message keyframes exist
+if (typeof document !== 'undefined' && !document.getElementById('status-message-styles')) {
+    const style = document.createElement('style');
+    style.id = 'status-message-styles';
+    style.textContent = `
+        @keyframes statusMessageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes statusMessageOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-6px); } }
+    `;
+    document.head.appendChild(style);
+}
+
 function showAlert(message, title = 'Information') {
     return showDialog({
         type: 'info',
@@ -282,12 +319,9 @@ function showAlert(message, title = 'Information') {
     });
 }
 
+// Success messages print to screen (non-blocking) instead of modal
 function showSuccess(message, title = 'Success') {
-    return showDialog({
-        type: 'success',
-        title,
-        message
-    });
+    showStatusMessage(message, title);
 }
 
 function showWarning(message, title = 'Warning') {
@@ -320,6 +354,8 @@ function showConfirm(message, title = 'Confirm') {
 window.showDialog = showDialog;
 window.showAlert = showAlert;
 window.showSuccess = showSuccess;
+window.showSuccessDialog = showSuccess; // same as showSuccess - on-screen only
+window.showStatusMessage = showStatusMessage;
 window.showWarning = showWarning;
 window.showErrorDialog = showError;
 window.showConfirm = showConfirm;

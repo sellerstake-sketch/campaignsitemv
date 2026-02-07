@@ -16,7 +16,7 @@ service cloud.firestore {
               (resource.data.email == request.auth.token.email || 
                resource.data.campaignEmail == request.auth.token.email));
     }
-    
+  
     // Helper function to check if user can create document with their email
     // Works for create operations
     function canCreate() {
@@ -99,8 +99,9 @@ service cloud.firestore {
       allow read: if request.auth != null;
       
       // Clients can write (create/update) their own document during campaign setup
-      // This allows clients to save campaign data to their client document
-      allow write: if request.auth != null && request.auth.token.email == clientId;
+      // Document ID must match the authenticated user's email (case-insensitive via .lower()).
+      allow write: if request.auth != null && request.auth.token.email != null &&
+                     request.auth.token.email.lower() == clientId.lower();
     }
     
     // Sessions collection - track user sessions with location and IP
