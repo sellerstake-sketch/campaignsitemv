@@ -1076,20 +1076,16 @@ const pageTemplates = {
                             <tr>
                                 <th>No.</th>
                                 <th>Image</th>
-                                <th>ID Number</th>
                                 <th>Name</th>
-                                <th>Constituency</th>
-                                <th>Island</th>
+                                <th>ID Number</th>
                                 <th>Permanent Address</th>
-                                <th>Current Location</th>
                                 <th>Pledge Status</th>
-                                <th>Candidate Name</th>
                                 <th>Date Recorded</th>
                             </tr>
                         </thead>
                         <tbody id="pledges-table-body">
                             <tr>
-                                <td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">No pledges recorded yet</td>
+                                <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">No pledges recorded yet</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1115,6 +1111,16 @@ const pageTemplates = {
                 <p class="page-subtitle">Assign and manage campaign agents</p>
             </div>
             <div class="action-buttons-row" style="display: flex; gap: 10px; align-items: center; flex-wrap: nowrap;">
+                <button class="icon-btn icon-btn-link" onclick="openBulkAssignModal()" title="Bulk Assign Voters">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        <line x1="12" y1="11" x2="12" y2="17"></line>
+                        <line x1="9" y1="14" x2="15" y2="14"></line>
+                    </svg>
+                </button>
                 <button class="icon-btn icon-btn-edit" onclick="window.openModal('agent')" title="Add Agent">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
@@ -1778,7 +1784,7 @@ async function loadDashboardData(forceRefresh = false) {
         // Setup real-time listeners for dynamic statistics
         // For island users, query by island; for campaign managers, query by email/campaignEmail
         let candidatesQuery, votersQuery, eventsQuery, callsQuery;
-        
+
         if (window.isIslandUser && window.islandUserData && window.islandUserData.island) {
             console.log('[loadDashboardData] Island user - querying by island:', window.islandUserData.island);
             candidatesQuery = query(collection(window.db, 'candidates'), where('island', '==', window.islandUserData.island));
@@ -2929,7 +2935,7 @@ async function loadRecentActivities(forceRefresh = false) {
         // For island users, query by island; for campaign managers, query by email/campaignEmail
         const isIslandUser = window.isIslandUser && window.islandUserData && window.islandUserData.island;
         const island = isIslandUser ? window.islandUserData.island : null;
-        
+
         // Get recent candidates
         try {
             const candidatesQuery = query(
@@ -3259,14 +3265,16 @@ async function loadCandidatesData(forceRefresh = false) {
                 snapshot = await getDocs(candidatesQuery);
             } catch (islandQueryError) {
                 console.error('[loadCandidatesData] Query by island failed:', islandQueryError);
-                snapshot = { docs: [] };
+                snapshot = {
+                    docs: []
+                };
             }
         } else {
             // Try both email and campaignEmail fields for campaign managers
             const emailDocs = [];
             const campaignEmailDocs = [];
             const allDocIds = new Set();
-            
+
             try {
                 const emailQuery = query(collection(window.db, 'candidates'), where('email', '==', window.userEmail));
                 const emailSnapshot = await getDocs(emailQuery);
@@ -3279,7 +3287,7 @@ async function loadCandidatesData(forceRefresh = false) {
             } catch (e) {
                 console.warn('[loadCandidatesData] Query by email failed:', e);
             }
-            
+
             try {
                 const campaignEmailQuery = query(collection(window.db, 'candidates'), where('campaignEmail', '==', window.userEmail));
                 const campaignSnapshot = await getDocs(campaignEmailQuery);
@@ -3292,7 +3300,7 @@ async function loadCandidatesData(forceRefresh = false) {
             } catch (e) {
                 console.warn('[loadCandidatesData] Query by campaignEmail failed:', e);
             }
-            
+
             // Combine results
             snapshot = {
                 docs: [...emailDocs, ...campaignEmailDocs]
@@ -3619,8 +3627,8 @@ const paginationState = {
     candidates: {
         currentPage: 1,
         recordsPerPage: 15,
-        sortBy: null,   // 'name' | 'position' | 'constituency' | 'island' | 'status'
-        sortDir: 1      // 1 = ascending, -1 = descending
+        sortBy: null, // 'name' | 'position' | 'constituency' | 'island' | 'status'
+        sortDir: 1 // 1 = ascending, -1 = descending
     },
     voters: {
         currentPage: 1,
@@ -4441,7 +4449,7 @@ async function setupRealtimeListener(collectionName, tableType) {
         // For island users, query by island; for campaign managers, query by email/campaignEmail
         const isIslandUser = window.isIslandUser && window.islandUserData && window.islandUserData.island;
         const island = isIslandUser ? window.islandUserData.island : null;
-        
+
         let collectionQuery;
         let emailField; // Define emailField outside if/else for logging
         if (isIslandUser) {
@@ -4670,27 +4678,27 @@ async function setupRealtimeListener(collectionName, tableType) {
                     switch (tableType) {
                         case 'voters':
                             if (typeof loadVotersData === 'function') loadVotersData(true);
-                                break;
-                            case 'calls':
-                                if (typeof loadCallsData === 'function') loadCallsData(true);
-                                break;
-                            case 'pledges':
-                                console.log('[Real-time Sync] Force refreshing pledges table immediately...');
-                                if (typeof loadPledgesData === 'function') {
-                                    loadPledgesData(true);
-                                } else {
-                                    console.warn('[Real-time Sync] loadPledgesData function not found');
-                                }
-                                break;
-                            case 'events':
-                                if (typeof loadEventsData === 'function') loadEventsData(true);
-                                break;
-                            case 'agents':
-                                if (typeof loadAgentsData === 'function') loadAgentsData(true);
-                                break;
-                            case 'candidates':
-                                if (typeof loadCandidatesData === 'function') loadCandidatesData(true);
-                                break;
+                            break;
+                        case 'calls':
+                            if (typeof loadCallsData === 'function') loadCallsData(true);
+                            break;
+                        case 'pledges':
+                            console.log('[Real-time Sync] Force refreshing pledges table immediately...');
+                            if (typeof loadPledgesData === 'function') {
+                                loadPledgesData(true);
+                            } else {
+                                console.warn('[Real-time Sync] loadPledgesData function not found');
+                            }
+                            break;
+                        case 'events':
+                            if (typeof loadEventsData === 'function') loadEventsData(true);
+                            break;
+                        case 'agents':
+                            if (typeof loadAgentsData === 'function') loadAgentsData(true);
+                            break;
+                        case 'candidates':
+                            if (typeof loadCandidatesData === 'function') loadCandidatesData(true);
+                            break;
                     }
                 }
 
@@ -5901,7 +5909,7 @@ async function loadVotersData(forceRefresh = false) {
         // Filter to ensure we only show voters matching user email (unless admin, island user, or no email fields set)
         const isAdmin = window.userEmail === 'rixaski@gmail.com';
         let filteredDocs = snapshot.docs;
-        
+
         // For island users, we've already queried by island, so no need to filter by email
         if (!window.isIslandUser) {
             filteredDocs = snapshot.docs.filter(doc => {
@@ -6003,7 +6011,10 @@ async function loadVotersData(forceRefresh = false) {
         voterDataCache.data = {
             filteredDocs: validDocsForCache.map(doc => {
                 try {
-                    return { id: doc.id, data: doc.data() };
+                    return {
+                        id: doc.id,
+                        data: doc.data()
+                    };
                 } catch (err) {
                     return null;
                 }
@@ -6021,7 +6032,9 @@ async function loadVotersData(forceRefresh = false) {
         if (window.updateComponentProgress) {
             window.updateComponentProgress('voters', 100);
         }
-        setTimeout(() => { populateVoterFilters(); }, 100);
+        setTimeout(() => {
+            populateVoterFilters();
+        }, 100);
         return;
         /* DEADCODE_START
             const doc = paginatedVoters[0];
@@ -7698,7 +7711,7 @@ async function loadPledgesData(forceRefresh = false) {
         } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
 
         let snapshot;
-        
+
         // For island users, query by island field; for campaign managers, query by email/campaignEmail
         if (window.isIslandUser && window.islandUserData && window.islandUserData.island) {
             console.log('[loadPledgesData] Island user - querying pledges by island:', window.islandUserData.island);
@@ -7718,9 +7731,9 @@ async function loadPledgesData(forceRefresh = false) {
             }
         } else {
             console.log('[loadPledgesData] Campaign manager - querying pledges for email:', window.userEmail);
-            
+
             const pledgesQuery = query(collection(window.db, 'pledges'), where('email', '==', window.userEmail));
-            
+
             try {
                 snapshot = await getDocs(pledgesQuery);
                 console.log('[loadPledgesData] Query successful, found', snapshot.size, 'pledges for email:', window.userEmail);
@@ -7749,7 +7762,7 @@ async function loadPledgesData(forceRefresh = false) {
                 throw queryError;
             }
         }
-        
+
         // Ensure snapshot is defined (should be set by either island user or campaign manager branch above)
         if (!snapshot) {
             // Create a snapshot-like object with forEach method for compatibility
@@ -7767,7 +7780,7 @@ async function loadPledgesData(forceRefresh = false) {
         if (snapshot.empty) {
             console.log('[loadPledgesData] No pledges found for email:', window.userEmail);
             setTimeout(() => {
-                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">No pledges recorded yet</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">No pledges recorded yet</td></tr>';
                 renderPagination('pledges', 0);
             }, 300);
             return;
@@ -8047,22 +8060,44 @@ async function loadPledgesData(forceRefresh = false) {
                         `<div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 14px;" data-voter-id="${idNumber !== 'N/A' ? idNumber : ''}">${initials}</div>`
                     }
                 </td>
-                <td>${idNumber}</td>
                 <td>
                     <div class="table-cell-user">
                         <strong>${voterName}</strong>
                     </div>
                 </td>
-                <td>${constituency}</td>
-                <td>${island}</td>
+                <td>${idNumber}</td>
                 <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${permanentAddress}">${permanentAddress}</td>
-                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${currentLocation}">${currentLocation}</td>
                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${candidateDisplay}">${candidateDisplay}</td>
                 <td>${dateStr}</td>
             `;
 
             fragment.appendChild(row);
+
+            if (!imageUrl && idNumber && idNumber !== 'N/A' && idNumber.trim()) {
+                lookupImageFromFolder(idNumber).then(foundUrl => {
+                    if (foundUrl) {
+                        const img = row.querySelector(`img[data-voter-id="${idNumber}"]`);
+                        if (img) {
+                            img.src = foundUrl;
+                            img.style.display = '';
+                            const fallback = img.nextElementSibling;
+                            if (fallback && fallback.classList.contains('user-avatar')) fallback.style.display = 'none';
+                        } else {
+                            const avatarDiv = row.querySelector(`.user-avatar[data-voter-id="${idNumber}"]`);
+                            if (avatarDiv) {
+                                const img = document.createElement('img');
+                                img.src = foundUrl;
+                                img.alt = voterName || 'Voter';
+                                img.className = 'voter-image';
+                                img.loading = 'lazy';
+                                img.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; object-fit: cover;';
+                                img.setAttribute('data-voter-id', idNumber);
+                                avatarDiv.parentNode.replaceChild(img, avatarDiv);
+                            }
+                        }
+                    }
+                }).catch(() => {});
+            }
 
             // Store pledge data for cache
             allPledges.push({
@@ -8112,7 +8147,7 @@ async function loadPledgesData(forceRefresh = false) {
             window.showErrorDialog(errorMessage, 'Error Loading Pledges');
         }
 
-        tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">
             <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
                 <p style="color: var(--danger-color); font-weight: 600;">${errorMessage}</p>
                 <button class="btn-secondary btn-compact" onclick="loadPledgesData(true)" style="margin-top: 10px;">Retry</button>
@@ -8179,7 +8214,10 @@ function renderCachedPledgesData() {
         const voterData = pledge.voterDocumentId ? voterDataMap.get(pledge.voterDocumentId) : null;
         const island = (pledge.island || (voterData && voterData.island) || 'N/A').toString().trim();
         const constituency = (pledge.constituency || (voterData && voterData.constituency) || 'N/A').toString().trim();
-        return { island, constituency };
+        return {
+            island,
+            constituency
+        };
     };
 
     // Populate Island and Constituency filter dropdowns from data (once we have options)
@@ -8188,7 +8226,10 @@ function renderCachedPledgesData() {
     const islands = new Set();
     const constituencies = new Set();
     allPledges.forEach(pledge => {
-        const { island, constituency } = getPledgeLocation(pledge);
+        const {
+            island,
+            constituency
+        } = getPledgeLocation(pledge);
         if (island) islands.add(island);
         if (constituency) constituencies.add(constituency);
     });
@@ -8255,7 +8296,9 @@ function renderCachedPledgesData() {
     // Apply island filter
     if (filterIsland) {
         filteredPledges = filteredPledges.filter(pledge => {
-            const { island } = getPledgeLocation(pledge);
+            const {
+                island
+            } = getPledgeLocation(pledge);
             return island === filterIsland;
         });
     }
@@ -8263,7 +8306,9 @@ function renderCachedPledgesData() {
     // Apply constituency filter
     if (filterConstituency) {
         filteredPledges = filteredPledges.filter(pledge => {
-            const { constituency } = getPledgeLocation(pledge);
+            const {
+                constituency
+            } = getPledgeLocation(pledge);
             return constituency === filterConstituency;
         });
     }
@@ -8313,7 +8358,7 @@ function renderCachedPledgesData() {
 
     if (filteredPledges.length === 0) {
         const hasActiveFilter = searchTerm || filterValue || filterIsland || filterConstituency;
-        tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">' +
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-light);">' +
             (hasActiveFilter ? 'No pledges found matching your filters' : 'No pledges recorded yet') + '</td></tr>';
         renderPagination('pledges', 0);
         return true;
@@ -8464,40 +8509,31 @@ function renderCachedPledgesData() {
                     `<div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--gradient-primary); color: white; font-weight: 600; font-size: 14px;" data-voter-id="${idNumber !== 'N/A' ? idNumber : ''}">${initials}</div>`
                 }
             </td>
-            <td>${idNumber}</td>
             <td>
                 <div class="table-cell-user">
                     <strong>${voterName}</strong>
                 </div>
             </td>
-            <td>${constituency}</td>
-            <td>${island}</td>
+            <td>${idNumber}</td>
             <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${permanentAddress}">${permanentAddress}</td>
-            <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${currentLocation}">${currentLocation}</td>
             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-            <td class="candidate-name-cell" data-pledge-id="${pledge.id || pledgeData.id}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${candidateDisplay}">${candidateDisplay}</td>
             <td>${dateStr}</td>
         `;
         fragment.appendChild(row);
 
-        // If no image URL found, try to lookup from images folder asynchronously
         if (!imageUrl && idNumber && idNumber !== 'N/A' && idNumber.trim()) {
             lookupImageFromFolder(idNumber).then(foundUrl => {
                 if (foundUrl) {
-                    // Find the image element and update it
-                    let img = row.querySelector(`img[data-voter-id="${idNumber}"]`);
+                    const img = row.querySelector(`img[data-voter-id="${idNumber}"]`);
                     if (img) {
                         img.src = foundUrl;
                         img.style.display = '';
                         const fallback = img.nextElementSibling;
-                        if (fallback && fallback.classList.contains('user-avatar')) {
-                            fallback.style.display = 'none';
-                        }
+                        if (fallback && fallback.classList.contains('user-avatar')) fallback.style.display = 'none';
                     } else {
-                        // If no img element (we showed initials), create one
                         const avatarDiv = row.querySelector(`.user-avatar[data-voter-id="${idNumber}"]`);
                         if (avatarDiv) {
-                            img = document.createElement('img');
+                            const img = document.createElement('img');
                             img.src = foundUrl;
                             img.alt = voterName || 'Voter';
                             img.className = 'voter-image';
@@ -8508,9 +8544,7 @@ function renderCachedPledgesData() {
                         }
                     }
                 }
-            }).catch(() => {
-                // Silently fail - fallback will show
-            });
+            }).catch(() => {});
         }
 
         rowNumber++;
@@ -9286,26 +9320,74 @@ async function loadAnalyticsData() {
         // For island users, query by island; for campaign managers, query by email/campaignEmail
         const isIslandUser = window.isIslandUser && window.islandUserData && window.islandUserData.island;
         const island = isIslandUser ? window.islandUserData.island : null;
-        
+
         const [votersSnap, pledgesSnap, callsSnap, agentsSnap, eventsSnap, candidatesSnap] = await Promise.all([
-            isIslandUser ? 
-                getDocs(query(collection(window.db, 'voters'), where('island', '==', island))).catch(() => ({ size: 0, docs: [], forEach: () => {} })) :
-                getDocs(query(collection(window.db, 'voters'), where('email', '==', window.userEmail))).catch(() => ({ size: 0, docs: [], forEach: () => {} })),
-            isIslandUser ? 
-                getDocs(query(collection(window.db, 'pledges'), where('island', '==', island))).catch(() => ({ size: 0, docs: [], forEach: () => {} })) :
-                getDocs(query(collection(window.db, 'pledges'), where('email', '==', window.userEmail))).catch(() => ({ size: 0, docs: [], forEach: () => {} })),
-            isIslandUser ? 
-                getDocs(query(collection(window.db, 'calls'), where('island', '==', island))).catch(() => ({ size: 0, docs: [], forEach: () => {} })) :
-                getDocs(query(collection(window.db, 'calls'), where('campaignEmail', '==', window.userEmail))).catch(() => ({ size: 0, docs: [], forEach: () => {} })),
-            isIslandUser ? 
-                getDocs(query(collection(window.db, 'agents'), where('island', '==', island))).catch(() => ({ size: 0, docs: [], forEach: () => {} })) :
-                getDocs(query(collection(window.db, 'agents'), where('email', '==', window.userEmail))).catch(() => ({ size: 0, docs: [], forEach: () => {} })),
-            isIslandUser ? 
-                getDocs(query(collection(window.db, 'events'), where('island', '==', island))).catch(() => ({ size: 0, docs: [], forEach: () => {} })) :
-                getDocs(query(collection(window.db, 'events'), where('campaignEmail', '==', window.userEmail))).catch(() => ({ size: 0, docs: [], forEach: () => {} })),
-            isIslandUser ? 
-                getDocs(query(collection(window.db, 'candidates'), where('island', '==', island))).catch(() => ({ size: 0, docs: [], forEach: () => {} })) :
-                getDocs(query(collection(window.db, 'candidates'), where('email', '==', window.userEmail))).catch(() => ({ size: 0, docs: [], forEach: () => {} }))
+            isIslandUser ?
+            getDocs(query(collection(window.db, 'voters'), where('island', '==', island))).catch(() => ({
+                size: 0,
+                docs: [],
+                forEach: () => {}
+            })) :
+            getDocs(query(collection(window.db, 'voters'), where('email', '==', window.userEmail))).catch(() => ({
+                size: 0,
+                docs: [],
+                forEach: () => {}
+            })),
+            isIslandUser ?
+            getDocs(query(collection(window.db, 'pledges'), where('island', '==', island))).catch(() => ({
+                size: 0,
+                docs: [],
+                forEach: () => {}
+            })) :
+            getDocs(query(collection(window.db, 'pledges'), where('email', '==', window.userEmail))).catch(() => ({
+                size: 0,
+                docs: [],
+                forEach: () => {}
+            })),
+            isIslandUser ?
+            getDocs(query(collection(window.db, 'calls'), where('island', '==', island))).catch(() => ({
+                size: 0,
+                docs: [],
+                forEach: () => {}
+            })) :
+            getDocs(query(collection(window.db, 'calls'), where('campaignEmail', '==', window.userEmail))).catch(() => ({
+                size: 0,
+                docs: [],
+                forEach: () => {}
+            })),
+            isIslandUser ?
+            getDocs(query(collection(window.db, 'agents'), where('island', '==', island))).catch(() => ({
+                size: 0,
+                docs: [],
+                forEach: () => {}
+            })) :
+            getDocs(query(collection(window.db, 'agents'), where('email', '==', window.userEmail))).catch(() => ({
+                size: 0,
+                docs: [],
+                forEach: () => {}
+            })),
+            isIslandUser ?
+            getDocs(query(collection(window.db, 'events'), where('island', '==', island))).catch(() => ({
+                size: 0,
+                docs: [],
+                forEach: () => {}
+            })) :
+            getDocs(query(collection(window.db, 'events'), where('campaignEmail', '==', window.userEmail))).catch(() => ({
+                size: 0,
+                docs: [],
+                forEach: () => {}
+            })),
+            isIslandUser ?
+            getDocs(query(collection(window.db, 'candidates'), where('island', '==', island))).catch(() => ({
+                size: 0,
+                docs: [],
+                forEach: () => {}
+            })) :
+            getDocs(query(collection(window.db, 'candidates'), where('email', '==', window.userEmail))).catch(() => ({
+                size: 0,
+                docs: [],
+                forEach: () => {}
+            }))
         ]);
 
         // Extract data
@@ -10227,7 +10309,10 @@ async function generateReport(type) {
                             const voterDocRef = docFn(window.db, 'voters', voterId);
                             const voterDoc = await getDocFn(voterDocRef);
                             if (voterDoc.exists()) {
-                                return { id: voterId, data: voterDoc.data() };
+                                return {
+                                    id: voterId,
+                                    data: voterDoc.data()
+                                };
                             }
                         } catch (error) {
                             console.warn(`Could not fetch voter for pledge report ${voterId}:`, error);
@@ -10272,12 +10357,12 @@ async function generateReport(type) {
                 const idNumber = voterData ? (voterData.idNumber || voterData.voterId || 'N/A') : (pledgeData.voterId || 'N/A');
                 const constituency = pledgeData.constituency || (voterData && voterData.constituency) || (window.campaignData && window.campaignData.constituency) || 'N/A';
                 const island = pledgeData.island || (voterData && voterData.island) || 'N/A';
-                const permanentAddress = voterData
-                    ? ((voterData.permanentAddress && voterData.permanentAddress.trim()) || (voterData.address && voterData.address.trim()) || 'N/A')
-                    : ((pledgeData.permanentAddress && pledgeData.permanentAddress.trim()) || (pledgeData.address && pledgeData.address.trim()) || 'N/A');
-                const currentLocation = voterData
-                    ? ((voterData.currentLocation && voterData.currentLocation.trim()) || (voterData.location && voterData.location.trim()) || 'N/A')
-                    : ((pledgeData.currentLocation && pledgeData.currentLocation.trim()) || 'N/A');
+                const permanentAddress = voterData ?
+                    ((voterData.permanentAddress && voterData.permanentAddress.trim()) || (voterData.address && voterData.address.trim()) || 'N/A') :
+                    ((pledgeData.permanentAddress && pledgeData.permanentAddress.trim()) || (pledgeData.address && pledgeData.address.trim()) || 'N/A');
+                const currentLocation = voterData ?
+                    ((voterData.currentLocation && voterData.currentLocation.trim()) || (voterData.location && voterData.location.trim()) || 'N/A') :
+                    ((pledgeData.currentLocation && pledgeData.currentLocation.trim()) || 'N/A');
 
                 let statusText = 'Undecided';
                 if (pledgeData.pledge === 'yes') statusText = 'Yes';
@@ -10293,9 +10378,9 @@ async function generateReport(type) {
                 }
                 const candidateDisplay = candidateNames.length > 0 ? candidateNames.join(', ') : 'N/A';
 
-                const dateRecorded = pledgeData.recordedAt
-                    ? (pledgeData.recordedAt.toDate ? pledgeData.recordedAt.toDate().toLocaleDateString() : pledgeData.recordedAt)
-                    : (pledgeData.dateRecorded ? (pledgeData.dateRecorded.toDate ? pledgeData.dateRecorded.toDate().toLocaleDateString() : pledgeData.dateRecorded) : 'N/A');
+                const dateRecorded = pledgeData.recordedAt ?
+                    (pledgeData.recordedAt.toDate ? pledgeData.recordedAt.toDate().toLocaleDateString() : pledgeData.recordedAt) :
+                    (pledgeData.dateRecorded ? (pledgeData.dateRecorded.toDate ? pledgeData.dateRecorded.toDate().toLocaleDateString() : pledgeData.dateRecorded) : 'N/A');
 
                 pledges.push({
                     'No.': rowNumber++,
@@ -10324,23 +10409,53 @@ async function generateReport(type) {
             // For island users, query by island; for campaign managers, query by email/campaignEmail
             const isIslandUser = window.isIslandUser && window.islandUserData && window.islandUserData.island;
             const island = isIslandUser ? window.islandUserData.island : null;
-            
+
             const [votersSnap, pledgesSnap, callsSnap, eventsSnap, agentsSnap] = await Promise.all([
-                isIslandUser ? 
-                    getDocs(query(collection(window.db, 'voters'), where('island', '==', island))).catch(() => ({ size: 0, docs: [] })) :
-                    getDocs(query(collection(window.db, 'voters'), where('email', '==', window.userEmail))).catch(() => ({ size: 0, docs: [] })),
-                isIslandUser ? 
-                    getDocs(query(collection(window.db, 'pledges'), where('island', '==', island))).catch(() => ({ size: 0, docs: [] })) :
-                    getDocs(query(collection(window.db, 'pledges'), where('email', '==', window.userEmail))).catch(() => ({ size: 0, docs: [] })),
-                isIslandUser ? 
-                    getDocs(query(collection(window.db, 'calls'), where('island', '==', island))).catch(() => ({ size: 0, docs: [] })) :
-                    getDocs(query(collection(window.db, 'calls'), where('campaignEmail', '==', window.userEmail))).catch(() => ({ size: 0, docs: [] })),
-                isIslandUser ? 
-                    getDocs(query(collection(window.db, 'events'), where('island', '==', island))).catch(() => ({ size: 0, docs: [] })) :
-                    getDocs(query(collection(window.db, 'events'), where('campaignEmail', '==', window.userEmail))).catch(() => ({ size: 0, docs: [] })),
-                isIslandUser ? 
-                    getDocs(query(collection(window.db, 'agents'), where('island', '==', island))).catch(() => ({ size: 0, docs: [] })) :
-                    getDocs(query(collection(window.db, 'agents'), where('email', '==', window.userEmail))).catch(() => ({ size: 0, docs: [] }))
+                isIslandUser ?
+                getDocs(query(collection(window.db, 'voters'), where('island', '==', island))).catch(() => ({
+                    size: 0,
+                    docs: []
+                })) :
+                getDocs(query(collection(window.db, 'voters'), where('email', '==', window.userEmail))).catch(() => ({
+                    size: 0,
+                    docs: []
+                })),
+                isIslandUser ?
+                getDocs(query(collection(window.db, 'pledges'), where('island', '==', island))).catch(() => ({
+                    size: 0,
+                    docs: []
+                })) :
+                getDocs(query(collection(window.db, 'pledges'), where('email', '==', window.userEmail))).catch(() => ({
+                    size: 0,
+                    docs: []
+                })),
+                isIslandUser ?
+                getDocs(query(collection(window.db, 'calls'), where('island', '==', island))).catch(() => ({
+                    size: 0,
+                    docs: []
+                })) :
+                getDocs(query(collection(window.db, 'calls'), where('campaignEmail', '==', window.userEmail))).catch(() => ({
+                    size: 0,
+                    docs: []
+                })),
+                isIslandUser ?
+                getDocs(query(collection(window.db, 'events'), where('island', '==', island))).catch(() => ({
+                    size: 0,
+                    docs: []
+                })) :
+                getDocs(query(collection(window.db, 'events'), where('campaignEmail', '==', window.userEmail))).catch(() => ({
+                    size: 0,
+                    docs: []
+                })),
+                isIslandUser ?
+                getDocs(query(collection(window.db, 'agents'), where('island', '==', island))).catch(() => ({
+                    size: 0,
+                    docs: []
+                })) :
+                getDocs(query(collection(window.db, 'agents'), where('email', '==', window.userEmail))).catch(() => ({
+                    size: 0,
+                    docs: []
+                }))
             ]);
 
             // Apply global filter
@@ -10588,7 +10703,7 @@ function updateMobileBottomNavVisibility() {
 
     // Update Zero Day visibility in More menu
     updateMobileMoreMenuZeroDay();
-    
+
     // Also update sidebar menu visibility based on current state
     if (typeof updateZeroDayMenuVisibility === 'function') {
         const zeroDayEnabled = (window.campaignData && window.campaignData.zeroDayEnabled === true);
@@ -12733,7 +12848,7 @@ async function calculateBallotStatistics(ballotId, ballotNumber) {
         // For island users, query by island and ballot; for campaign managers, query by email/campaignEmail and ballot
         let votersSnapshot;
         let voters = [];
-        
+
         const isIslandUser = window.isIslandUser && window.islandUserData && window.islandUserData.island;
         const island = isIslandUser ? window.islandUserData.island : null;
 
@@ -13400,7 +13515,7 @@ window.generateBallotLink = async (ballotId, ballotNumber) => {
                 where,
                 getDocs
             } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-            
+
             // Get voters assigned to this ballot
             const ballotNum = ballotNumber || ballotData.ballotNumber;
             if (ballotNum) {
@@ -13410,11 +13525,11 @@ window.generateBallotLink = async (ballotId, ballotNumber) => {
                     where('email', '==', ballotData.email || window.userEmail)
                 );
                 const votersSnapshot = await getDocs(votersQuery);
-                
+
                 // Build agent map
                 const agentsMap = {};
                 const agentCounts = {};
-                
+
                 // Fetch agents
                 try {
                     const agentsQuery = query(
@@ -13429,7 +13544,7 @@ window.generateBallotLink = async (ballotId, ballotNumber) => {
                 } catch (agentError) {
                     console.warn('Could not fetch agents:', agentError);
                 }
-                
+
                 // Count agents from voters
                 votersSnapshot.docs.forEach(doc => {
                     const voterData = doc.data();
@@ -13438,10 +13553,10 @@ window.generateBallotLink = async (ballotId, ballotNumber) => {
                         agentCounts[agentsMap[agentId]] = (agentCounts[agentsMap[agentId]] || 0) + 1;
                     }
                 });
-                
+
                 // Get most common agent
                 if (Object.keys(agentCounts).length > 0) {
-                    agentName = Object.keys(agentCounts).reduce((a, b) => 
+                    agentName = Object.keys(agentCounts).reduce((a, b) =>
                         agentCounts[a] > agentCounts[b] ? a : b
                     );
                 }
@@ -13584,7 +13699,7 @@ window.generateTransportationLink = async (transportId, type, transportNumber) =
         // This ensures the link queries match the campaignEmail field in transportation records
         let linkEmail = window.userEmail;
         let campaignEmailForLink = window.userEmail;
-        
+
         if (window.isIslandUser && window.islandUserData && window.islandUserData.campaignEmail) {
             // Island users: use campaign manager's email for the link
             // But store the token under the campaign manager's account so the link works
@@ -14711,13 +14826,13 @@ function updateZeroDayMenuVisibility(enabled) {
     if (zeroDayNavItem) {
         zeroDayNavItem.style.display = enabled ? 'flex' : 'none';
     }
-    
+
     // Update mobile more menu item
     const mobileZeroDayNavItem = document.getElementById('mobile-more-zero-day');
     if (mobileZeroDayNavItem) {
         mobileZeroDayNavItem.style.display = enabled ? 'flex' : 'none';
     }
-    
+
     // Also update window.campaignData to keep it in sync
     if (window.campaignData) {
         window.campaignData.zeroDayEnabled = enabled;
@@ -15598,7 +15713,7 @@ function enableVoterEdit() {
         });
 
         if (saveBtn) saveBtn.style.display = 'block';
-        
+
         // Show image upload field in edit mode
         const imageUploadDiv = document.getElementById('voter-detail-image-upload');
         if (imageUploadDiv) {
@@ -15722,48 +15837,48 @@ async function saveVoterFromDetail() {
         if (currentLocationInput && currentLocationInput.value) updateData.currentLocation = currentLocationInput.value.trim();
         if (phoneInput && phoneInput.value) updateData.number = phoneInput.value.trim();
 
-                    // Handle image upload if a new image was selected
-                    const imageInput = document.getElementById('voter-detail-image-input');
-                    if (imageInput && imageInput.files && imageInput.files[0]) {
-                        try {
-                            console.log('[Voter Detail] Starting image upload...', {
-                                fileName: imageInput.files[0].name,
-                                fileSize: imageInput.files[0].size,
-                                fileType: imageInput.files[0].type,
-                                userEmail: window.userEmail
-                            });
-                            
-                            const {
-                                getStorage,
-                                ref,
-                                uploadBytes,
-                                getDownloadURL
-                            } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js');
-                            
-                            // Use global storage instance if available, otherwise get default
-                            const storage = window.storage || getStorage();
-                            const imageFile = imageInput.files[0];
-                            const imageFileName = `${voterId}_${Date.now()}_${imageFile.name}`;
-                            const imagePath = `voters/${window.userEmail}/${imageFileName}`;
-                            console.log('[Voter Detail] Uploading to path:', imagePath);
-                            
-                            const imageRef = ref(storage, imagePath);
-                            await uploadBytes(imageRef, imageFile);
-                            console.log('[Voter Detail] Image uploaded successfully, getting download URL...');
-                            
-                            const imageUrl = await getDownloadURL(imageRef);
-                            console.log('[Voter Detail] Image upload complete, URL:', imageUrl);
-                            
-                            updateData.imageUrl = imageUrl;
-                            updateData.image = imageUrl; // Keep for backward compatibility
-                        } catch (imageError) {
-                            console.error('[Voter Detail] Error uploading image:', imageError);
-                            if (window.showErrorDialog) {
-                                window.showErrorDialog(`Failed to upload image: ${imageError.message || imageError}. The voter will be saved without the new image.`, 'Image Upload Error');
-                            }
-                            // Continue with save even if image upload fails
-                        }
-                    }
+        // Handle image upload if a new image was selected
+        const imageInput = document.getElementById('voter-detail-image-input');
+        if (imageInput && imageInput.files && imageInput.files[0]) {
+            try {
+                console.log('[Voter Detail] Starting image upload...', {
+                    fileName: imageInput.files[0].name,
+                    fileSize: imageInput.files[0].size,
+                    fileType: imageInput.files[0].type,
+                    userEmail: window.userEmail
+                });
+
+                const {
+                    getStorage,
+                    ref,
+                    uploadBytes,
+                    getDownloadURL
+                } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js');
+
+                // Use global storage instance if available, otherwise get default
+                const storage = window.storage || getStorage();
+                const imageFile = imageInput.files[0];
+                const imageFileName = `${voterId}_${Date.now()}_${imageFile.name}`;
+                const imagePath = `voters/${window.userEmail}/${imageFileName}`;
+                console.log('[Voter Detail] Uploading to path:', imagePath);
+
+                const imageRef = ref(storage, imagePath);
+                await uploadBytes(imageRef, imageFile);
+                console.log('[Voter Detail] Image uploaded successfully, getting download URL...');
+
+                const imageUrl = await getDownloadURL(imageRef);
+                console.log('[Voter Detail] Image upload complete, URL:', imageUrl);
+
+                updateData.imageUrl = imageUrl;
+                updateData.image = imageUrl; // Keep for backward compatibility
+            } catch (imageError) {
+                console.error('[Voter Detail] Error uploading image:', imageError);
+                if (window.showErrorDialog) {
+                    window.showErrorDialog(`Failed to upload image: ${imageError.message || imageError}. The voter will be saved without the new image.`, 'Image Upload Error');
+                }
+                // Continue with save even if image upload fails
+            }
+        }
 
         // Set email and campaignEmail fields (required for Firestore rules)
         // Updated Firestore rules allow updates if:
@@ -16235,9 +16350,9 @@ async function fetchVoterPledges(voterId, idNumber) {
         snapshot.forEach(doc => {
             const pledgeData = doc.data();
             // Match by voterDocumentId, voterId, or idNumber to find all related pledges regardless of campaign
-            if (pledgeData.voterDocumentId === voterId || 
-                pledgeData.voterId === voterId || 
-                pledgeData.idNumber === idNumber || 
+            if (pledgeData.voterDocumentId === voterId ||
+                pledgeData.voterId === voterId ||
+                pledgeData.idNumber === idNumber ||
                 pledgeData.voterId === idNumber) {
                 voterPledges.push({
                     id: doc.id,
@@ -17338,30 +17453,30 @@ async function bulkDeleteAllVoters() {
 
         // First, get count of voters (query both campaignEmail and email to catch all voters)
         console.log('[Bulk Delete] Counting voters for user:', window.userEmail);
-        
+
         // Query voters by campaignEmail
         const votersQueryByCampaign = query(
             collection(window.db, 'voters'),
             where('campaignEmail', '==', window.userEmail)
         );
-        
+
         // Query voters by email
         const votersQueryByEmail = query(
             collection(window.db, 'voters'),
             where('email', '==', window.userEmail)
         );
-        
+
         // Get both snapshots and combine (using a Set to avoid duplicates)
         const [snapshotByCampaign, snapshotByEmail] = await Promise.all([
             getDocs(votersQueryByCampaign),
             getDocs(votersQueryByEmail)
         ]);
-        
+
         // Combine results, avoiding duplicates by document ID
         const voterDocsMap = new Map();
         snapshotByCampaign.docs.forEach(doc => voterDocsMap.set(doc.id, doc));
         snapshotByEmail.docs.forEach(doc => voterDocsMap.set(doc.id, doc));
-        
+
         const allVoterDocs = Array.from(voterDocsMap.values());
         const voterCount = allVoterDocs.length;
 
@@ -17374,7 +17489,7 @@ async function bulkDeleteAllVoters() {
 
         // Confirm deletion with count
         const confirmMessage = `Are you sure you want to delete ALL ${voterCount} voter(s)?\n\nThis action cannot be undone and will permanently remove all voter records. This is useful when you need to upload a new list with updated information (such as updated Ballot Box numbers).`;
-        
+
         let confirmed = false;
         if (window.showConfirm) {
             confirmed = await window.showConfirm(
@@ -17450,7 +17565,7 @@ async function bulkDeleteAllVoters() {
 }
 
 // Create Pledge Detail HTML (similar to Call Detail)
-function createPledgeDetailHTML(pledgeData, voterData = null) {
+function createPledgeDetailHTML(pledgeData, voterData = null, candidateDisplay = 'N/A') {
     const voterName = pledgeData.voterName || (voterData && voterData.name) || 'N/A';
     const idNumber = pledgeData.voterId || (voterData && (voterData.idNumber || voterData.voterId)) || 'N/A';
     const permanentAddress = voterData ? (voterData.permanentAddress || voterData.address || 'N/A') : (pledgeData.permanentAddress || 'N/A');
@@ -17548,6 +17663,10 @@ function createPledgeDetailHTML(pledgeData, voterData = null) {
                     <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Date Recorded</label>
                     <p id="pledge-detail-date" style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${pledgeDateStr}</p>
                 </div>
+                <div style="grid-column: span 2;">
+                    <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Candidate Name</label>
+                    <p style="margin: 0; color: var(--text-color); font-size: 14px; font-weight: 500;">${candidateDisplay}</p>
+                </div>
                 ${pledgeData.notes ? `
                 <div style="grid-column: span 2;">
                     <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Notes</label>
@@ -17633,7 +17752,7 @@ async function viewPledgeDetails(pledgeId, navigateDirection = null) {
             const emailDocs = [];
             const campaignEmailDocs = [];
             const allDocIds = new Set();
-            
+
             try {
                 const emailQuery = query(collection(window.db, 'pledges'), where('email', '==', window.userEmail));
                 const emailSnapshot = await getDocs(emailQuery);
@@ -17646,7 +17765,7 @@ async function viewPledgeDetails(pledgeId, navigateDirection = null) {
             } catch (e) {
                 console.warn('[viewPledgeDetails] Query by email failed:', e);
             }
-            
+
             try {
                 const campaignEmailQuery = query(collection(window.db, 'pledges'), where('campaignEmail', '==', window.userEmail));
                 const campaignSnapshot = await getDocs(campaignEmailQuery);
@@ -17659,10 +17778,12 @@ async function viewPledgeDetails(pledgeId, navigateDirection = null) {
             } catch (e) {
                 console.warn('[viewPledgeDetails] Query by campaignEmail failed:', e);
             }
-            
-            allPledgesSnapshot = { docs: [...emailDocs, ...campaignEmailDocs] };
+
+            allPledgesSnapshot = {
+                docs: [...emailDocs, ...campaignEmailDocs]
+            };
         }
-        
+
         const allPledges = allPledgesSnapshot.docs.map(d => ({
             id: d.id,
             ...d.data()
@@ -17696,7 +17817,7 @@ async function viewPledgeDetails(pledgeId, navigateDirection = null) {
         const isAdmin = window.userEmail === 'rixaski@gmail.com';
         const emailMatches = pledgeData.email === window.userEmail || pledgeData.campaignEmail === window.userEmail;
         const islandMatches = window.isIslandUser && window.islandUserData && pledgeData.island === window.islandUserData.island;
-        
+
         if (!isAdmin && !emailMatches && !islandMatches) {
             if (window.showErrorDialog) {
                 window.showErrorDialog('You do not have permission to view this pledge.', 'Access Denied');
@@ -17800,6 +17921,24 @@ async function viewPledgeDetails(pledgeId, navigateDirection = null) {
             }
         }
 
+        // Fetch candidate names for pledge
+        let candidateNames = [];
+        const cids = pledgeData.candidateIds || (pledgeData.candidateId ? [pledgeData.candidateId] : []) || (pledgeData.candidate ? [pledgeData.candidate] : []);
+        for (const cid of cids) {
+            if (cid) {
+                try {
+                    const candRef = doc(window.db, 'candidates', cid);
+                    const candSnap = await getDoc(candRef);
+                    if (candSnap.exists()) {
+                        const name = candSnap.data().name || 'Unknown';
+                        if (name && !candidateNames.includes(name)) candidateNames.push(name);
+                    }
+                } catch (e) {
+                    /* ignore */ }
+            }
+        }
+        const candidateDisplay = candidateNames.length > 0 ? candidateNames.join(', ') : 'N/A';
+
         // Get detail panel and content
         const detailPanel = document.getElementById('pledge-detail-panel');
         const detailContent = document.getElementById('pledge-detail-content');
@@ -17860,7 +17999,7 @@ async function viewPledgeDetails(pledgeId, navigateDirection = null) {
         }
 
         // Show pledge info immediately
-        detailContent.innerHTML = createPledgeDetailHTML(pledgeData, voterData);
+        detailContent.innerHTML = createPledgeDetailHTML(pledgeData, voterData, candidateDisplay);
 
         // Update navigation buttons immediately
         const prevBtn = detailContent.querySelector('#pledge-prev-btn');
@@ -18854,7 +18993,7 @@ async function viewCandidateDetails(candidateId, navigateDirection = null) {
             const emailDocs = [];
             const campaignEmailDocs = [];
             const allDocIds = new Set();
-            
+
             try {
                 const emailQuery = query(collection(window.db, 'candidates'), where('email', '==', window.userEmail));
                 const emailSnapshot = await getDocs(emailQuery);
@@ -18867,7 +19006,7 @@ async function viewCandidateDetails(candidateId, navigateDirection = null) {
             } catch (e) {
                 console.warn('[viewCandidateDetails] Query by email failed:', e);
             }
-            
+
             try {
                 const campaignEmailQuery = query(collection(window.db, 'candidates'), where('campaignEmail', '==', window.userEmail));
                 const campaignSnapshot = await getDocs(campaignEmailQuery);
@@ -18880,8 +19019,10 @@ async function viewCandidateDetails(candidateId, navigateDirection = null) {
             } catch (e) {
                 console.warn('[viewCandidateDetails] Query by campaignEmail failed:', e);
             }
-            
-            allCandidatesSnapshot = { docs: [...emailDocs, ...campaignEmailDocs] };
+
+            allCandidatesSnapshot = {
+                docs: [...emailDocs, ...campaignEmailDocs]
+            };
         }
         const allCandidates = allCandidatesSnapshot.docs.map(d => ({
             id: d.id,
@@ -18917,7 +19058,7 @@ async function viewCandidateDetails(candidateId, navigateDirection = null) {
         const hasEmailFields = candidateData.email || candidateData.campaignEmail;
         const emailMatches = candidateData.email === window.userEmail || candidateData.campaignEmail === window.userEmail;
         const islandMatches = window.isIslandUser && window.islandUserData && candidateData.island === window.islandUserData.island;
-        
+
         if (!isAdmin && hasEmailFields && !emailMatches && !islandMatches) {
             if (window.showErrorDialog) {
                 window.showErrorDialog('You do not have permission to view this candidate.', 'Access Denied');
@@ -19647,6 +19788,248 @@ function reloadTableData(type, editVoterId = null, editPledgeId = null, editAgen
                     currentSection = prevSection;
                 }, 100);
             }, 300);
+        }
+    }
+}
+
+// Bulk assign voters to agent - open modal
+async function openBulkAssignModal() {
+    if (!window.db || !window.userEmail) {
+        if (window.showErrorDialog) window.showErrorDialog('Database not initialized. Please refresh the page.');
+        return;
+    }
+    try {
+        const {
+            collection,
+            query,
+            where,
+            getDocs,
+            doc,
+            getDoc
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // Fetch agents
+        let agentsQuery = query(collection(window.db, 'agents'), where('email', '==', window.userEmail));
+        const agentsSnapshot = await getDocs(agentsQuery);
+        if (agentsSnapshot.empty) {
+            if (window.showErrorDialog) window.showErrorDialog('No agents found. Please add agents first.', 'No Agents');
+            return;
+        }
+
+        const agents = agentsSnapshot.docs.map(d => ({
+            id: d.id,
+            ...d.data()
+        }));
+
+        // Fetch voters (island user or campaign manager)
+        let votersSnapshot;
+        if (window.isIslandUser && window.islandUserData && window.islandUserData.island) {
+            votersSnapshot = await getDocs(query(collection(window.db, 'voters'), where('island', '==', window.islandUserData.island)));
+        } else {
+            votersSnapshot = await getDocs(query(collection(window.db, 'voters'), where('email', '==', window.userEmail)));
+        }
+        if (votersSnapshot.empty) {
+            if (window.showErrorDialog) window.showErrorDialog('No voters found. Please import voters first.', 'No Voters');
+            return;
+        }
+
+        const voters = [];
+        const islands = new Set();
+        votersSnapshot.forEach(voterDoc => {
+            const d = voterDoc.data();
+            voters.push({
+                id: voterDoc.id,
+                name: d.name || 'N/A',
+                idNumber: d.idNumber || d.voterId || 'N/A',
+                island: d.island || 'N/A',
+                assignedAgentId: d.assignedAgentId || null
+            });
+            if (d.island) islands.add(d.island);
+        });
+
+        const modalOverlay = ensureModalExists();
+        if (!modalOverlay) return;
+        const modalBody = document.getElementById('modal-body');
+        const modalTitle = document.getElementById('modal-title');
+        if (!modalBody || !modalTitle) return;
+
+        modalTitle.textContent = 'Bulk Assign Voters to Agent';
+
+        const sortedIslands = Array.from(islands).sort();
+        const escAttr = function(s) {
+            var t = (s == null ? '' : s) + '';
+            return t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        };
+        var agentOptions = '';
+        for (var ai = 0; ai < agents.length; ai++) {
+            var a = agents[ai];
+            var aId = escAttr(a.id);
+            var aName = escAttr(a.name || 'Unnamed');
+            var aArea = a.assignedArea ? ' (' + escAttr(a.assignedArea) + ')' : '';
+            agentOptions += '<option value="' + aId + '">' + aName + aArea + '</option>';
+        }
+        var islandOptions = '';
+        for (var ii = 0; ii < sortedIslands.length; ii++) {
+            var isl = escAttr(sortedIslands[ii]);
+            islandOptions += '<option value="' + isl + '">' + isl + '</option>';
+        }
+        var html = '<div style="display: flex; flex-direction: column; gap: 16px;">' +
+            '<div><label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-color); margin-bottom: 8px;">Select Agent *</label>' +
+            '<select id="bulk-assign-agent" style="width: 100%; padding: 10px 12px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 14px;">' +
+            '<option value="">-- Choose Agent --</option>' + agentOptions + '</select></div>' +
+            '<div><label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-color); margin-bottom: 8px;">Filter by Island</label>' +
+            '<select id="bulk-assign-island-filter" style="width: 100%; padding: 10px 12px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 14px;">' +
+            '<option value="">All Islands</option>' + islandOptions + '</select></div>' +
+            '<div><input type="text" id="bulk-assign-voter-search" placeholder="Search voters by name or ID..." style="width: 100%; padding: 10px 12px; border: 2px solid var(--border-color); border-radius: 8px; font-size: 14px;"></div>' +
+            '<div style="display: flex; gap: 8px; flex-wrap: wrap;">' +
+            '<button type="button" class="btn-secondary btn-compact" onclick="bulkAssignSelectAll(true)">Select All</button>' +
+            '<button type="button" class="btn-secondary btn-compact" onclick="bulkAssignSelectAll(false)">Deselect All</button>' +
+            '<button type="button" class="btn-secondary btn-compact" onclick="bulkAssignSelectByIsland()">Select by Island</button>' +
+            '</div><div id="bulk-assign-voter-list" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">';
+
+        for (var vi = 0; vi < voters.length; vi++) {
+            var v = voters[vi];
+            var isAssignedOther = v.assignedAgentId != null;
+            var id = escAttr(v.id);
+            var name = escAttr(v.name);
+            var idNum = escAttr(v.idNumber);
+            var islandVal = escAttr(v.island);
+            var nameLower = escAttr((v.name || '').toLowerCase());
+            var idNumLower = escAttr((v.idNumber || '').toLowerCase());
+            html += '<label class="bulk-assign-voter-item" data-voter-id="' + id + '" data-voter-name="' + nameLower + '" data-voter-idnum="' + idNumLower + '" data-island="' + islandVal + '" style="display: flex; align-items: center; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; background: white; transition: all 0.2s;">' +
+                '<input type="checkbox" class="bulk-assign-checkbox" data-voter-id="' + id + '" style="margin-right: 12px; width: 18px; height: 18px; cursor: pointer;"' + (isAssignedOther ? ' disabled' : '') + '>' +
+                '<div style="flex: 1;"><strong style="display: block; color: var(--text-color); font-size: 14px;">' + name + '</strong>' +
+                '<span style="font-size: 12px; color: var(--text-light);">ID: ' + idNum + ' | Island: ' + islandVal + '</span>' +
+                (isAssignedOther ? '<span style="font-size: 11px; color: var(--warning-color); margin-left: 8px;">(Assigned to another agent)</span>' : '') + '</div></label>';
+        }
+
+        html += '</div><p id="bulk-assign-count" style="font-size: 13px; color: var(--text-light); margin: 0;">0 voter(s) selected</p>' +
+            '<div id="bulk-assign-error" style="display: none; color: var(--danger-color); font-size: 13px;"></div>' +
+            '<div class="modal-footer" style="margin-top: 8px;">' +
+            '<button type="button" class="btn-secondary btn-compact" onclick="closeModal()">Cancel</button>' +
+            '<button type="button" class="btn-primary btn-compact" onclick="saveBulkVoterAssignment()">Assign Selected Voters</button></div></div>';
+
+        modalBody.innerHTML = html;
+        modalOverlay.style.display = 'flex';
+
+        // Search
+        const searchEl = document.getElementById('bulk-assign-voter-search');
+        const islandFilter = document.getElementById('bulk-assign-island-filter');
+        const updateVisibility = () => {
+            const search = (searchEl ? searchEl.value : '').toLowerCase();
+            const island = islandFilter ? islandFilter.value : '';
+            document.querySelectorAll('.bulk-assign-voter-item').forEach(item => {
+                const name = item.dataset.voterName || '';
+                const idnum = item.dataset.voterIdnum || '';
+                const itemIsland = item.dataset.island || '';
+                const matchSearch = !search || name.includes(search) || idnum.includes(search);
+                const matchIsland = !island || itemIsland === island;
+                item.style.display = matchSearch && matchIsland ? 'flex' : 'none';
+            });
+            updateBulkAssignCount();
+        };
+        if (searchEl) searchEl.addEventListener('input', updateVisibility);
+        if (islandFilter) islandFilter.addEventListener('change', updateVisibility);
+
+        // Checkbox change
+        document.querySelectorAll('.bulk-assign-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateBulkAssignCount);
+        });
+        document.querySelectorAll('.bulk-assign-voter-item').forEach(label => {
+            label.addEventListener('click', (e) => {
+                if (!e.target.matches('input[type="checkbox"]') && !e.target.closest('input')) {
+                    const cb = label.querySelector('.bulk-assign-checkbox');
+                    if (cb && !cb.disabled) {
+                        cb.checked = !cb.checked;
+                        updateBulkAssignCount();
+                    }
+                }
+            });
+        });
+
+        window.updateBulkAssignCount = updateBulkAssignCount;
+        updateBulkAssignCount();
+    } catch (err) {
+        console.error('Error opening bulk assign modal:', err);
+        if (window.showErrorDialog) window.showErrorDialog('Failed to load data. Please try again.', 'Error');
+    }
+}
+
+function updateBulkAssignCount() {
+    const checked = document.querySelectorAll('.bulk-assign-checkbox:not(:disabled):checked');
+    const countEl = document.getElementById('bulk-assign-count');
+    if (countEl) countEl.textContent = `${checked.length} voter(s) selected`;
+}
+
+function bulkAssignSelectAll(select) {
+    document.querySelectorAll('.bulk-assign-voter-item').forEach(item => {
+        if (item.style.display !== 'none') {
+            const cb = item.querySelector('.bulk-assign-checkbox');
+            if (cb && !cb.disabled) cb.checked = select;
+        }
+    });
+    if (window.updateBulkAssignCount) window.updateBulkAssignCount();
+}
+
+function bulkAssignSelectByIsland() {
+    const islandFilter = document.getElementById('bulk-assign-island-filter');
+    const island = islandFilter ? islandFilter.value : '';
+    if (!island) {
+        if (window.showErrorDialog) window.showErrorDialog('Please select an island first.', 'Select Island');
+        return;
+    }
+    document.querySelectorAll('.bulk-assign-voter-item').forEach(item => {
+        const cb = item.querySelector('.bulk-assign-checkbox');
+        if (cb && !cb.disabled && item.dataset.island === island) cb.checked = true;
+    });
+    if (window.updateBulkAssignCount) window.updateBulkAssignCount();
+}
+
+async function saveBulkVoterAssignment() {
+    const agentSelect = document.getElementById('bulk-assign-agent');
+    const agentId = agentSelect ? agentSelect.value : '';
+    if (!agentId) {
+        if (window.showErrorDialog) window.showErrorDialog('Please select an agent.', 'Select Agent');
+        return;
+    }
+    const checkboxes = document.querySelectorAll('.bulk-assign-checkbox:not(:disabled):checked');
+    const voterIds = Array.from(checkboxes).map(cb => cb.dataset.voterId).filter(Boolean);
+    if (voterIds.length === 0) {
+        if (window.showErrorDialog) window.showErrorDialog('Please select at least one voter.', 'Select Voters');
+        return;
+    }
+    const errorEl = document.getElementById('bulk-assign-error');
+    if (errorEl) {
+        errorEl.style.display = 'none';
+        errorEl.textContent = '';
+    }
+
+    try {
+        const {
+            doc,
+            writeBatch
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const BATCH_SIZE = 500;
+        let done = 0;
+        for (let i = 0; i < voterIds.length; i += BATCH_SIZE) {
+            const batch = writeBatch(window.db);
+            const chunk = voterIds.slice(i, i + BATCH_SIZE);
+            for (const voterId of chunk) {
+                batch.update(doc(window.db, 'voters', voterId), {
+                    assignedAgentId: agentId
+                });
+            }
+            await batch.commit();
+            done += chunk.length;
+        }
+        if (window.showSuccess) window.showSuccess(`Successfully assigned ${done} voter(s) to agent.`, 'Success');
+        closeModal();
+        if (window.reloadTableData) window.reloadTableData('agent');
+    } catch (err) {
+        console.error('Error saving bulk assignment:', err);
+        if (errorEl) {
+            errorEl.textContent = 'Failed to save. Please try again.';
+            errorEl.style.display = 'block';
         }
     }
 }
@@ -20977,7 +21360,7 @@ async function viewCallDetails(callId, navigateDirection = null) {
         const isAdmin = window.userEmail === 'rixaski@gmail.com';
         const emailMatches = callData.campaignEmail === window.userEmail || callData.email === window.userEmail;
         const islandMatches = window.isIslandUser && window.islandUserData && callData.island === window.islandUserData.island;
-        
+
         if (!isAdmin && !emailMatches && !islandMatches) {
             window.showErrorDialog('You do not have permission to view this call record.', 'Access Denied');
             return;
@@ -21418,7 +21801,7 @@ async function deleteCall(callId) {
         const isAdmin = window.userEmail === 'rixaski@gmail.com';
         const emailMatches = callData.campaignEmail === window.userEmail || callData.email === window.userEmail;
         const islandMatches = window.isIslandUser && window.islandUserData && callData.island === window.islandUserData.island;
-        
+
         if (!isAdmin && !emailMatches && !islandMatches) {
             window.showErrorDialog('You do not have permission to delete this call record.', 'Access Denied');
             return;
@@ -23061,6 +23444,10 @@ function downloadAssignedVotersList(agentId, agentName) {
 }
 
 window.assignVotersToAgent = assignVotersToAgent;
+window.openBulkAssignModal = openBulkAssignModal;
+window.bulkAssignSelectAll = bulkAssignSelectAll;
+window.bulkAssignSelectByIsland = bulkAssignSelectByIsland;
+window.saveBulkVoterAssignment = saveBulkVoterAssignment;
 window.saveVoterAssignment = saveVoterAssignment;
 window.generateAgentLink = generateAgentLink;
 window.copyAgentLink = copyAgentLink;
@@ -24661,7 +25048,12 @@ async function handleSettingsPasswordChange(e) {
     }
 
     try {
-        const { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePassword } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+        const {
+            getAuth,
+            reauthenticateWithCredential,
+            EmailAuthProvider,
+            updatePassword
+        } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
         const auth = getAuth();
         const user = auth.currentUser;
 
@@ -24694,7 +25086,7 @@ async function handleSettingsPasswordChange(e) {
     } catch (error) {
         console.error('Password change error:', error);
         let errorMessage = 'Failed to change password. ';
-        
+
         if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
             errorMessage += 'Current password is incorrect.';
         } else if (error.code === 'auth/weak-password') {
@@ -25035,7 +25427,7 @@ window.loadTransportationCoordinatorView = async (campaignEmail) => {
                 where('campaignEmail', '==', normalizedEmail)
             );
             const islandUsersSnapshot = await getDocs(islandUsersQuery);
-            
+
             // Get unique islands from island users
             const islands = new Set();
             islandUsersSnapshot.docs.forEach(doc => {
@@ -25044,7 +25436,7 @@ window.loadTransportationCoordinatorView = async (campaignEmail) => {
                     islands.add(data.island.trim());
                 }
             });
-            
+
             islandsForQuery = Array.from(islands);
             if (islandsForQuery.length > 0) {
                 console.log(`[loadTransportationCoordinatorView] Found ${islandsForQuery.length} island(s) for campaign: ${islandsForQuery.join(', ')}`);
@@ -25175,7 +25567,7 @@ window.loadTransportationCoordinatorView = async (campaignEmail) => {
                         }
                     } catch (queryError4) {
                         console.warn(`[loadTransportationCoordinatorView] Fallback query by campaignEmail failed:`, queryError4);
-                        
+
                         // Try email
                         try {
                             const fallbackQuery2 = query(
