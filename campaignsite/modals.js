@@ -3084,22 +3084,14 @@ function openModal(type, itemId = null) {
                     }
                 }
 
-                // Auto-calculate age from date of birth
+                // Auto-calculate age from date of birth (uses calculateAge for correct local-date handling)
                 const dobInput = document.getElementById('voter-dob');
                 const ageInput = document.getElementById('voter-age');
                 if (dobInput && ageInput) {
                     dobInput.addEventListener('change', (e) => {
                         if (e.target.value) {
-                            const dob = new Date(e.target.value);
-                            const today = new Date();
-                            let age = today.getFullYear() - dob.getFullYear();
-                            const monthDiff = today.getMonth() - dob.getMonth();
-                            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-                                age--;
-                            }
-                            if (age >= 18 && age <= 120) {
-                                ageInput.value = age;
-                            }
+                            const age = calculateAge(e.target.value);
+                            if (age != null) ageInput.value = age;
                         }
                     });
                 }
@@ -4724,17 +4716,43 @@ async function handleBatchVoterImport(csvDataArray) {
     }
 }
 
-// Calculate age from date of birth
+// Parse date of birth to a local Date (avoids UTC date-only parsing which can shift day and age)
+function parseDateOfBirth(value) {
+    if (value == null) return null;
+    if (value.toDate && typeof value.toDate === 'function') return value.toDate(); // Firestore Timestamp
+    if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+    const s = typeof value === 'string' ? value.trim() : String(value).trim();
+    if (!s) return null;
+    // ISO date-only YYYY-MM-DD: parse as local date to avoid timezone shifting the day
+    const isoMatch = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (isoMatch) {
+        const y = parseInt(isoMatch[1], 10), m = parseInt(isoMatch[2], 10) - 1, d = parseInt(isoMatch[3], 10);
+        const date = new Date(y, m, d);
+        if (date.getFullYear() !== y || date.getMonth() !== m || date.getDate() !== d) return null;
+        return date;
+    }
+    const fallback = new Date(s);
+    return isNaN(fallback.getTime()) ? null : fallback;
+}
+
+// Calculate age from date of birth (uses local date to avoid timezone errors). Returns null if outside 18-120.
 function calculateAge(dateString) {
+    const age = getAgeFromDate(dateString);
+    return age != null && age >= 18 && age <= 120 ? age : null;
+}
+
+// Get age in years from DOB (no range clamp). Use for display/distribution; use calculateAge for form validation.
+function getAgeFromDate(value) {
     try {
-        const dob = new Date(dateString);
+        const dob = parseDateOfBirth(value);
+        if (!dob) return null;
         const today = new Date();
         let age = today.getFullYear() - dob.getFullYear();
         const monthDiff = today.getMonth() - dob.getMonth();
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
             age--;
         }
-        return age >= 18 && age <= 120 ? age : null;
+        return age;
     } catch {
         return null;
     }
@@ -5013,6 +5031,8 @@ window.openModal = openModal;
 window.setupBallotDropdown = setupBallotDropdown;
 window.closeModal = closeModal;
 window.calculateAge = calculateAge;
+window.getAgeFromDate = getAgeFromDate;
+window.parseDateOfBirth = parseDateOfBirth;
 window.setupCallFormForLink = setupCallFormForLink;
 window.ensureModalExists = ensureModalExists;
 window.handleImagePreview = handleImagePreview;

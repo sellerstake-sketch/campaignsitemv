@@ -5070,7 +5070,9 @@ function createVoterTableRow(id, data, rowNumber) {
     // Get image URL, checking images folder if needed
     let imageUrl = getVoterImageUrl(data, idNumber);
 
-    const age = data.age !== undefined && data.age !== null && data.age !== '' ? data.age : 'N/A';
+    let age = data.age !== undefined && data.age !== null && data.age !== '' ? data.age : null;
+    if (age == null && data.dateOfBirth && window.getAgeFromDate) age = window.getAgeFromDate(data.dateOfBirth);
+    age = age != null ? age : 'N/A';
     const gender = data.gender ? (data.gender.charAt(0).toUpperCase() + data.gender.slice(1)) : 'N/A';
     const island = data.island || 'N/A';
     const ballotBox = data.ballot || data.ballotBox || 'N/A';
@@ -5188,7 +5190,9 @@ function createVoterMobileCard(id, data, rowNumber) {
         }
     }
 
-    const age = data.age !== undefined && data.age !== null && data.age !== '' ? data.age : 'N/A';
+    let age = data.age !== undefined && data.age !== null && data.age !== '' ? data.age : null;
+    if (age == null && data.dateOfBirth && window.getAgeFromDate) age = window.getAgeFromDate(data.dateOfBirth);
+    age = age != null ? age : 'N/A';
     const gender = data.gender ? (data.gender.charAt(0).toUpperCase() + data.gender.slice(1)) : 'N/A';
     const island = data.island || 'N/A';
     const ballotBox = data.ballot || data.ballotBox || 'N/A';
@@ -9716,7 +9720,9 @@ function renderAgeDistribution(voters) {
 
     voters.forEach(voter => {
         let age = voter.age;
-        if (!age && voter.dateOfBirth) {
+        if (age == null && voter.dateOfBirth && window.getAgeFromDate) {
+            age = window.getAgeFromDate(voter.dateOfBirth);
+        } else if (age == null && voter.dateOfBirth) {
             const dob = voter.dateOfBirth.toDate ? voter.dateOfBirth.toDate() : new Date(voter.dateOfBirth);
             const today = new Date();
             age = today.getFullYear() - dob.getFullYear();
@@ -9726,7 +9732,7 @@ function renderAgeDistribution(voters) {
             }
         }
 
-        if (age) {
+        if (age != null) {
             if (age >= 18 && age <= 25) ageGroups['18-25']++;
             else if (age >= 26 && age <= 35) ageGroups['26-35']++;
             else if (age >= 36 && age <= 45) ageGroups['36-45']++;
@@ -16729,6 +16735,12 @@ async function createVoterDetailHTML(data, {
     const idNumberDisplay = (data.idNumber && data.idNumber.trim()) ? data.idNumber.trim() : (data.voterId ? data.voterId : 'N/A');
     const currentVoterIndex = window.currentVoterIndex !== undefined ? window.currentVoterIndex : 0;
     const totalVoters = window.totalVotersCount || 0;
+    let ageDisplay = (data.age !== undefined && data.age !== null && data.age !== '') ? (data.age + ' years') : null;
+    if (ageDisplay == null && data.dateOfBirth && window.getAgeFromDate) {
+        const computed = window.getAgeFromDate(data.dateOfBirth);
+        ageDisplay = computed != null ? computed + ' years' : 'N/A';
+    }
+    if (ageDisplay == null) ageDisplay = 'N/A';
 
     return `
         <!-- Basic Info Tab Content -->
@@ -16774,7 +16786,7 @@ async function createVoterDetailHTML(data, {
                     </div>
                     <div>
                         <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">AGE</label>
-                        <input type="text" id="voter-edit-age" value="${(data.age !== undefined && data.age !== null && data.age !== '') ? (data.age + ' years') : 'N/A'}" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color);" />
+                        <input type="text" id="voter-edit-age" value="${ageDisplay}" readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--light-color); color: var(--text-color);" />
                     </div>
                     <div>
                         <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase;">GENDER</label>
@@ -17319,9 +17331,17 @@ async function deleteVoter(voterId) {
 
 // Bulk delete all voters function
 async function bulkDeleteAllVoters() {
-    if (!window.db || !window.userEmail) {
+    const isIslandUser = window.isIslandUser && window.islandUserData && window.islandUserData.island;
+    const island = isIslandUser ? window.islandUserData.island : null;
+    if (!window.db) {
         if (window.showErrorDialog) {
             window.showErrorDialog('Database not initialized. Please refresh the page.', 'Error');
+        }
+        return;
+    }
+    if (!isIslandUser && !window.userEmail) {
+        if (window.showErrorDialog) {
+            window.showErrorDialog('Not signed in. Please refresh the page.', 'Error');
         }
         return;
     }
@@ -17337,33 +17357,37 @@ async function bulkDeleteAllVoters() {
             doc
         } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
 
-        // First, get count of voters (query both campaignEmail and email to catch all voters)
-        console.log('[Bulk Delete] Counting voters for user:', window.userEmail);
+        let allVoterDocs;
+        if (isIslandUser && island) {
+            // Island users: query voters by island
+            console.log('[Bulk Delete] Counting voters for island:', island);
+            const votersQueryByIsland = query(
+                collection(window.db, 'voters'),
+                where('island', '==', island)
+            );
+            const snapshot = await getDocs(votersQueryByIsland);
+            allVoterDocs = snapshot.docs;
+        } else {
+            // Campaign managers: query by campaignEmail and email
+            console.log('[Bulk Delete] Counting voters for user:', window.userEmail);
+            const votersQueryByCampaign = query(
+                collection(window.db, 'voters'),
+                where('campaignEmail', '==', window.userEmail)
+            );
+            const votersQueryByEmail = query(
+                collection(window.db, 'voters'),
+                where('email', '==', window.userEmail)
+            );
+            const [snapshotByCampaign, snapshotByEmail] = await Promise.all([
+                getDocs(votersQueryByCampaign),
+                getDocs(votersQueryByEmail)
+            ]);
+            const voterDocsMap = new Map();
+            snapshotByCampaign.docs.forEach(d => voterDocsMap.set(d.id, d));
+            snapshotByEmail.docs.forEach(d => voterDocsMap.set(d.id, d));
+            allVoterDocs = Array.from(voterDocsMap.values());
+        }
 
-        // Query voters by campaignEmail
-        const votersQueryByCampaign = query(
-            collection(window.db, 'voters'),
-            where('campaignEmail', '==', window.userEmail)
-        );
-
-        // Query voters by email
-        const votersQueryByEmail = query(
-            collection(window.db, 'voters'),
-            where('email', '==', window.userEmail)
-        );
-
-        // Get both snapshots and combine (using a Set to avoid duplicates)
-        const [snapshotByCampaign, snapshotByEmail] = await Promise.all([
-            getDocs(votersQueryByCampaign),
-            getDocs(votersQueryByEmail)
-        ]);
-
-        // Combine results, avoiding duplicates by document ID
-        const voterDocsMap = new Map();
-        snapshotByCampaign.docs.forEach(doc => voterDocsMap.set(doc.id, doc));
-        snapshotByEmail.docs.forEach(doc => voterDocsMap.set(doc.id, doc));
-
-        const allVoterDocs = Array.from(voterDocsMap.values());
         const voterCount = allVoterDocs.length;
 
         if (voterCount === 0) {
@@ -17406,8 +17430,10 @@ async function bulkDeleteAllVoters() {
 
             for (const voterDoc of batchDocs) {
                 const voterData = voterDoc.data();
-                // Double-check permission
-                if (voterData.email === window.userEmail || voterData.campaignEmail === window.userEmail) {
+                const canDelete = isIslandUser
+                    ? (voterData.island === island)
+                    : (voterData.email === window.userEmail || voterData.campaignEmail === window.userEmail);
+                if (canDelete) {
                     batch.delete(doc(window.db, 'voters', voterDoc.id));
                 }
             }

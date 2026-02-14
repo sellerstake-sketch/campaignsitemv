@@ -275,6 +275,13 @@ service cloud.firestore {
                               request.resource.data.email == request.auth.token.email ||
                               request.resource.data.campaignEmail == request.auth.token.email);
       
+      // Island users can update/delete voters for their island
+      allow update, delete: if request.auth != null && 
+                             request.auth.token.island != null && 
+                             request.auth.token.island != '' && 
+                             resource != null &&
+                             resource.data.island == request.auth.token.island;
+      
       // Officers can update voters to mark them as voted (unauthenticated access)
       // This allows officers to mark voters as voted when they have ballot access
       // Security: Only allow updating the 'voted' and 'votedAt' fields
