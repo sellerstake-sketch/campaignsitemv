@@ -4198,7 +4198,7 @@ function setupCSVImport() {
                 csvData = parseResult.data;
 
                 if (csvData.length === 0) {
-                    showModalError('File is empty or invalid. Ensure it has columns such as: ID Number, Name, Date of Birth, Age, Gender, Island, Ballot Box, Permanent Address, Current Location, Number.');
+                    showModalError('File is empty or invalid. Use the download template and ensure columns match: ID Number, Name, Date of Birth, Age, Gender, Constituency, Island, Ballot Sequence No, Ballot Box, Permanent Address, Current Location, Phone Number.');
                     csvPreview.style.display = 'none';
                     startBatchImportBtn.disabled = true;
                     return;
@@ -4410,21 +4410,23 @@ function displayCSVPreview(data, headerEl, bodyEl, countEl, originalHeaders = nu
     }
 }
 
-// Download CSV template
-function downloadCSVTemplate() {
+// Single source of truth: bulk import template columns and sample row (aligned with voter profile form)
+function getVoterImportTemplateData() {
     const constituency = (window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : 'M01 - Meedhoo Dhaaira';
-    const headers = ['#', 'Image', 'ID Number', 'Name', 'Date of Birth', ' Age', 'Gender', 'Constituency', 'Island', 'Ballot Sequence No', 'Ballot Box', ' Permanent Address', 'Current Location', 'Number'];
+    const headers = ['#', 'Image', 'ID Number', 'Name', 'Date of Birth', 'Age', 'Gender', 'Constituency', 'Island', 'Ballot Sequence No', 'Ballot Box', 'Permanent Address', 'Current Location', 'Phone Number'];
     const sampleRows = [
         ['1', '', 'A123456', 'Ahmed Ali', '1990-01-15', '34', 'Male', constituency, 'Meedhoo', '1', 'DHU-98', 'Meedhoo, Maldives', 'Meedhoo, Maldives', '+960 1234567'],
         ['2', '', 'B789012', 'Aisha Mohamed', '1985-05-20', '39', 'Female', constituency, 'Bandidhoo', '2', 'DHU-99', 'Bandidhoo, Maldives', 'Bandidhoo, Maldives', '+960 7654321']
     ];
+    return { headers, sampleRows };
+}
 
+// Download CSV template (same columns as voter profile / Excel template)
+function downloadCSVTemplate() {
+    const { headers, sampleRows } = getVoterImportTemplateData();
     let csv = headers.join(',') + '\n';
     csv += sampleRows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-
-    const blob = new Blob([csv], {
-        type: 'text/csv'
-    });
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -4435,19 +4437,14 @@ function downloadCSVTemplate() {
     window.URL.revokeObjectURL(url);
 }
 
-// Download Excel template (loads SheetJS on first use)
+// Download Excel template (same columns as voter profile / CSV template)
 async function downloadExcelTemplate() {
     try {
         if (typeof window.XLSX === 'undefined') {
             await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
         }
         const XLSX = window.XLSX;
-        const constituency = (window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : 'M01 - Meedhoo Dhaaira';
-        const headers = ['#', 'Image', 'ID Number', 'Name', 'Date of Birth', 'Age', 'Gender', 'Constituency', 'Island', 'Ballot Sequence No', 'Ballot Box', 'Permanent Address', 'Current Location', 'Number'];
-        const sampleRows = [
-            ['1', '', 'A123456', 'Ahmed Ali', '1990-01-15', '34', 'Male', constituency, 'Meedhoo', '1', 'DHU-98', 'Meedhoo, Maldives', 'Meedhoo, Maldives', '+960 1234567'],
-            ['2', '', 'B789012', 'Aisha Mohamed', '1985-05-20', '39', 'Female', constituency, 'Bandidhoo', '2', 'DHU-99', 'Bandidhoo, Maldives', 'Bandidhoo, Maldives', '+960 7654321']
-        ];
+        const { headers, sampleRows } = getVoterImportTemplateData();
         const sheet = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
         const book = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(book, sheet, 'Voters');
