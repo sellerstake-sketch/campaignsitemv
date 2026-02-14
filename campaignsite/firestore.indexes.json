@@ -1,0 +1,298 @@
+{
+    "indexes": [{
+            "collectionGroup": "events",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "campaignEmail",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "eventDate",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "events",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "campaignEmail",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "eventDate",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "calls",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "campaignEmail",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "callDate",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "calls",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "email",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "callDate",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "voters",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "email",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "constituency",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "voters",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "email",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "island",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "voters",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "campaignEmail",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "constituency",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "voters",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "campaignEmail",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "island",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "candidates",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "email",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "constituency",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "candidates",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "email",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "island",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "agents",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "email",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "constituency",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "agents",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "email",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "island",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "pledges",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "email",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "recordedAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "events",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "email",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "eventDate",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "events",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "email",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "eventDate",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "ballots",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "email",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "ballotNumber",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "ballots",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "campaignEmail",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "ballotNumber",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "ballots",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "email",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "constituency",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "ballots",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "email",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "island",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "ballots",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "campaignEmail",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "constituency",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "ballots",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "campaignEmail",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "island",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "islandUsers",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                "fieldPath": "email",
+                "order": "ASCENDING"
+            }]
+        },
+        {
+            "collectionGroup": "islandUsers",
+            "queryScope": "COLLECTION",
+            "fields": [{
+                    "fieldPath": "campaignEmail",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        }
+    ],
+    "fieldOverrides": []
+}

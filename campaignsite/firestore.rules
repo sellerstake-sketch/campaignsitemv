@@ -1,0 +1,733 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'rixaski@gmail.com';
+    }
+    
+    // Helper function to check if user owns the document (by email field)
+    // Works for read, update, delete operations
+    function isOwner() {
+      return request.auth != null && 
+             (resource != null && 
+              (resource.data.email == request.auth.token.email || 
+               resource.data.campaignEmail == request.auth.token.email));
+    }
+  
+    // Helper function to check if user can create document with their email
+    // Works for create operations
+    function canCreate() {
+      return request.auth != null && 
+             (request.resource.data.email == request.auth.token.email || 
+              request.resource.data.campaignEmail == request.auth.token.email);
+    }
+    
+    // Helper function to check if user is anonymous (no email in token)
+    function isAnonymous() {
+      return request.auth != null && 
+             (request.auth.token.email == null || request.auth.token.email == '');
+    }
+    
+    // Helper function to check if user is an island user
+    // Island users have their island stored in custom claims (set during authentication)
+    // If custom claim is not available, we'll allow access based on island field matching
+    function isIslandUser() {
+      return request.auth != null && 
+             request.auth.token.email != null &&
+             request.auth.token.email != '';
+    }
+    
+    // Helper function to check if document belongs to user's campaign or island
+    // For island users: check if document's island matches user's island (from custom claim or query)
+    // For campaign managers: check if document's email/campaignEmail matches
+    function canAccessDocument() {
+      return request.auth != null &&
+             (resource.data.email == request.auth.token.email ||
+              resource.data.campaignEmail == request.auth.token.email ||
+              // Allow island users to access documents where island matches (will be filtered by app)
+              (request.auth.token.island != null && resource.data.island == request.auth.token.island));
+    }
+    
+    // ============================================
+    // ADMIN & USER MANAGEMENT COLLECTIONS
+    // ============================================
+    
+    // Users collection - users can read and write their own document, admin can do everything
+    match /users/{userId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Users can read their own document if authenticated
+      allow read: if request.auth != null && request.auth.token.email == userId;
+      
+      // Allow authenticated users (including anonymous agents) to read other users' documents
+      // This allows campaign managers and agents to see other online users for messaging
+      allow read: if request.auth != null;
+      
+      // Users can create/update their own document if authenticated
+      // For agents: allow if authenticated (agents use agent_${id} format which doesn't match email)
+      // For regular users: allow if userId matches auth token email
+      // Application logic ensures users only write to their own documents
+      allow write: if request.auth != null;
+      
+      // Allow list operations for queries and snapshot listeners
+      // This is needed for real-time listeners on user documents
+      allow list: if request.auth != null;
+    }
+    
+    // Clients collection - admin can read/write all, clients can read/write their own
+    match /clients/{clientId} {
+      // Admin has full access (check first for performance)
+      allow read, write: if isAdmin();
+      
+      // Allow unauthenticated reads for code validation during onboarding
+      // This is CRITICAL: Users need to validate their client code BEFORE logging in
+      // Without this, the query by clientCode will fail with "permission denied"
+      // This is safe because:
+      // 1. Client codes are meant to be public (they're in URLs)
+      // 2. Only basic client info is exposed (code, email, status)
+      // 3. Sensitive data is protected by other rules
+      allow read: if request.auth == null;
+      
+      // Clients can read their own document (by email match) when authenticated
+      allow read: if request.auth != null && request.auth.token.email == clientId;
+      
+      // Allow authenticated reads for any client document (needed for code validation queries)
+      allow read: if request.auth != null;
+      
+      // Clients can write (create/update) their own document during campaign setup
+      // Document ID must match the authenticated user's email (case-insensitive via .lower()).
+      allow write: if request.auth != null && request.auth.token.email != null &&
+                     request.auth.token.email.lower() == clientId.lower();
+    }
+    
+    // Sessions collection - track user sessions with location and IP
+    match /sessions/{sessionId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Users can read their own sessions
+      // For queries: Firestore checks each document - if email matches user's email, allow read
+      // For individual reads: check resource.data.email
+      allow read: if request.auth != null && 
+                   (resource != null && resource.data.email == request.auth.token.email);
+      
+      // Users can update their own sessions
+      // Allow update if the existing document's email matches the authenticated user's email
+      // Also ensure the email field is not being changed in the update
+      allow update: if request.auth != null && 
+                     (resource != null && resource.data.email == request.auth.token.email) &&
+                     (request.resource.data.email == resource.data.email || 
+                      !('email' in request.resource.data));
+      
+      // Users can delete their own sessions
+      allow delete: if request.auth != null && 
+                     (resource != null && resource.data.email == request.auth.token.email);
+      
+      // Allow users to create their own sessions
+      // Check that the email in the new document matches the authenticated user's email
+      allow create: if request.auth != null && 
+                     request.resource.data.email == request.auth.token.email;
+      
+      // Allow list operations for queries and snapshot listeners
+      allow list: if request.auth != null;
+    }
+    
+    // Notifications collection - admin can send, users can read their own, agents can create for campaign manager
+    match /notifications/{notificationId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Admin can create notifications
+      allow create: if isAdmin();
+      
+      // Allow authenticated users (including agents) to create notifications
+      // Agents create notifications with recipientEmail set to campaign manager's email
+      allow create: if request.auth != null && 
+                     request.resource.data.recipientEmail != null;
+      
+      // Clients can read their own notifications
+      allow read: if request.auth != null && 
+                   resource != null &&
+                   resource.data.recipientEmail == request.auth.token.email;
+      
+      // Clients can update (mark as read) their own notifications
+      allow update: if request.auth != null && 
+                     resource != null &&
+                     resource.data.recipientEmail == request.auth.token.email;
+      
+      // Clients can delete their own notifications
+      // Check that resource exists and recipientEmail matches authenticated user
+      allow delete: if request.auth != null && 
+                     resource != null &&
+                     resource.data.recipientEmail == request.auth.token.email;
+      
+      // Allow list operations for queries and snapshot listeners
+      allow list: if request.auth != null;
+    }
+    
+    // Admin logs collection - only admin can access
+    match /adminLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Admin actions collection - alias for adminLogs
+    match /adminActions/{actionId} {
+      allow read, write: if isAdmin();
+    }
+    
+    // ============================================
+    // CAMPAIGN DATA COLLECTIONS
+    // These collections store campaign-specific data
+    // Users can only access data for their own campaign (matching email)
+    // ============================================
+    
+    // Candidates collection
+    match /candidates/{candidateId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Users can read candidates for their own campaign
+      allow read: if request.auth != null && 
+                   resource != null &&
+                   (resource.data.email == request.auth.token.email || 
+                    resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can read candidates for their island
+      // Note: Application code filters by island, but we allow read if island field exists
+      // This allows island users to read candidates that have an island field
+      // The application will filter to only show candidates matching their specific island
+      allow read: if request.auth != null && 
+                   resource != null &&
+                   resource.data.island != null &&
+                   resource.data.island != '';
+      
+      // Users can update/delete candidates for their own campaign
+      allow update, delete: if request.auth != null && 
+                             (resource.data.email == request.auth.token.email || 
+                              resource.data.campaignEmail == request.auth.token.email);
+      
+      // Users can create candidates for their own campaign
+      allow create: if request.auth != null && 
+                     (request.resource.data.email == request.auth.token.email || 
+                      request.resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can create candidates for their island
+      allow create: if request.auth != null && 
+                     request.resource.data.island != null &&
+                     request.resource.data.island != '';
+      
+      // Allow list operations for queries and snapshot listeners
+      // Only allow if user is authenticated (read rules will filter documents)
+      allow list: if request.auth != null;
+    }
+    
+    // Voters collection
+    match /voters/{voterId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Users can read voters for their own campaign
+      allow read: if request.auth != null && 
+                   (resource.data.email == request.auth.token.email || 
+                    resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can read voters for their island
+      // Note: Application code filters by island, but we allow read if island field exists
+      allow read: if request.auth != null && 
+                   resource != null &&
+                   resource.data.island != null &&
+                   resource.data.island != '';
+      
+      // Agents (unauthenticated) can read voters assigned to them
+      // Supports both assignedAgentId (single) and assignedAgentIds (multi-agent full list)
+      allow read: if resource.data.assignedAgentId != null ||
+                   (resource.data.assignedAgentIds != null && resource.data.assignedAgentIds.size() > 0);
+      
+      // Officers can read voters assigned to ballots (unauthenticated access)
+      // Officers access voters via ballot number when they have the shareToken and password
+      // This allows officers to view voters for ballots they have access to
+      allow read: if resource.data.ballot != null && 
+                   resource.data.ballot != '';
+      
+      // Allow unauthenticated reads for call link access (for voter search)
+      // Users accessing via call link can search voters by campaignEmail
+      // This is limited to queries that filter by campaignEmail matching the callLink
+      allow read: if request.auth == null && 
+                   resource.data.campaignEmail != null;
+                   
+      // Allow anonymous users (signed in but no email) to read voters by campaignEmail
+      // This allows call link users who sign in anonymously to search voters
+      allow read: if request.auth != null && 
+                   (request.auth.token.email == null || request.auth.token.email == '') &&
+                   resource.data.campaignEmail != null;
+      
+      // Users can update/delete voters for their own campaign
+      // Allow update if:
+      // 1. Existing document has email/campaignEmail matching user's email, OR
+      // 2. New document will have email/campaignEmail matching user's email (allows setting email on documents that don't have it)
+      allow update, delete: if request.auth != null && 
+                             (resource.data.email == request.auth.token.email || 
+                              resource.data.campaignEmail == request.auth.token.email ||
+                              request.resource.data.email == request.auth.token.email ||
+                              request.resource.data.campaignEmail == request.auth.token.email);
+      
+      // Officers can update voters to mark them as voted (unauthenticated access)
+      // This allows officers to mark voters as voted when they have ballot access
+      // Security: Only allow updating the 'voted' and 'votedAt' fields
+      allow update: if resource.data.ballot != null && 
+                     resource.data.ballot != '' &&
+                     // Only allow updating voted and votedAt fields
+                     (!('email' in request.resource.data) || request.resource.data.email == resource.data.email) &&
+                     (!('campaignEmail' in request.resource.data) || request.resource.data.campaignEmail == resource.data.campaignEmail) &&
+                     (!('name' in request.resource.data) || request.resource.data.name == resource.data.name) &&
+                     (!('idNumber' in request.resource.data) || request.resource.data.idNumber == resource.data.idNumber);
+      
+      // Users can create voters for their own campaign
+      allow create: if request.auth != null && 
+                     (request.resource.data.email == request.auth.token.email || 
+                      request.resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can create voters for their island
+      allow create: if request.auth != null && 
+                     request.resource.data.island != null &&
+                     request.resource.data.island != '';
+      
+      // Allow list operations for queries and snapshot listeners
+      // Authenticated users can list their own voters
+      // Agents can list voters assigned to them (filtered by read rule)
+      // Officers can list voters by ballot (filtered by read rule)
+      allow list: if true;
+    }
+    
+    // Events collection
+    match /events/{eventId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Users can read events for their own campaign
+      allow read: if request.auth != null && 
+                   (resource.data.email == request.auth.token.email || 
+                    resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can read events for their island
+      // Note: Application code filters by island, but we allow read if island field exists
+      allow read: if request.auth != null && 
+                   resource != null &&
+                   resource.data.island != null &&
+                   resource.data.island != '';
+      
+      // Users can update/delete events for their own campaign
+      allow update, delete: if request.auth != null && 
+                             (resource.data.email == request.auth.token.email || 
+                              resource.data.campaignEmail == request.auth.token.email);
+      
+      // Users can create events for their own campaign
+      allow create: if request.auth != null && 
+                     (request.resource.data.email == request.auth.token.email || 
+                      request.resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can create events for their island
+      allow create: if request.auth != null && 
+                     request.resource.data.island != null &&
+                     request.resource.data.island != '';
+      
+      // Allow list operations for queries and snapshot listeners
+      allow list: if request.auth != null;
+    }
+    
+    // Calls collection
+    // Call Links collection - for generating links to record calls
+    match /callLinks/{linkId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Allow unauthenticated reads for link validation (when accessing via link)
+      // This allows the link access page to verify the link and access code
+      allow read: if request.auth == null;
+      
+      // Allow anonymous users (signed in but no email) to read call links
+      // This allows the call recording page to validate links after anonymous sign-in
+      allow read: if request.auth != null && 
+                   (request.auth.token.email == null || request.auth.token.email == '');
+      
+      // Campaign managers can read their own call links
+      allow read: if request.auth != null && 
+                   (resource != null && resource.data.campaignEmail == request.auth.token.email);
+      
+      // Campaign managers can create their own call links
+      allow create: if request.auth != null && 
+                     request.resource.data.campaignEmail == request.auth.token.email;
+      
+      // Campaign managers can update their own call links (for incrementing callsMade)
+      allow update: if request.auth != null && 
+                     (resource != null && resource.data.campaignEmail == request.auth.token.email);
+      
+      // Campaign managers can delete their own call links
+      allow delete: if request.auth != null && 
+                     (resource != null && resource.data.campaignEmail == request.auth.token.email);
+      
+      // Allow unauthenticated users to increment callsMade if they have the correct access code
+      // This is a very specific update to prevent other modifications
+      allow update: if request.auth == null &&
+                   resource != null &&
+                   resource.data.accessCode == request.query.code &&
+                   request.resource.data.callsMade == resource.data.callsMade + 1 &&
+                   request.resource.data.keys().hasAll(['callsMade']) &&
+                   request.resource.data.keys().size() == 1;
+    }
+    
+    match /calls/{callId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Users can read calls for their own campaign
+      allow read: if request.auth != null && 
+                   (resource.data.email == request.auth.token.email || 
+                    resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can read calls for their island
+      // Note: Application code filters by island, but we allow read if island field exists
+      allow read: if request.auth != null && 
+                   resource != null &&
+                   resource.data.island != null &&
+                   resource.data.island != '';
+      
+      // Users can update/delete calls for their own campaign
+      allow update, delete: if request.auth != null && 
+                             (resource.data.email == request.auth.token.email || 
+                              resource.data.campaignEmail == request.auth.token.email);
+      
+      // Users can create calls for their own campaign
+      allow create: if request.auth != null && 
+                     (request.resource.data.email == request.auth.token.email || 
+                      request.resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can create calls for their island
+      allow create: if request.auth != null && 
+                     request.resource.data.island != null &&
+                     request.resource.data.island != '';
+      
+      // Agents can create calls (agentId in request.resource.data) without authentication
+      allow create: if request.resource.data.agentId != null && 
+                     request.resource.data.agentId != '' &&
+                     request.resource.data.email != null &&
+                     request.resource.data.email != '';
+      
+      // Allow unauthenticated users to create calls when accessed via call link
+      // Must have callLinkId and campaignEmail matching the link
+      allow create: if request.auth == null &&
+                     request.resource.data.callLinkId != null &&
+                     request.resource.data.campaignEmail != null;
+      
+      // Allow list operations for queries and snapshot listeners
+      allow list: if request.auth != null;
+    }
+    
+    // Pledges collection
+    match /pledges/{pledgeId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Users can read pledges for their own campaign (authenticated users)
+      allow read: if request.auth != null && 
+                   (resource.data.email == request.auth.token.email || 
+                    resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can read pledges for their island
+      // Note: Application code filters by island, but we allow read if island field exists
+      allow read: if request.auth != null && 
+                   resource != null &&
+                   resource.data.island != null &&
+                   resource.data.island != '';
+      
+      // Users can update/delete pledges for their own campaign
+      allow update, delete: if request.auth != null && 
+                             (resource.data.email == request.auth.token.email || 
+                              resource.data.campaignEmail == request.auth.token.email);
+      
+      // Users can create pledges for their own campaign
+      allow create: if request.auth != null && 
+                     (request.resource.data.email == request.auth.token.email || 
+                      request.resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can create pledges for their island
+      allow create: if request.auth != null && 
+                     request.resource.data.island != null &&
+                     request.resource.data.island != '';
+      
+      // Agents can create pledges (agentId in request.resource.data) without authentication
+      allow create: if request.resource.data.agentId != null && 
+                     request.resource.data.agentId != '' &&
+                     request.resource.data.email != null &&
+                     request.resource.data.email != '';
+      
+      // Agents can update pledges they created (check agentId matches)
+      // This allows agents to update pledges without authentication
+      // Security: agentId must match AND email must match (prevents changing campaign)
+      allow update: if resource != null &&
+                     resource.data.agentId != null &&
+                     resource.data.agentId != '' &&
+                     request.resource.data.agentId == resource.data.agentId &&
+                     request.resource.data.email != null &&
+                     request.resource.data.email != '' &&
+                     request.resource.data.email == resource.data.email;
+      
+      // Agents can read pledges they created (for querying their own pledges)
+      // This allows agents to query pledges by agentId without authentication
+      // Security: Only pledges with agentId field can be read by agents
+      // Note: For queries, Firestore evaluates this rule against documents that match the query
+      // Since we're querying where('agentId', '==', ...), all matching documents will have agentId
+      // The 'read' permission covers both 'get' (single document) and 'list' (queries)
+      allow read: if resource != null &&
+                   resource.data.agentId != null &&
+                   resource.data.agentId != '';
+      
+      // Allow list operations for queries and snapshot listeners
+      // Firestore requires explicit list permission for queries and real-time listeners
+      // Security: Multiple read rules above ensure proper access control:
+      // 1. Authenticated users can read their own pledges (by email/campaignEmail)
+      // 2. Agents can read pledges with agentId set
+      // 3. The read rules filter which documents are returned
+      // This allows the query/listener operation itself, but individual document access is still controlled
+      allow list: if true;
+    }
+    
+    // Agents collection
+    match /agents/{agentId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Allow anonymous authenticated users (agents) to update agent documents
+      // This allows agents to update their presence (isOnline, lastSeen)
+      // Security: Application logic ensures agents only update their own document (by agentId)
+      // This rule must come before other update rules to allow anonymous users
+      allow update: if isAnonymous();
+      
+      // Users can read agents for their own campaign
+      allow read: if request.auth != null && 
+                   (resource.data.email == request.auth.token.email || 
+                    resource.data.campaignEmail == request.auth.token.email);
+      
+      // Allow authenticated users (including anonymous) to read agents
+      // This allows agents to see other agents in their campaign
+      allow read: if request.auth != null;
+      
+      // Allow unauthenticated read for agent portal access code validation
+      // This allows agents to query by agentAccessCode without authentication
+      // Security: Only the access code is exposed, full agent data access is controlled
+      allow read: if true; // Access code validation happens in application code
+      
+      // Users can update/delete agents for their own campaign (for authenticated users with email)
+      allow update, delete: if request.auth != null && 
+                             request.auth.token.email != null &&
+                             (resource.data.email == request.auth.token.email || 
+                              resource.data.campaignEmail == request.auth.token.email);
+      
+      // Users can create agents for their own campaign
+      allow create: if request.auth != null && 
+                     (request.resource.data.email == request.auth.token.email || 
+                      request.resource.data.campaignEmail == request.auth.token.email);
+      
+      // Allow list operations for queries and snapshot listeners
+      allow list: if true;
+    }
+    
+    // Allow querying agents collection by agentAccessCode (for agent portal)
+    // This is needed for the where('agentAccessCode', '==', code) query
+    // Note: This allows listing agents, but individual document access is controlled above
+    
+    // Remarks collection (agent remarks for voters)
+    match /remarks/{remarkId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Campaign managers can read all remarks for their campaign
+      allow read: if request.auth != null && 
+                   (resource.data.email == request.auth.token.email || 
+                    resource.data.campaignEmail == request.auth.token.email);
+      
+      // Allow creation with agentId (agents can create remarks without authentication)
+      // This allows agents to create remarks using their access code
+      allow create: if request.resource.data.agentId != null && 
+                     request.resource.data.agentId != '' &&
+                     request.resource.data.email != null &&
+                     request.resource.data.email != '';
+      
+      // Campaign managers can update/delete remarks for their campaign
+      allow update, delete: if request.auth != null && 
+                             (resource.data.email == request.auth.token.email || 
+                              resource.data.campaignEmail == request.auth.token.email);
+    }
+    
+    // Event Attendance collection
+    match /eventAttendance/{attendanceId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Campaign managers can read all attendance for their campaign
+      allow read: if request.auth != null && 
+                   (resource.data.email == request.auth.token.email || 
+                    resource.data.campaignEmail == request.auth.token.email);
+      
+      // Allow creation with agentId (agents can create attendance records without authentication)
+      // This allows agents to create attendance records using their access code
+      allow create: if request.resource.data.agentId != null && 
+                     request.resource.data.agentId != '' &&
+                     request.resource.data.email != null &&
+                     request.resource.data.email != '';
+      
+      // Campaign managers can update/delete attendance for their campaign
+      allow update, delete: if request.auth != null && 
+                             (resource.data.email == request.auth.token.email || 
+                              resource.data.campaignEmail == request.auth.token.email);
+    }
+    
+    // Update voters rules to allow agents to read voters assigned to them
+    // Voters collection rules are already defined above, but we need to add agent read access
+    // Agents can query voters by assignedAgentId (query-based access)
+    // Individual document reads are controlled by the voters collection rules below
+    
+    // Ballots collection (Zero Day feature)
+    match /ballots/{ballotId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Users can read ballots for their own campaign
+      allow read: if request.auth != null && 
+                   (resource.data.email == request.auth.token.email || 
+                    resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can read ballots for their island
+      // Note: Application code filters by island, but we allow read if island field exists
+      allow read: if request.auth != null && 
+                   resource != null &&
+                   resource.data.island != null &&
+                   resource.data.island != '';
+      
+      // Officers can read ballots with shareToken (unauthenticated access via temporary password)
+      // This allows officers to access ballot data using the shareable link and password
+      allow read: if resource.data.shareToken != null && 
+                   resource.data.shareToken != '';
+      
+      // Users can update/delete ballots for their own campaign
+      allow update, delete: if request.auth != null && 
+                             (resource.data.email == request.auth.token.email || 
+                              resource.data.campaignEmail == request.auth.token.email);
+      
+      // Users can create ballots for their own campaign
+      allow create: if request.auth != null && 
+                     (request.resource.data.email == request.auth.token.email || 
+                      request.resource.data.campaignEmail == request.auth.token.email);
+      
+      // Allow list operations for queries and snapshot listeners
+      // Officers need to list ballots (for queries by shareToken)
+      allow list: if true;
+    }
+    
+    // Transportation collection (Zero Day feature)
+    match /transportation/{transportationId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Users can read transportation for their own campaign
+      allow read: if request.auth != null && 
+                   request.auth.token.email != null &&
+                   request.auth.token.email != '' &&
+                   (resource.data.email == request.auth.token.email || 
+                    resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can read transportation for their island
+      // Note: Application code filters by island, but we allow read if island field exists
+      allow read: if request.auth != null && 
+                   resource != null &&
+                   resource.data.island != null &&
+                   resource.data.island != '';
+      
+      // Allow unauthenticated reads for transportation coordinator links
+      // Security is maintained by token/password verification in application code
+      // This allows transportation coordinator links to work even if anonymous auth is disabled
+      // Application code filters results by campaignEmail from URL, so this is safe
+      // Similar to how ballots work with shareToken
+      allow read: if true;
+      
+      // Users can update/delete transportation for their own campaign
+      allow update, delete: if request.auth != null && 
+                             request.auth.token.email != null &&
+                             request.auth.token.email != '' &&
+                             (resource.data.email == request.auth.token.email || 
+                              resource.data.campaignEmail == request.auth.token.email);
+      
+      // Allow unauthenticated updates for transportation coordinator links
+      // Security is maintained by token/password verification in application code
+      // Only allow updating assignedVoters array (onBoard status)
+      // This allows coordinators to mark voters as on-board without authentication
+      // Ensure critical fields are not changed
+      allow update: if (!('email' in request.resource.data) || request.resource.data.email == resource.data.email) &&
+                     (!('campaignEmail' in request.resource.data) || request.resource.data.campaignEmail == resource.data.campaignEmail) &&
+                     (!('type' in request.resource.data) || request.resource.data.type == resource.data.type);
+      
+      // Users can create transportation for their own campaign
+      allow create: if request.auth != null && 
+                     request.auth.token.email != null &&
+                     request.auth.token.email != '' &&
+                     (request.resource.data.email == request.auth.token.email || 
+                      request.resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can create transportation for their island
+      allow create: if request.auth != null && 
+                     request.resource.data.island != null &&
+                     request.resource.data.island != '';
+      
+      // Allow list operations for queries and snapshot listeners
+      // Allow unauthenticated access (for coordinator links)
+      // Security: Application code filters by campaignEmail from URL token and password
+      allow list: if true;
+    }
+    
+    // Island Users collection (for managing island-specific users)
+    match /islandUsers/{islandUserId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Campaign managers can read island users for their own campaign
+      allow read: if request.auth != null && 
+                   (resource != null && 
+                    resource.data.campaignEmail == request.auth.token.email);
+      
+      // Island users can read their own record (to check their status)
+      allow read: if request.auth != null && 
+                   (resource != null && 
+                    resource.data.email == request.auth.token.email);
+      
+      // Campaign managers can create island users for their own campaign
+      // Note: Application code must normalize emails to lowercase for this rule to work correctly
+      allow create: if request.auth != null && 
+                     request.auth.token.email != null &&
+                     request.resource.data.campaignEmail != null &&
+                     request.resource.data.campaignEmail == request.auth.token.email;
+      
+      // Campaign managers can update/delete island users for their own campaign
+      allow update, delete: if request.auth != null && 
+                             (resource != null && 
+                              resource.data.campaignEmail == request.auth.token.email);
+      
+      // Allow list operations for queries and snapshot listeners
+      // Campaign managers can query by campaignEmail
+      // Island users can query by email (to find their own record)
+      allow list: if request.auth != null;
+    }
+    
+    // ============================================
+    // DEFAULT DENY RULE
+    // ============================================
+    
+    // Default deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

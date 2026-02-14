@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Call Recording - Campaign Management System</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="pages-styles.css">
+    <script type="module" src="dialog.js"></script>
+    <script>
+        // Detect if opened via file:// protocol and show error
+        if (window.location.protocol === 'file:') {
+            document.write(`
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        text-align: center; 
+                        padding: 50px; 
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                    }
+                    .error-box {
+                        background: rgba(255,255,255,0.95);
+                        color: #333;
+                        padding: 40px;
+                        border-radius: 15px;
+                        max-width: 600px;
+                        margin: 50px auto;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                    }
+                    h1 { color: #dc3545; margin-bottom: 20px; }
+                </style>
+                <div class="error-box">
+                    <h1>⚠️ File Protocol Error</h1>
+                    <p>This application must be opened through a web server.</p>
+                    <p><strong>Please use: <a href="http://localhost:8000/call-recording.html">http://localhost:8000/call-recording.html</a></strong></p>
+                    <p>Make sure the server is running by executing <code>start-server.bat</code></p>
+                </div>
+            `);
+            throw new Error('File protocol not supported');
+        }
+    </script>
+</head>
+
+<body style="font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--white); display: none; align-items: center; justify-content: center; z-index: 9999;">
+        <div class="loading-container" style="text-align: center; color: var(--text-color); font-family: 'Poppins', sans-serif;">
+            <div class="loading-spinner" style="width: 60px; height: 60px; border: 5px solid var(--border-color); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+            <h2 id="loading-title" style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; font-family: 'Poppins', sans-serif; color: var(--text-color);">Loading Call Recording...</h2>
+            <div id="loading-subtitle" class="loading-subtitle" style="font-size: 14px; color: var(--text-light); margin-bottom: 15px; display: none; font-family: 'Poppins', sans-serif;"></div>
+            <div class="loading-progress-container" style="width: 300px; height: 8px; background: var(--border-color); border-radius: 4px; margin: 0 auto 10px; overflow: hidden;">
+                <div id="loading-progress-bar" class="loading-progress-bar" style="height: 100%; background: var(--primary-color); width: 0%; transition: width 0.3s ease; border-radius: 4px;"></div>
+            </div>
+            <div id="loading-percentage" class="loading-percentage" style="font-size: 16px; font-weight: 600; font-family: 'Poppins', sans-serif; color: var(--text-color);">0%</div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .call-recording-wrapper {
+            min-height: 100vh;
+            background: var(--light-color);
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .call-recording-header {
+            background: var(--white);
+            color: var(--text-color);
+            padding: 16px 28px;
+            box-shadow: var(--shadow-md);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .call-recording-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .call-recording-header-title {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-color);
+        }
+
+        .call-recording-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .access-code-input {
+            font-size: 24px !important;
+            letter-spacing: 12px !important;
+            font-weight: 700 !important;
+            text-align: center !important;
+        }
+    </style>
+
+    <!-- Access Code Verification Modal -->
+    <div id="access-code-modal" class="modal-overlay access-code-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+        <div class="modal-container" style="background: white; border-radius: 20px; box-shadow: var(--shadow-xl); animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+            <div style="padding: 32px 28px 28px;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <div style="width: 64px; height: 64px; background: var(--light-color); border: 2px solid var(--border-color); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </div>
+                    <h2 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: var(--text-color); letter-spacing: -0.02em; font-family: 'Poppins', sans-serif;">Login to Call Recording</h2>
+                    <p style="margin: 0; color: var(--text-light); font-size: 14px; font-weight: 500; font-family: 'Poppins', sans-serif;">Enter campaign manager email and temporary password</p>
+                </div>
+                <form id="access-code-form">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="login-email" style="display: block; font-size: 13px; font-weight: 600; color: var(--text-color); margin-bottom: 8px;">Campaign Manager Email *</label>
+                        <input type="email" id="login-email" placeholder="email@example.com" required style="width: 100%; padding: 14px 16px; border: 2px solid var(--border-color); border-radius: 12px; font-size: 14px; font-family: 'Poppins', sans-serif; background: var(--white); transition: var(--transition); box-sizing: border-box;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="login-password" style="display: block; font-size: 13px; font-weight: 600; color: var(--text-color); margin-bottom: 8px;">Temporary Password *</label>
+                        <input type="password" id="login-password" placeholder="Enter temporary password" required style="width: 100%; padding: 14px 16px; border: 2px solid var(--border-color); border-radius: 12px; font-size: 14px; font-family: 'Poppins', sans-serif; background: var(--white); transition: var(--transition); box-sizing: border-box;">
+                    </div>
+                    <div id="access-code-error" class="error-message" style="display: none; margin-top: 12px; margin-bottom: 16px; padding: 12px; background: rgba(220, 38, 38, 0.1); border-left: 3px solid var(--danger-color); border-radius: 8px; color: var(--danger-color); font-size: 13px; font-weight: 500;"></div>
+                    <div class="modal-footer" style="display: flex; gap: 12px;">
+                        <button type="button" class="btn-secondary btn-compact" onclick="window.location.href='index.html'" style="flex: 1; padding: 14px; font-weight: 600;">Cancel</button>
+                        <button type="submit" class="btn-primary btn-compact" style="flex: 1; padding: 14px; font-weight: 600; background: var(--gradient-primary);">Login</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call Recording Container -->
+    <div id="call-recording-container" class="call-recording-wrapper" style="display: none;">
+        <!-- Header -->
+        <header class="call-recording-header">
+            <div class="call-recording-header-content">
+                <div>
+                    <h1 class="call-recording-header-title">Call Recording</h1>
+                </div>
+                <div>
+                    <button id="logout-btn" class="btn-secondary btn-compact" style="font-family: 'Poppins', sans-serif;">Exit</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="call-recording-content">
+            <div id="call-recording-main" style="background: var(--white); border-radius: 16px; padding: 32px; box-shadow: var(--shadow-md);">
+                <!-- Call form will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase and Scripts -->
+    <script type="module" src="call-recording.js"></script>
+</body>
+
+</html>
