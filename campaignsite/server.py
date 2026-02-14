@@ -125,25 +125,42 @@ def main():
     os.chdir(Path(__file__).parent)
     
     Handler = MyHTTPRequestHandler
+    ports_to_try = [PORT, 8080, 8888, 3000]
+    httpd = None
     
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
-        url = f"http://localhost:{PORT}/"
-        print("=" * 60)
-        print(f"Server started at http://localhost:{PORT}")
-        print(f"Open your browser and go to: {url}")
-        print("=" * 60)
-        print("\nPress Ctrl+C to stop the server\n")
-        
-        # Try to open browser automatically
+    for port in ports_to_try:
         try:
-            webbrowser.open(url)
-        except:
-            pass
-        
-        try:
-            httpd.serve_forever()
-        except KeyboardInterrupt:
-            print("\n\nServer stopped.")
+            httpd = socketserver.TCPServer(("", port), Handler)
+            break
+        except OSError as e:
+            if "10048" in str(e) or "Address already in use" in str(e):
+                print(f"Port {port} in use, trying next...")
+                continue
+            raise
+    
+    if httpd is None:
+        print("Could not bind to any port. Try closing other apps using 8000, 8080, 8888, or 3000.")
+        return
+    
+    actual_port = httpd.server_address[1]
+    url = f"http://127.0.0.1:{actual_port}/"
+    print("=" * 60)
+    print(f"Server started at {url}")
+    print(f"Also try: http://localhost:{actual_port}/")
+    print("=" * 60)
+    print("\nPress Ctrl+C to stop the server\n")
+    
+    try:
+        webbrowser.open(url)
+    except Exception:
+        pass
+    
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\n\nServer stopped.")
+    finally:
+        httpd.server_close()
 
 if __name__ == "__main__":
     main()

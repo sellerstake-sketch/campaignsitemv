@@ -4244,7 +4244,8 @@ function getMappedHeadersAndBuildData(headers, rows) {
     };
     const headerMap = {
         'image': 'image', 'img': 'image', 'photo': 'image', 'picture': 'image',
-        'no': 'no', 'num': 'no', '#': 'no',
+        'no': 'no', '#': 'no',
+        'num': 'number',
         'idnumber': 'idnumber', 'nid': 'idnumber', 'id': 'idnumber', 'voterid': 'idnumber', 'voteridnumber': 'idnumber', 'idno': 'idnumber', 'nationalid': 'idnumber',
         'name': 'name', 'fullname': 'name', 'votername': 'name',
         'dateofbirth': 'dateofbirth', 'dob': 'dateofbirth', 'birthdate': 'dateofbirth', 'birth': 'dateofbirth', 'date': 'dateofbirth',
@@ -4284,13 +4285,20 @@ function getMappedHeadersAndBuildData(headers, rows) {
         return norm.original.toLowerCase().replace(/\s+/g, '');
     });
     const data = [];
+    const nCols = headers.length;
     for (let i = 0; i < rows.length; i++) {
-        const values = rows[i];
-        if (!values || values.length === 0 || values.every(v => !String(v || '').trim())) continue;
+        let values = rows[i];
+        if (!values || values.length === 0) continue;
+        if (values.every(v => !String(v || '').trim())) continue;
+        // Pad so we have at least nCols values (avoids losing last column when row has fewer cells)
+        values = Array.isArray(values) ? values.slice() : [];
+        while (values.length < nCols) values.push('');
+        values = values.slice(0, nCols);
         const row = {};
         mappedHeaders.forEach((mappedHeader, index) => {
-            if (mappedHeader && values[index] !== undefined && values[index] !== null) {
-                const value = String(values[index]).trim();
+            if (mappedHeader && index < values.length) {
+                const raw = values[index];
+                const value = (raw !== undefined && raw !== null) ? String(raw).trim() : '';
                 if (value) row[mappedHeader] = value;
             }
         });
@@ -4374,7 +4382,25 @@ function parseCSVLine(line) {
     return values.map(v => v.replace(/^"|"$/g, '').trim());
 }
 
-// Display CSV preview
+// Preview columns: fixed order matching template (label, data key). Empty columns stay in place.
+var BULK_PREVIEW_COLUMNS = [
+    { label: '#', key: 'no' },
+    { label: 'Image', key: 'image' },
+    { label: 'ID Number', key: 'idnumber' },
+    { label: 'Name', key: 'name' },
+    { label: 'Permanent Address', key: 'permanentaddress' },
+    { label: 'Date of Birth', key: 'dateofbirth' },
+    { label: 'Age', key: 'age' },
+    { label: 'Gender', key: 'gender' },
+    { label: 'Constituency', key: 'constituency' },
+    { label: 'Island', key: 'island' },
+    { label: 'Ballot Sequence No', key: 'ballotboxsequence' },
+    { label: 'Ballot Box', key: 'ballotbox' },
+    { label: 'Current Location', key: 'currentlocation' },
+    { label: 'Number', key: 'number' }
+];
+
+// Display CSV preview: same format as template, all columns in order, empty cells shown as empty
 function displayCSVPreview(data, headerEl, bodyEl, countEl, originalHeaders = null) {
     if (data.length === 0) {
         if (countEl) {
@@ -4383,40 +4409,39 @@ function displayCSVPreview(data, headerEl, bodyEl, countEl, originalHeaders = nu
         return;
     }
 
-    // Get all unique keys from data
-    const allKeys = new Set();
-    data.forEach(row => Object.keys(row).forEach(key => allKeys.add(key)));
-    const headers = Array.from(allKeys);
+    var cols = BULK_PREVIEW_COLUMNS;
 
-    // Display headers with mapping info
-    headerEl.innerHTML = headers.map(h => {
-        const displayName = h.charAt(0).toUpperCase() + h.slice(1).replace(/([A-Z])/g, ' $1');
-        return `<th style="padding: 8px; text-align: left; border-bottom: 2px solid var(--border-color);">${displayName}</th>`;
+    // Headers: always template order
+    headerEl.innerHTML = cols.map(function (c) {
+        return '<th style="padding: 8px; text-align: left; border-bottom: 2px solid var(--border-color);">' + c.label + '</th>';
     }).join('');
 
-    // Display preview rows (first 5)
-    const previewRows = data.slice(0, 5);
-    bodyEl.innerHTML = previewRows.map(row => {
-        return `<tr>${headers.map(h => `<td style="padding: 6px; border-bottom: 1px solid var(--border-light); font-size: 11px;">${row[h] || '<span style="color: #999;">(empty)</span>'}</td>`).join('')}</tr>`;
+    // Rows: same column order, show value or empty. For Number column use any phone key so values are not shown empty.
+    var previewRows = data.slice(0, 5);
+    bodyEl.innerHTML = previewRows.map(function (row) {
+        return '<tr>' + cols.map(function (c) {
+            var val = c.key === 'number' ? (row.number || row.phone || row.phonenumber || row.mobile || '') : row[c.key];
+            var text = (val !== undefined && val !== null && val !== '') ? String(val).trim() : '';
+            return '<td style="padding: 6px; border-bottom: 1px solid var(--border-light); font-size: 11px;">' + text + '</td>';
+        }).join('') + '</tr>';
     }).join('');
 
-    // Show row count with detected columns
-    let countText = `Total rows to import: ${data.length}${data.length > 5 ? ' (showing first 5)' : ''}`;
+    var countText = 'Total rows in file: ' + data.length + (data.length > 5 ? ' (showing first 5)' : '') + '. These will be added to your existing voters. Rows with a duplicate ID number in the file are skipped (one voter per ID).';
     if (originalHeaders && originalHeaders.length > 0) {
-        countText += `<br><small style="color: var(--text-secondary);">Detected columns: ${originalHeaders.join(', ')}</small>`;
+        countText += '<br><small style="color: var(--text-secondary);">Detected columns: ' + originalHeaders.join(', ') + '</small>';
     }
     if (countEl) {
         countEl.innerHTML = countText;
     }
 }
 
-// Single source of truth: bulk import template columns and sample row (aligned with voter profile form)
+// Single source of truth: bulk import template columns and sample row (order must match bulk table)
 function getVoterImportTemplateData() {
     const constituency = (window.campaignData && window.campaignData.constituency) ? window.campaignData.constituency : 'M01 - Meedhoo Dhaaira';
-    const headers = ['#', 'Image', 'ID Number', 'Name', 'Date of Birth', 'Age', 'Gender', 'Constituency', 'Island', 'Ballot Sequence No', 'Ballot Box', 'Permanent Address', 'Current Location', 'Phone Number'];
+    const headers = ['#', 'Image', 'ID Number', 'Name', 'Permanent Address', 'Date of Birth', 'Age', 'Gender', 'Constituency', 'Island', 'Ballot Sequence No', 'Ballot Box', 'Current Location', 'Number'];
     const sampleRows = [
-        ['1', '', 'A123456', 'Ahmed Ali', '1990-01-15', '34', 'Male', constituency, 'Meedhoo', '1', 'DHU-98', 'Meedhoo, Maldives', 'Meedhoo, Maldives', '+960 1234567'],
-        ['2', '', 'B789012', 'Aisha Mohamed', '1985-05-20', '39', 'Female', constituency, 'Bandidhoo', '2', 'DHU-99', 'Bandidhoo, Maldives', 'Bandidhoo, Maldives', '+960 7654321']
+        ['1', '', 'A123456', 'Ahmed Ali', 'Meedhoo, Maldives', '1990-01-15', '34', 'Male', constituency, 'Meedhoo', '1', 'DHU-98', 'Meedhoo, Maldives', '+960 1234567'],
+        ['2', '', 'B789012', 'Aisha Mohamed', 'Bandidhoo, Maldives', '1985-05-20', '39', 'Female', constituency, 'Bandidhoo', '2', 'DHU-99', 'Bandidhoo, Maldives', '+960 7654321']
     ];
     return { headers, sampleRows };
 }
@@ -4494,7 +4519,9 @@ async function handleBatchVoterImport(csvDataArray) {
 
         let successCount = 0;
         let errorCount = 0;
+        let duplicateSkippedCount = 0;
         const errors = [];
+        const seenIdNumbers = new Set();
 
         const total = csvData.length;
         const BATCH_SIZE = 500; // Firestore batch write limit
@@ -4533,6 +4560,15 @@ async function handleBatchVoterImport(csvDataArray) {
                     // Extract and clean values from CSV row - handle both old and new formats
                     const idNumber = cleanValue(row.idnumber || row['id number'] || row.nid || row.id || row.voterid);
                     const name = cleanValue(row.name || row.fullname || row.votername);
+
+                    // Skip duplicate rows (same ID number) so one file row = one voter record
+                    const idKey = (idNumber || '').toString().trim().toUpperCase() || `row-${i}`;
+                    if (seenIdNumbers.has(idKey)) {
+                        duplicateSkippedCount++;
+                        continue;
+                    }
+                    seenIdNumbers.add(idKey);
+
                     const permanentAddress = cleanValue(row.permanentaddress || row[' permanent address'] || row.address || row.permanent);
                     const currentLocation = cleanValue(row.currentlocation || row['current location'] || row.location || row.current);
                     const constituency = cleanValue(row.constituency || window.campaignData.constituency);
@@ -4625,7 +4661,10 @@ async function handleBatchVoterImport(csvDataArray) {
         // Show results
         if (progressDiv) progressDiv.style.display = 'none';
 
-        let message = `Import completed!\n\nSuccessfully imported: ${successCount} voters`;
+        let message = `Import completed!\n\nYour file had ${total} row(s). Successfully imported: ${successCount} voter(s).`;
+        if (duplicateSkippedCount > 0) {
+            message += `\n${duplicateSkippedCount} row(s) were skipped because the ID number was repeated in the file (we keep one voter per ID).`;
+        }
         if (errorCount > 0) {
             message += `\nFailed: ${errorCount} voters`;
             if (errors.length > 0 && errors.length <= 10) {
@@ -4634,6 +4673,7 @@ async function handleBatchVoterImport(csvDataArray) {
                 message += `\n\nFirst 10 errors:\n${errors.slice(0, 10).join('\n')}`;
             }
         }
+        message += `\n\nThe total count shown on the page includes these new voters plus any voters that were already in your database.`;
 
         if (window.showSuccess) {
             window.showSuccess(message, 'Import Complete');
@@ -4679,17 +4719,35 @@ function parseDateOfBirth(value) {
     if (value == null) return null;
     if (value.toDate && typeof value.toDate === 'function') return value.toDate(); // Firestore Timestamp
     if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
-    const s = typeof value === 'string' ? value.trim() : String(value).trim();
+    // Excel serial date (number): days since 1899-12-30
+    if (typeof value === 'number' && !isNaN(value) && value > 0) {
+        var d = new Date(1899, 11, 30);
+        d.setDate(d.getDate() + Math.floor(value));
+        return isNaN(d.getTime()) ? null : d;
+    }
+    var s = typeof value === 'string' ? value.trim() : String(value).trim();
     if (!s) return null;
-    // ISO date-only YYYY-MM-DD: parse as local date to avoid timezone shifting the day
-    const isoMatch = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    // ISO date (YYYY-MM-DD or with time): parse date part as local to avoid timezone shifting the day
+    var isoMatch = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
     if (isoMatch) {
-        const y = parseInt(isoMatch[1], 10), m = parseInt(isoMatch[2], 10) - 1, d = parseInt(isoMatch[3], 10);
-        const date = new Date(y, m, d);
+        var y = parseInt(isoMatch[1], 10), m = parseInt(isoMatch[2], 10) - 1, d = parseInt(isoMatch[3], 10);
+        var date = new Date(y, m, d);
         if (date.getFullYear() !== y || date.getMonth() !== m || date.getDate() !== d) return null;
         return date;
     }
-    const fallback = new Date(s);
+    // DD/MM/YYYY or MM/DD/YYYY (with / or -)
+    var slashMatch = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (slashMatch) {
+        var n1 = parseInt(slashMatch[1], 10), n2 = parseInt(slashMatch[2], 10), y = parseInt(slashMatch[3], 10);
+        var day, month;
+        if (n1 > 12) { day = n1; month = n2 - 1; }
+        else if (n2 > 12) { day = n2; month = n1 - 1; }
+        else { day = n1; month = n2 - 1; }
+        var dateSlash = new Date(y, month, day);
+        if (dateSlash.getFullYear() !== y || dateSlash.getMonth() !== month || dateSlash.getDate() !== day) return null;
+        return dateSlash;
+    }
+    var fallback = new Date(s);
     return isNaN(fallback.getTime()) ? null : fallback;
 }
 
