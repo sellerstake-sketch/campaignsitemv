@@ -3270,6 +3270,12 @@ window.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        const shareToken = urlParams.get('share');
+        if (shareToken) {
+            await handleShareVoterView(shareToken);
+            return;
+        }
+
         // Show loading screen while checking auth state
         showLoading(true, {
             title: 'Loading...',
@@ -3337,6 +3343,100 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
     }
 });
+
+// Share voter list view: show password entry (no login required)
+async function handleShareVoterView(shareToken) {
+    removeAuthLoadingClass();
+    showLoading(false);
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+    });
+    const shareScreen = document.getElementById('share-voter-screen');
+    if (!shareScreen) {
+        console.error('[handleShareVoterView] share-voter-screen not found');
+        return;
+    }
+    shareScreen.classList.add('active');
+
+    const passwordWrap = document.getElementById('share-voter-password-wrap');
+    const listWrap = document.getElementById('share-voter-list-wrap');
+    if (passwordWrap) passwordWrap.style.display = 'block';
+    if (listWrap) listWrap.style.display = 'none';
+
+    window._shareToken = shareToken;
+
+    const form = document.getElementById('share-voter-password-form');
+    const errorEl = document.getElementById('share-voter-password-error');
+    if (form) {
+        form.onsubmit = null;
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+            const passwordInput = document.getElementById('share-voter-password-input');
+            const password = passwordInput ? passwordInput.value.trim() : '';
+            if (!password) {
+                if (errorEl) { errorEl.textContent = 'Please enter the temporary password.'; errorEl.style.display = 'block'; }
+                return;
+            }
+            try {
+                const base = window.location.origin;
+                const res = await fetch(base + '/api/share/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: shareToken, password: password })
+                });
+                const data = res.ok ? await res.json().catch(() => ({})) : null;
+                if (res.ok && data && data.ok) {
+                    const sessionToken = data.sessionToken || data.session;
+                    if (sessionToken) {
+                        sessionStorage.setItem('shareSession_' + shareToken, JSON.stringify({ sessionToken: sessionToken }));
+                    }
+                    if (passwordWrap) passwordWrap.style.display = 'none';
+                    if (listWrap) listWrap.style.display = 'block';
+                    if (typeof window.loadShareVoterList === 'function') {
+                        window.loadShareVoterList();
+                    } else {
+                        const loadingEl = document.getElementById('share-voter-loading');
+                        const tableContainer = document.getElementById('share-voter-table-container');
+                        if (loadingEl) loadingEl.textContent = 'Share backend not configured. Voter list cannot be loaded.';
+                        if (tableContainer) tableContainer.style.display = 'none';
+                    }
+                    const refreshBtn = document.getElementById('share-voter-refresh-btn');
+                    if (refreshBtn) refreshBtn.onclick = () => { if (window.loadShareVoterList) window.loadShareVoterList(); };
+                } else {
+                    if (errorEl) {
+                        errorEl.textContent = res.status === 503 ? 'Share feature is not configured on the server.' : (data && data.error) || 'Invalid password or link.';
+                        errorEl.style.display = 'block';
+                    }
+                }
+            } catch (err) {
+                if (errorEl) {
+                    errorEl.textContent = 'Could not verify. Check your connection or try again.';
+                    errorEl.style.display = 'block';
+                }
+            }
+        };
+    }
+
+    const existingSession = sessionStorage.getItem('shareSession_' + shareToken);
+    if (existingSession) {
+        try {
+            const parsed = JSON.parse(existingSession);
+            if (parsed.sessionToken) {
+                const base = window.location.origin;
+                const r = await fetch(base + '/api/share/voters?session=' + encodeURIComponent(parsed.sessionToken));
+                if (r.ok) {
+                    if (passwordWrap) passwordWrap.style.display = 'none';
+                    if (listWrap) listWrap.style.display = 'block';
+                    if (typeof window.loadShareVoterList === 'function') window.loadShareVoterList();
+                    const refreshBtn = document.getElementById('share-voter-refresh-btn');
+                    if (refreshBtn) refreshBtn.onclick = () => { if (window.loadShareVoterList) window.loadShareVoterList(); };
+                    return;
+                }
+            }
+        } catch (_) {}
+    }
+}
 
 // Handle officer ballot view (no authentication required - only temporary password)
 async function handleOfficerBallotView(ballotId, token) {

@@ -92,10 +92,268 @@ function getFormTemplate(type) {
         agent: getAgentFormTemplate(),
         ballot: getBallotFormTemplate(),
         transportation: getTransportationFormTemplate(),
-        'island-user': getIslandUserFormTemplate()
+        'island-user': getIslandUserFormTemplate(),
+        'share-voter-list': getShareVoterListFormTemplate()
     };
     return templates[type] || '<p>Unknown form type</p>';
 }
+
+// Share Voter List modal: existing links table + generate new link form
+function getShareVoterListFormTemplate() {
+    return `
+        <div id="share-voter-list-content">
+            <p style="color: var(--text-light); font-size: 13px; margin-bottom: 16px;">Share the voter database with a link and temporary password. Recipients can view the list and record pledges. Access is logged below.</p>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="font-weight: 600; margin-bottom: 8px; display: block;">Existing users with access</label>
+                <div id="share-voter-links-table-wrap" style="overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; min-height: 80px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <thead>
+                            <tr style="background: var(--light-color);">
+                                <th style="padding: 10px 12px; text-align: left;">Recipient name</th>
+                                <th style="padding: 10px 12px; text-align: left;">Island</th>
+                                <th style="padding: 10px 12px; text-align: left;">Created</th>
+                                <th style="padding: 10px 12px; text-align: left;">Last access</th>
+                                <th style="padding: 10px 12px; text-align: left;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="share-voter-links-tbody">
+                            <tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-light);">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;">
+            <div class="form-group">
+                <label style="font-weight: 600; margin-bottom: 8px; display: block;">Generate new link</label>
+                <p style="font-size: 12px; color: var(--text-light); margin-bottom: 12px;">Enter the recipient's name and island. A link and temporary password will be generated to share.</p>
+                <div style="display: grid; gap: 12px;">
+                    <div>
+                        <label for="share-recipient-name">Recipient name *</label>
+                        <input type="text" id="share-recipient-name" placeholder="Full name" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px;">
+                    </div>
+                    <div>
+                        <label for="share-recipient-island">Island *</label>
+                        <select id="share-recipient-island" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px;">
+                            <option value="">Select island</option>
+                        </select>
+                    </div>
+                    <button type="button" id="share-generate-link-btn" class="btn-primary">Generate link</button>
+                </div>
+            </div>
+            <div id="share-link-result" style="display: none; margin-top: 16px; padding: 16px; background: var(--light-color); border-radius: 8px; border: 1px solid var(--border-color);">
+                <p style="font-weight: 600; margin-bottom: 12px;">Share this link and password with the recipient:</p>
+                <div style="margin-bottom: 10px;">
+                    <label style="font-size: 11px; color: var(--text-light);">Link</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" id="share-link-url" readonly style="flex: 1; padding: 8px 12px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 6px; background: white;">
+                        <button type="button" class="icon-btn" onclick="copyShareLinkUrl()" title="Copy link">Copy</button>
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: var(--text-light);">Temporary password</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" id="share-link-password" readonly style="flex: 1; padding: 8px 12px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 6px; background: white;">
+                        <button type="button" class="icon-btn" onclick="copyShareLinkPassword()" title="Copy password">Copy</button>
+                    </div>
+                </div>
+            </div>
+            <div id="modal-error" class="error-message" style="display: none;"></div>
+            <div class="modal-footer" style="margin-top: 20px;">
+                <button type="button" class="btn-secondary btn-compact" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    `;
+}
+
+// Last generated share link/password for copy buttons
+window._shareLinkLastGenerated = { url: '', password: '' };
+
+async function setupShareVoterListModal() {
+    await loadSharedVoterLinks();
+    const islandSelect = document.getElementById('share-recipient-island');
+    if (islandSelect && window.campaignData && window.campaignData.constituency && window.maldivesData && window.maldivesData.constituencyIslands) {
+        const islands = window.maldivesData.constituencyIslands[window.campaignData.constituency] || [];
+        islandSelect.innerHTML = '<option value="">Select island</option>';
+        islands.sort().forEach(island => {
+            const opt = document.createElement('option');
+            opt.value = island;
+            opt.textContent = island;
+            islandSelect.appendChild(opt);
+        });
+    }
+    const btn = document.getElementById('share-generate-link-btn');
+    if (btn) btn.onclick = () => generateShareVoterLink();
+}
+
+async function loadSharedVoterLinks() {
+    const tbody = document.getElementById('share-voter-links-tbody');
+    if (!tbody) return;
+    if (!window.db || !window.userEmail) {
+        tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; color: var(--text-light);">Please log in.</td></tr>';
+        return;
+    }
+    try {
+        const { collection, query, where, getDocs, orderBy } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const q = query(
+            collection(window.db, 'sharedVoterLinks'),
+            where('createdBy', '==', window.userEmail),
+            orderBy('createdAt', 'desc')
+        );
+        const snap = await getDocs(q);
+        const links = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (links.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; color: var(--text-light);">No shared links yet. Generate one below.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = links.map(link => {
+            const created = link.createdAt && link.createdAt.toDate ? link.createdAt.toDate().toLocaleString() : '—';
+            const lastAccess = link.accessLog && link.accessLog.length > 0
+                ? (link.accessLog[link.accessLog.length - 1].accessedAt && link.accessLog[link.accessLog.length - 1].accessedAt.toDate
+                    ? link.accessLog[link.accessLog.length - 1].accessedAt.toDate().toLocaleString()
+                    : '—')
+                : 'Never';
+            const baseUrl = window.location.origin + window.location.pathname + (window.location.pathname.endsWith('/') ? '' : '/') + (window.location.pathname.endsWith('.html') ? '' : 'index.html');
+            const url = baseUrl + (baseUrl.indexOf('?') >= 0 ? '&' : '?') + 'share=' + encodeURIComponent(link.token);
+            return `<tr>
+                <td style="padding: 10px 12px;">${(link.recipientName || '—')}</td>
+                <td style="padding: 10px 12px;">${(link.recipientIsland || '—')}</td>
+                <td style="padding: 10px 12px;">${created}</td>
+                <td style="padding: 10px 12px;">${lastAccess}</td>
+                <td style="padding: 10px 12px;">
+                    <button type="button" class="icon-btn" onclick="copyShareLinkUrl('${url.replace(/'/g, "\\'")}')" title="Copy link">Copy link</button>
+                    <button type="button" class="icon-btn" style="color: var(--danger-color);" onclick="revokeShareVoterLink('${link.id}')" title="Revoke">Revoke</button>
+                </td>
+            </tr>`;
+        }).join('');
+    } catch (err) {
+        console.error('loadSharedVoterLinks:', err);
+        if (err.code === 'failed-precondition' || (err.message && err.message.includes('index'))) {
+            const { collection, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+            const q = query(collection(window.db, 'sharedVoterLinks'), where('createdBy', '==', window.userEmail));
+            const snap = await getDocs(q);
+            const links = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => {
+                const at = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : 0;
+                const bt = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : 0;
+                return bt - at;
+            });
+            if (links.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; color: var(--text-light);">No shared links yet.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = links.map(link => {
+                const created = link.createdAt && link.createdAt.toDate ? link.createdAt.toDate().toLocaleString() : '—';
+                const lastAccess = link.accessLog && link.accessLog.length > 0
+                    ? (link.accessLog[link.accessLog.length - 1].accessedAt && link.accessLog[link.accessLog.length - 1].accessedAt.toDate
+                        ? link.accessLog[link.accessLog.length - 1].accessedAt.toDate().toLocaleString()
+                        : '—')
+                    : 'Never';
+                const baseUrl = window.location.origin + window.location.pathname + (window.location.pathname.endsWith('/') ? '' : '/') + (window.location.pathname.endsWith('.html') ? '' : 'index.html');
+                const url = baseUrl + (baseUrl.indexOf('?') >= 0 ? '&' : '?') + 'share=' + encodeURIComponent(link.token);
+                return `<tr>
+                    <td style="padding: 10px 12px;">${(link.recipientName || '—')}</td>
+                    <td style="padding: 10px 12px;">${(link.recipientIsland || '—')}</td>
+                    <td style="padding: 10px 12px;">${created}</td>
+                    <td style="padding: 10px 12px;">${lastAccess}</td>
+                    <td style="padding: 10px 12px;">
+                        <button type="button" class="icon-btn" onclick="copyShareLinkUrl('${url.replace(/'/g, "\\'")}')" title="Copy link">Copy link</button>
+                        <button type="button" class="icon-btn" style="color: var(--danger-color);" onclick="revokeShareVoterLink('${link.id}')" title="Revoke">Revoke</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; color: var(--danger-color);">Error loading links.</td></tr>';
+        }
+    }
+}
+
+function randomToken(len) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let s = '';
+    for (let i = 0; i < len; i++) s += chars.charAt(Math.floor(Math.random() * chars.length));
+    return s;
+}
+
+async function generateShareVoterLink() {
+    const nameInput = document.getElementById('share-recipient-name');
+    const islandSelect = document.getElementById('share-recipient-island');
+    const errEl = document.getElementById('modal-error');
+    const resultEl = document.getElementById('share-link-result');
+    const urlInput = document.getElementById('share-link-url');
+    const pwInput = document.getElementById('share-link-password');
+    if (errEl) errEl.style.display = 'none';
+    const name = nameInput && nameInput.value ? nameInput.value.trim() : '';
+    const island = islandSelect && islandSelect.value ? islandSelect.value.trim() : '';
+    if (!name || !island) {
+        if (errEl) { errEl.textContent = 'Please enter recipient name and island.'; errEl.style.display = 'block'; }
+        return;
+    }
+    if (!window.db || !window.userEmail) {
+        if (errEl) { errEl.textContent = 'Not logged in.'; errEl.style.display = 'block'; }
+        return;
+    }
+    try {
+        const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const token = randomToken(32);
+        const password = randomToken(8);
+        await addDoc(collection(window.db, 'sharedVoterLinks'), {
+            createdBy: window.userEmail,
+            recipientName: name,
+            recipientIsland: island,
+            token,
+            password,
+            createdAt: serverTimestamp(),
+            accessLog: []
+        });
+        const baseUrl = window.location.origin + window.location.pathname + (window.location.pathname.endsWith('/') ? '' : '/') + (window.location.pathname.endsWith('.html') ? '' : 'index.html');
+        const url = baseUrl + (baseUrl.indexOf('?') >= 0 ? '&' : '?') + 'share=' + encodeURIComponent(token);
+        if (urlInput) urlInput.value = url;
+        if (pwInput) pwInput.value = password;
+        if (resultEl) resultEl.style.display = 'block';
+        window._shareLinkLastGenerated = { url, password };
+        await loadSharedVoterLinks();
+        if (nameInput) nameInput.value = '';
+        if (islandSelect) islandSelect.value = '';
+        if (window.showSuccess) window.showSuccess('Link generated. Share the link and password with the recipient.', 'Success');
+    } catch (e) {
+        console.error('generateShareVoterLink:', e);
+        if (errEl) { errEl.textContent = e.message || 'Failed to generate link.'; errEl.style.display = 'block'; }
+    }
+}
+
+window.revokeShareVoterLink = async function(linkId) {
+    if (!window.db || !window.userEmail) return;
+    if (!window.showConfirm) { if (!confirm('Revoke this share link? The recipient will no longer be able to access.')) return; }
+    else { try { if (!(await window.showConfirm('Revoke this share link? The recipient will no longer be able to access.', 'Revoke link'))) return; } catch (_) { return; } }
+    try {
+        const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        await deleteDoc(doc(window.db, 'sharedVoterLinks', linkId));
+        await loadSharedVoterLinks();
+        if (window.showSuccess) window.showSuccess('Link revoked.', 'Success');
+    } catch (e) {
+        console.error('revokeShareVoterLink:', e);
+        if (window.showErrorDialog) window.showErrorDialog(e.message || 'Failed to revoke.', 'Error');
+    }
+};
+
+window.copyShareLinkUrl = function(givenUrl) {
+    const url = givenUrl || (document.getElementById('share-link-url') && document.getElementById('share-link-url').value) || window._shareLinkLastGenerated.url;
+    if (url && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => { if (window.showSuccess) window.showSuccess('Link copied.', 'Copied'); }).catch(() => {});
+    } else if (url) {
+        const el = document.createElement('input'); el.value = url; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
+        if (window.showSuccess) window.showSuccess('Link copied.', 'Copied');
+    }
+};
+
+window.copyShareLinkPassword = function() {
+    const pw = (document.getElementById('share-link-password') && document.getElementById('share-link-password').value) || window._shareLinkLastGenerated.password;
+    if (pw && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(pw).then(() => { if (window.showSuccess) window.showSuccess('Password copied.', 'Copied'); }).catch(() => {});
+    } else if (pw) {
+        const el = document.createElement('input'); el.value = pw; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
+        if (window.showSuccess) window.showSuccess('Password copied.', 'Copied');
+    }
+};
 
 // Safe Island Select Populator (DOM-based, no template literal parsing)
 // Respects global filter - if island is selected in global filter, only show that island
@@ -1297,11 +1555,14 @@ CAND - $ {
 
                 let eventDateValue = null;
                 if (eventDate && eventStartTime) {
-                    // Combine date and time into a single Date object
                     const dateTimeString = eventDate + 'T' + eventStartTime;
-                    eventDateValue = new Date(dateTimeString);
+                    eventDateValue = safeParseDate(dateTimeString);
                 } else if (eventDate) {
-                    eventDateValue = new Date(eventDate);
+                    eventDateValue = safeParseDate(eventDate);
+                }
+                if (eventDate && !eventDateValue) {
+                    showModalError('Please enter a valid event date and time.');
+                    return;
                 }
 
                 // Check if this is an edit operation
@@ -1337,7 +1598,8 @@ CAND - $ {
                 const callCallerNameInput = formData.get('call-caller-name');
                 const callCallerNameDropdown = formData.get('call-caller-name-dropdown');
                 const callCallerName = callCallerNameDropdown || callCallerNameInput;
-                const callDateValue = formData.get('call-date');
+                const callDateValueRaw = formData.get('call-date');
+                const callDateValue = callDateValueRaw ? safeParseDate(callDateValueRaw) : null;
                 const callStatus = formData.get('call-status');
                 const callNotes = formData.get('call-notes');
                 const callVoterDocumentId = formData.get('call-voter-id-hidden'); // Get hidden voter ID
@@ -1364,7 +1626,7 @@ CAND - $ {
                     voterDocumentId: cleanFormValue(callVoterDocumentId), // Save the document ID
                     phone: cleanFormValue(callVoterPhone),
                     caller: callCallerName.trim(),
-                    callDate: callDateValue ? new Date(callDateValue) : serverTimestamp(),
+                    callDate: callDateValue || serverTimestamp(),
                     status: callStatus.trim(),
                     notes: cleanFormValue(callNotes),
                     constituency: cleanFormValue(callConstituency),
@@ -2913,7 +3175,8 @@ function openModal(type, itemId = null) {
             'agent': 'Add Agent',
             'ballot': 'Add Ballot',
             'transportation': 'Add Transportation',
-            'island-user': 'Add Island User'
+            'island-user': 'Add Island User',
+            'share-voter-list': 'Share voter database'
         };
 
         modalTitle.textContent = titles[type] || 'Modal';
@@ -2923,6 +3186,10 @@ function openModal(type, itemId = null) {
 
         // Set form content
         modalBody.innerHTML = getFormTemplate(type);
+
+        if (type === 'share-voter-list') {
+            setTimeout(() => setupShareVoterListModal(), 50);
+        }
 
         // Setup form submission
         const form = document.getElementById('modal-form');
@@ -3582,15 +3849,22 @@ async function populateCallEditForm(callId) {
         if (callerNameInput) callerNameInput.value = callData.caller || '';
         if (callStatusSelect) callStatusSelect.value = callData.status || 'answered';
 
-        // Format date for datetime-local input
+        // Format date for datetime-local input (guard against invalid date to avoid "Invalid time value")
         if (callDateInput && callData.callDate) {
-            const callDate = callData.callDate.toDate ? callData.callDate.toDate() : new Date(callData.callDate);
-            const year = callDate.getFullYear();
-            const month = String(callDate.getMonth() + 1).padStart(2, '0');
-            const day = String(callDate.getDate()).padStart(2, '0');
-            const hours = String(callDate.getHours()).padStart(2, '0');
-            const minutes = String(callDate.getMinutes()).padStart(2, '0');
-            callDateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            let callDate = null;
+            if (callData.callDate.toDate) {
+                callDate = callData.callDate.toDate();
+            } else {
+                callDate = safeParseDate(callData.callDate);
+            }
+            if (callDate && !isNaN(callDate.getTime())) {
+                const year = callDate.getFullYear();
+                const month = String(callDate.getMonth() + 1).padStart(2, '0');
+                const day = String(callDate.getDate()).padStart(2, '0');
+                const hours = String(callDate.getHours()).padStart(2, '0');
+                const minutes = String(callDate.getMinutes()).padStart(2, '0');
+                callDateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
         }
 
         if (callNotesTextarea) callNotesTextarea.value = callData.notes || '';
@@ -3687,10 +3961,11 @@ async function populateEventEditForm(eventId) {
             } else if (eventData.eventDate instanceof Date) {
                 eventDate = eventData.eventDate;
             } else {
-                eventDate = new Date(eventData.eventDate);
+                eventDate = safeParseDate(eventData.eventDate);
             }
-            const dateStr = eventDate.toISOString().split('T')[0];
-            eventDateInput.value = dateStr;
+            if (eventDate && !isNaN(eventDate.getTime())) {
+                eventDateInput.value = eventDate.toISOString().split('T')[0];
+            }
         }
 
         // Handle island select (populate dropdown first, then set value)
@@ -4712,6 +4987,13 @@ async function handleBatchVoterImport(csvDataArray) {
         if (progressDiv) progressDiv.style.display = 'none';
         if (startBtn) startBtn.disabled = false;
     }
+}
+
+// Parse a date/datetime value for forms (event date, call date). Returns valid Date or null to avoid "Invalid time value".
+function safeParseDate(value) {
+    if (value == null || (typeof value === 'string' && !value.trim())) return null;
+    var d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
 }
 
 // Parse date of birth to a local Date (avoids UTC date-only parsing which can shift day and age)

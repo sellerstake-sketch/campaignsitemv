@@ -695,6 +695,17 @@ service cloud.firestore {
       allow list: if true;
     }
     
+    // Shared Voter Links - campaign manager shares voter list via link + temporary password
+    // Only campaign manager (createdBy) can read/write. Verification is done server-side (backend).
+    match /sharedVoterLinks/{linkId} {
+      allow read, update, delete: if request.auth != null &&
+                                   resource != null &&
+                                   resource.data.createdBy == request.auth.token.email;
+      allow create: if request.auth != null &&
+                       request.resource.data.createdBy == request.auth.token.email;
+      allow list: if request.auth != null;
+    }
+    
     // Island Users collection (for managing island-specific users)
     match /islandUsers/{islandUserId} {
       // Admin has full access

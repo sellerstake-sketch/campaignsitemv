@@ -527,6 +527,15 @@ const pageTemplates = {
                 <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: var(--text-color);">Voter Profile</h1>
             </div>
             <div class="action-buttons-row" style="display: flex; gap: 10px; align-items: center; flex-wrap: nowrap;">
+                <button class="icon-btn" onclick="openModal('share-voter-list')" title="Share voter database">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="18" cy="5" r="3"></circle>
+                        <circle cx="6" cy="12" r="3"></circle>
+                        <circle cx="18" cy="19" r="3"></circle>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                </button>
                 <button class="icon-btn icon-btn-danger" onclick="bulkDeleteAllVoters()" title="Delete All Voters">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
@@ -15701,12 +15710,12 @@ async function saveVoterFromDetail() {
 
         if (nameInput && nameInput.value) updateData.name = nameInput.value.trim();
         if (dobInput && dobInput.value) {
-            // Parse date of birth
             const dobValue = dobInput.value.trim();
             if (dobValue && dobValue !== 'N/A') {
-                try {
-                    updateData.dateOfBirth = new Date(dobValue);
-                } catch (e) {
+                const d = new Date(dobValue);
+                if (!isNaN(d.getTime())) {
+                    updateData.dateOfBirth = d;
+                } else {
                     updateData.dateOfBirth = dobValue;
                 }
             }
@@ -15847,8 +15856,10 @@ async function saveVoterFromDetail() {
 
                 if (dateInput.value) {
                     const date = new Date(dateInput.value);
-                    pledgeUpdate.date = Timestamp.fromDate(date);
-                    pledgeUpdate.recordedAt = Timestamp.fromDate(date);
+                    if (!isNaN(date.getTime())) {
+                        pledgeUpdate.date = Timestamp.fromDate(date);
+                        pledgeUpdate.recordedAt = Timestamp.fromDate(date);
+                    }
                 }
 
                 if (notesTextarea.value !== undefined) {
@@ -15894,12 +15905,14 @@ async function saveVoterFromDetail() {
 
                 if (dateInput.value) {
                     const date = new Date(dateInput.value);
-                    if (timeInput.value) {
-                        const [hours, minutes] = timeInput.value.split(':');
-                        date.setHours(parseInt(hours), parseInt(minutes));
+                    if (!isNaN(date.getTime())) {
+                        if (timeInput.value) {
+                            const [hours, minutes] = timeInput.value.split(':');
+                            date.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+                        }
+                        callUpdate.callDate = Timestamp.fromDate(date);
+                        callUpdate.date = Timestamp.fromDate(date);
                     }
-                    callUpdate.callDate = Timestamp.fromDate(date);
-                    callUpdate.date = Timestamp.fromDate(date);
                 }
 
                 if (timeInput.value) {
@@ -16647,7 +16660,10 @@ async function saveVoterPledgeFromDetail(pledgeId) {
         }
 
         if (dateEdit && dateEdit.value) {
-            updateData.recordedAt = new Date(dateEdit.value);
+            const d = new Date(dateEdit.value);
+            if (!isNaN(d.getTime())) {
+                updateData.recordedAt = d;
+            }
         }
 
         await updateDoc(pledgeRef, updateData);
