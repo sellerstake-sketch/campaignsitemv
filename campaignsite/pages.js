@@ -527,7 +527,7 @@ const pageTemplates = {
                 <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: var(--text-color);">Voter Profile</h1>
             </div>
             <div class="action-buttons-row" style="display: flex; gap: 10px; align-items: center; flex-wrap: nowrap;">
-                <button class="icon-btn" onclick="openModal('share-voter-list')" title="Share voter database">
+                <button id="voter-share-list-btn" class="icon-btn" onclick="openModal('share-voter-list')" title="Share voter database">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="18" cy="5" r="3"></circle>
                         <circle cx="6" cy="12" r="3"></circle>
@@ -1660,6 +1660,13 @@ function _loadPageContentInternal(section) {
                 } else if (section === 'voters') {
                     loadVotersData();
                     setupSearchListeners('voters');
+                    // Ensure Share voter database button is visible for campaign managers, hidden for island users
+                    setTimeout(() => {
+                        const shareBtn = document.getElementById('voter-share-list-btn');
+                        if (shareBtn) {
+                            shareBtn.style.display = (window.isIslandUser && window.islandUserData) ? 'none' : '';
+                        }
+                    }, 0);
                     // Setup search input listener for new search field
                     setTimeout(() => {
                         const searchInput = document.getElementById('voters-search-input');

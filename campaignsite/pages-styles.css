@@ -151,15 +151,18 @@
     flex-wrap: wrap;
     min-width: 0;
     flex-shrink: 1;
+    overflow: visible;
 }
 
-/* Action buttons row - keeps buttons side by side */
+/* Action buttons row - keeps buttons side by side, ensure not clipped when deployed */
 .page-header .action-buttons-row {
     display: flex;
     gap: 12px;
     align-items: center;
     flex-wrap: nowrap;
     justify-content: flex-start;
+    overflow: visible;
+    min-width: min-content;
 }
 
 .page-header .action-buttons-row button {
