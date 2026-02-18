@@ -4381,10 +4381,23 @@ async function checkAndSetIslandUserFilter() {
     try {
         const {
             collection,
+            doc,
+            getDoc,
+            getDocs,
             query,
-            where,
-            getDocs
+            where
         } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+
+        // License holder (initial email with license in clients) is always campaign manager
+        const clientDoc = await getDoc(doc(window.db, 'clients', window.userEmail));
+        if (clientDoc.exists()) {
+            window.isIslandUser = false;
+            window.islandUserData = null;
+            window.globalFilterState.locked = false;
+            const globalFilterContainer = document.getElementById('global-filter-container');
+            if (globalFilterContainer) globalFilterContainer.style.display = 'flex';
+            return;
+        }
 
         // Check if current email is an island user
         const islandUserQuery = query(
